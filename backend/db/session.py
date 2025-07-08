@@ -6,8 +6,13 @@ import asyncio
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 import os
+from pathlib import Path
 
-load_dotenv()
+# 显式指定.env文件的路径，确保总能正确加载
+# 假设.env文件位于 'backend' 目录下
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 
