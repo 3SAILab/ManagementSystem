@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGMA AI - 登录</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="bg-slate-50">
+
+    <!-- Login View -->
+    <div id="login-view" class="auth-view w-full min-h-screen flex items-center justify-center p-4">
+        <div class="flex w-full max-w-6xl lg:min-h-[700px] rounded-2xl shadow-2xl overflow-hidden bg-white">
+            <!-- Left Panel (Branding) -->
+            <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-12 flex-col justify-between relative overflow-hidden">
+                <!-- Background shapes -->
+                <div class="absolute inset-0 z-0">
+                    <div class="shape-1"></div>
+                    <div class="shape-2"></div>
+                    <div class="shape-3"></div>
+                    <div class="central-sphere"></div>
+                </div>
+
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-white/20 p-3 rounded-lg">
+                            <i data-lucide="brain-circuit" class="w-7 h-7 text-white"></i>
+                        </div>
+                        <h1 class="text-2xl font-bold tracking-wider">SIGMA AI</h1>
+                    </div>
+                    <div class="mt-8 text-3xl font-bold leading-snug max-w-md" style="height: 96px;">
+                        <span id="typewriter-text"></span><span class="typewriter-cursor">|</span>
+                    </div>
+                </div>
+                <div class="relative z-10 text-sm text-indigo-200">
+                    &copy; 2024 SIGMA AI. All Rights Reserved.
+                </div>
+            </div>
+
+            <!-- Right Panel (Login Form) -->
+            <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+                <div class="w-full max-w-md">
+                    <div class="lg:hidden text-center mb-10">
+                        <div class="flex items-center gap-3 justify-center">
+                            <div class="bg-indigo-600 p-2 rounded-lg">
+                                <i data-lucide="brain-circuit" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <h1 class="text-xl font-bold text-slate-800 tracking-wider">SIGMA AI</h1>
+                        </div>
+                    </div>
+
+                    <h2 class="text-3xl font-bold text-slate-800 mb-2">欢迎回来 👋</h2>
+                    <p class="text-slate-500 mb-8">请点击登录进入您的工作台</p>
+
+                    <form id="login-form" class="space-y-6">
+                        <!-- Email Input -->
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-slate-700 mb-1">邮箱地址</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="mail" class="w-5 h-5 text-slate-400"></i>
+                                </div>
+                                <input type="email" id="email" name="email"
+                                       class="form-input pl-10"
+                                       placeholder="you@example.com" value="demo@example.com" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Password Input -->
+                        <div>
+                             <div class="flex justify-between items-center mb-1">
+                                <label for="password" class="block text-sm font-medium text-slate-700">密码</label>
+                                <a href="#" id="forgot-password-link" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">忘记密码?</a>
+                            </div>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="lock" class="w-5 h-5 text-slate-400"></i>
+                                </div>
+                                <input type="password" id="password" name="password"
+                                       class="form-input pl-10"
+                                       placeholder="********" value="********" readonly>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div>
+                            <button type="submit"
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                登录
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password View -->
+    <div id="forgot-password-view" class="auth-view hidden w-full min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 sm:p-12 transition-all transform">
+            <!-- Step 1: Email -->
+            <div id="forgot-step-1">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">重置密码</h2>
+                <p class="text-slate-500 mb-8">别担心，输入您的邮箱，我们会帮助您找回。</p>
+                <form id="forgot-password-step1-form" class="space-y-6">
+                    <div>
+                        <label for="forgot-email" class="block text-sm font-medium text-slate-700 mb-1">邮箱地址</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i data-lucide="mail" class="w-5 h-5 text-slate-400"></i>
+                            </div>
+                            <input type="email" id="forgot-email" name="email"
+                                   class="form-input pl-10"
+                                   placeholder="you@example.com" required>
+                        </div>
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            发送验证码
+                        </button>
+                    </div>
+                </form>
+                <div class="mt-6 text-center">
+                    <a href="#" id="back-to-login-link" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">记起来了？返回登录</a>
+                </div>
+            </div>
+            <!-- Step 2: New Password -->
+            <div id="forgot-step-2" class="hidden">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">设置新密码</h2>
+                <p class="text-slate-500 mb-8">验证码已发送 (模拟)。请输入新密码。</p>
+                <form id="forgot-password-step2-form" class="space-y-4">
+                     <div>
+                        <label for="verification-code" class="block text-sm font-medium text-slate-700 mb-1">验证码</label>
+                        <input type="text" id="verification-code" required class="form-input" placeholder="6位验证码">
+                    </div>
+                    <div>
+                        <label for="new-password" class="block text-sm font-medium text-slate-700 mb-1">新密码</label>
+                        <input type="password" id="new-password" required class="form-input" placeholder="********">
+                    </div>
+                    <div>
+                        <label for="confirm-new-password" class="block text-sm font-medium text-slate-700 mb-1">确认新密码</label>
+                        <input type="password" id="confirm-new-password" required class="form-input" placeholder="********">
+                    </div>
+                    <div class="pt-4">
+                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            重置密码
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        lucide.createIcons();
+        
+        // --- Typewriter Effect ---
+        const Typewriter = {
+            init() {
+                const target = document.getElementById('typewriter-text');
+                if (!target) return;
+
+                const phrases = [
+                    "智能驱动，<br>精准管理绩效。",
+                    "协同创作，<br>效率倍增。",
+                    "数据洞察，<br>驱动决策。"
+                ];
+                let phraseIndex = 0;
+                let charIndex = 0;
+                let isDeleting = false;
+
+                function type() {
+                    const currentPhrase = phrases[phraseIndex];
+                    let typeSpeed = isDeleting ? 60 : 120;
+
+                    if (isDeleting) {
+                        const content = currentPhrase.substring(0, charIndex);
+                        if (content.endsWith('>')) {
+                            const tagStartIndex = content.lastIndexOf('<');
+                            charIndex = tagStartIndex;
+                        } else {
+                            charIndex--;
+                        }
+                         target.innerHTML = currentPhrase.substring(0, charIndex);
+                    } else { // Typing
+                        if (currentPhrase.charAt(charIndex) === '<') {
+                            const tagEndIndex = currentPhrase.indexOf('>', charIndex);
+                            charIndex = tagEndIndex + 1;
+                        } else {
+                            charIndex++;
+                        }
+                        target.innerHTML = currentPhrase.substring(0, charIndex);
+                    }
+
+                    if (!isDeleting && charIndex >= currentPhrase.length) {
+                        charIndex = currentPhrase.length;
+                        typeSpeed = 2000;
+                        isDeleting = true;
+                    } else if (isDeleting && charIndex <= 0) {
+                        charIndex = 0;
+                        isDeleting = false;
+                        phraseIndex = (phraseIndex + 1) % phrases.length;
+                        typeSpeed = 500;
+                    }
+                    setTimeout(type, typeSpeed);
+                }
+                type();
+            }
+        };
+        Typewriter.init();
+
+        // --- Login Logic ---
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            // In a real app, you'd validate credentials. Here, we just simulate login.
+            // We'll store the default role in sessionStorage and redirect.
+            sessionStorage.setItem('loggedInUserRole', 'sales'); // Default to sales
+            window.location.href = 'index.html';
+        });
+
+        function switchLoginViews(showId, hideId) {
+            const showView = document.getElementById(showId);
+            const hideView = document.getElementById(hideId);
+            
+            if (hideView) {
+                hideView.classList.add('is-exiting');
+                setTimeout(() => {
+                    hideView.classList.add('hidden');
+                    hideView.classList.remove('is-exiting');
+                }, 300);
+            }
+
+            if (showView) {
+                showView.classList.add('is-exiting');
+                showView.classList.remove('hidden');
+                
+                requestAnimationFrame(() => {
+                    showView.classList.remove('is-exiting');
+                });
+
+                if (showId === 'forgot-password-view') {
+                    document.getElementById('forgot-step-1').classList.remove('hidden');
+                    document.getElementById('forgot-step-2').classList.add('hidden');
+                }
+            }
+        }
+
+        document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            switchLoginViews('forgot-password-view', 'login-view');
+        });
+        
+        document.getElementById('back-to-login-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            switchLoginViews('login-view', 'forgot-password-view');
+        });
+
+        document.getElementById('forgot-password-step1-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            document.getElementById('forgot-step-1').classList.add('hidden');
+            document.getElementById('forgot-step-2').classList.remove('hidden');
+        });
+        
+        document.getElementById('forgot-password-step2-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('密码已重置成功！');
+            switchLoginViews('login-view', 'forgot-password-view');
+        });
+
+    </script>
+</body>
+</html> 

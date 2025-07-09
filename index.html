@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGMA AI - 考评绩效工单管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="bg-slate-50">
+
+    <!-- App View -->
+    <div id="app-view" class="h-screen flex">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar bg-white flex-col fixed top-0 left-0 h-full lg:flex">
+            <div class="flex items-center gap-3 justify-center p-4 h-[var(--header-height)]">
+                <div class="bg-indigo-600 p-2 rounded-lg">
+                    <i data-lucide="brain-circuit" class="w-6 h-6 text-white"></i>
+                </div>
+                <h1 class="text-xl font-bold text-slate-800 tracking-wider">SIGMA AI</h1>
+            </div>
+            <nav id="sidebar-nav" class="flex-1 p-4 space-y-1"></nav>
+            <div class="p-4 border-t border-slate-200">
+                <div class="mb-4">
+                    <label for="role-switcher" class="text-xs text-slate-500 block mb-1.5">切换用户角色</label>
+                    <select id="role-switcher" class="w-full bg-slate-100 border-transparent rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="sales">销售 (王五)</option>
+                        <option value="prod_manager">生产主管 (赵六)</option>
+                        <option value="art_lead">美工组长 (李四)</option>
+                        <option value="art_staff">美工 (张三)</option>
+                        <option value="render_staff">渲染师 (孙七)</option>
+                        <option value="kanban_supervisor">看板总监 (周一)</option>
+                        <option value="hr">HR (陈HR)</option>
+                    </select>
+                </div>
+                <div id="user-info" class="flex items-center justify-between"></div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="main-content" class="main-content flex-1 flex flex-col overflow-y-auto">
+            <header class="bg-white/80 backdrop-blur-sm border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-10 h-[var(--header-height)]">
+                <button id="menu-toggle" class="lg:hidden p-2 rounded-md text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <h2 id="page-title" class="text-2xl font-bold text-slate-800"></h2>
+                <div id="header-actions"></div>
+            </header>
+            <div id="app" class="p-6 flex-1">
+                <!-- App content will be rendered here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal-backdrop hidden">
+        <div id="modal-content" class="modal-content">
+            <!-- Modal content will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        // Auth check
+        if (!sessionStorage.getItem('loggedInUserRole')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    <script src="assets/js/main.js" type="module"></script>
+
+</body>
+</html> 
