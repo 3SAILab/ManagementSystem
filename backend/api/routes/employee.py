@@ -9,7 +9,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter()
 
-
+#员工登录
 @router.post("/login", response_model=Token)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -27,7 +27,7 @@ async def login(
     #返回Token以及Token类型
     return {"access_token": access_token, "token_type": "bearer"}
 
-#注册员工
+#员工注册
 @router.post("/register", response_model=api_response)
 async def register(
     newEmployee: EmployeeCreate,

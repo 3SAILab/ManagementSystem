@@ -13,7 +13,7 @@ async def lifespan(app: FastAPI):
     print("应用启动，开始初始化数据库...")
     async with async_engine.begin() as conn:
         # 每次启动时清空数据库（仅限开发！）
-        await conn.run_sync(Base.metadata.drop_all)
+        #await conn.run_sync(Base.metadata.drop_all)
         # 创建所有模型
         await conn.run_sync(Base.metadata.create_all)
     print("数据库初始化完成。")
