@@ -64,6 +64,12 @@
         </div>
     </div>
 
+    <!-- Right Side Panel -->
+    <div id="side-panel-overlay" class="fixed inset-0 bg-black/30 z-20 hidden"></div>
+    <aside id="side-panel" class="fixed top-0 right-0 h-full w-full max-w-2xl bg-white shadow-xl z-30 transform translate-x-full transition-transform duration-300 ease-in-out">
+        <!-- Panel content will be injected here -->
+    </aside>
+
     <script>
         // Auth check
         if (!sessionStorage.getItem('loggedInUserRole')) {

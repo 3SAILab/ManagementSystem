@@ -83,7 +83,7 @@ const MOCK_DATA = {
         'dept_art': { departmentId: 'dept_art', name: '美工部' },
         'dept_render': { departmentId: 'dept_render', name: '渲染部' },
         'dept_mgmt': { departmentId: 'dept_mgmt', name: '管理部' },
-        'dept_hr': { departmentId: 'dept_hr', name: '人事部' },
+        'dept_hr': { departmentId: 'dept_hr', name: '人力资源部' },
         'dept_design': { departmentId: 'dept_design', name: '设计部' },
         'dept_hr': { departmentId: 'dept_hr', name: '人力资源部' },
     },
@@ -103,13 +103,13 @@ const MOCK_DATA = {
     ],
     product_categories: ['手机', '电风扇', '服装', '零食', '智能家居', '化妆品'],
     work_orders: [
-        { orderId: 'order_1', orderName: '夏季T恤新品主图', clientId: 'client_1', leadId: 'user_art_li', status: 'in_progress', type: 'non_shooting', needRendering: false, createdAt: getPastDate(1), createdBy: 'user_sales_wang', progress: 75, contractAmount: 5000, isTrial: false, startDate: getPastDate(1).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '服装' },
-        { orderId: 'order_2', orderName: '智能音箱渲染图', clientId: 'client_2', leadId: 'user_render_sun', status: 'in_progress', type: 'non_shooting', needRendering: true, createdAt: getPastDate(2), createdBy: 'user_sales_wang', progress: 40, contractAmount: 12000, isTrial: false, startDate: getPastDate(2).toISOString().split('T')[0], hasPhysicalObject: false, productCategory: '智能家居' },
-        { orderId: 'order_3', orderName: '薯片包装拍摄', clientId: 'client_3', leadId: null, status: 'in_progress', type: 'shooting', needRendering: false, createdAt: getPastDate(3), createdBy: 'user_sales_wang', progress: 10, contractAmount: 800, isTrial: true, startDate: getPastDate(3).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '零食' },
-        { orderId: 'order_4', orderName: '春季夹克详情页', clientId: 'client_1', leadId: 'user_art_li', status: 'completed', type: 'non_shooting', needRendering: false, createdAt: getPastDate(10), completedAt: getPastDate(7).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 4500, isTrial: false, startDate: getPastDate(10).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '服装', finalPaymentStatus: '已结算' },
-        { orderId: 'order_5', orderName: '运动鞋海报设计', clientId: 'client_1', leadId: 'user_art_li', status: 'completed', type: 'non_shooting', needRendering: false, createdAt: getPastDate(5), completedAt: getPastDate(2).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 3000, isTrial: false, startDate: getPastDate(5).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '服装', finalPaymentStatus: '待结算' },
-        { orderId: 'order_6', orderName: '新款手机渲染', clientId: 'client_2', leadId: 'user_render_sun', status: 'completed', type: 'non_shooting', needRendering: true, createdAt: getPastDate(8), completedAt: getPastDate(1).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 25000, isTrial: false, startDate: getPastDate(8).toISOString().split('T')[0], hasPhysicalObject: false, productCategory: '手机', finalPaymentStatus: '已结算' },
-        { orderId: 'order_7', orderName: '电风扇拍摄', clientId: 'client_2', leadId: 'user_art_li', status: 'completed', type: 'shooting', needRendering: false, createdAt: getPastDate(12), completedAt: getPastDate(9).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 1500, isTrial: false, startDate: getPastDate(12).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '电风扇', finalPaymentStatus: '待结算' }
+        { orderId: 'order_1', orderName: '夏季T恤新品主图', clientId: 'client_1', leadId: 'user_art_li', status: 'in_progress', type: 'non_shooting', needRendering: false, createdAt: getPastDate(1), createdBy: 'user_sales_wang', progress: 75, contractAmount: 5000, isTrial: false, startDate: getPastDate(1).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '服装', priority: 'Medium', dueDate: getPastDate(-5).toISOString().split('T')[0], description: '为夏季新款T恤制作一套完整的电商用主图，包括白底图、场景图和细节图。需要突出材质和设计特点。' },
+        { orderId: 'order_2', orderName: '智能音箱渲染图', clientId: 'client_2', leadId: 'user_render_sun', status: 'in_progress', type: 'non_shooting', needRendering: true, createdAt: getPastDate(2), createdBy: 'user_sales_wang', progress: 40, contractAmount: 12000, isTrial: false, startDate: getPastDate(2).toISOString().split('T')[0], hasPhysicalObject: false, productCategory: '智能家居', priority: 'High', dueDate: getPastDate(-10).toISOString().split('T')[0], description: '为新款智能音箱提供三张不同角度和光线环境下的高精度渲染图，用于产品发布会。' },
+        { orderId: 'order_3', orderName: '薯片包装拍摄', clientId: 'client_3', leadId: null, status: 'pending', type: 'shooting', needRendering: false, createdAt: getPastDate(3), createdBy: 'user_sales_wang', progress: 10, contractAmount: 800, isTrial: true, startDate: getPastDate(3).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '零食', priority: 'Low', dueDate: getPastDate(-2).toISOString().split('T')[0], description: '拍摄一组用于社交媒体宣传的薯片包装图，要求色彩鲜艳，有食欲。' },
+        { orderId: 'order_4', orderName: '春季夹克详情页', clientId: 'client_1', leadId: 'user_art_li', status: 'completed', type: 'non_shooting', needRendering: false, createdAt: getPastDate(10), completedAt: getPastDate(7).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 4500, isTrial: false, startDate: getPastDate(10).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '服装', finalPaymentStatus: '已结算', priority: 'Medium', dueDate: getPastDate(-20).toISOString().split('T')[0], description: '设计制作春季新款夹克的电商详情页，包含模特图、细节图和尺码表。' },
+        { orderId: 'order_5', orderName: '运动鞋海报设计', clientId: 'client_1', leadId: 'user_art_li', status: 'completed', type: 'non_shooting', needRendering: false, createdAt: getPastDate(5), completedAt: getPastDate(2).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 3000, isTrial: false, startDate: getPastDate(5).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '服装', finalPaymentStatus: '待结算', priority: 'High', dueDate: getPastDate(-10).toISOString().split('T')[0], description: '设计一款突出科技感的运动鞋宣传海报。' },
+        { orderId: 'order_6', orderName: '新款手机渲染', clientId: 'client_2', leadId: 'user_render_sun', status: 'completed', type: 'non_shooting', needRendering: true, createdAt: getPastDate(8), completedAt: getPastDate(1).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 25000, isTrial: false, startDate: getPastDate(8).toISOString().split('T')[0], hasPhysicalObject: false, productCategory: '手机', finalPaymentStatus: '已结算', priority: 'High', dueDate: getPastDate(-15).toISOString().split('T')[0], description: '对新款手机进行全方位高精度渲染。' },
+        { orderId: 'order_7', orderName: '电风扇拍摄', clientId: 'client_2', leadId: 'user_art_li', status: 'completed', type: 'shooting', needRendering: false, createdAt: getPastDate(12), completedAt: getPastDate(9).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 1500, isTrial: false, startDate: getPastDate(12).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '电风扇', finalPaymentStatus: '待结算', priority: 'Low', dueDate: getPastDate(-22).toISOString().split('T')[0], description: '拍摄一组简约风格的电风扇产品图。' }
     ],
     tasks: [
         { taskId: 'task_1', orderId: 'order_1', assigneeId: 'user_art_zhang', assignerId: 'user_art_li', departmentId: 'dept_art', status: 'in_progress', description: '制作3张白底主图' },
@@ -129,6 +129,12 @@ const MOCK_DATA = {
     ],
     daily_reports: [
         { reportId: 'report_1', employeeId: 'user_art_zhang', reportDate: getPastDate(1).toISOString().split('T')[0], content: '完成了运动鞋海报的最终修改，并与组长确认。今天开始跟进夏季T恤项目。'},
+    ],
+    activities: [
+        { activityId: 'act_1', orderId: 'order_1', userId: 'user_sales_wang', type: 'CREATE_ORDER', content: '创建了工单', timestamp: getPastDate(1) },
+        { activityId: 'act_2', orderId: 'order_1', userId: 'user_prod_zhao', type: 'ASSIGN_LEAD', content: '将工单指派给了 <strong>李四</strong>', timestamp: getPastDate(1) },
+        { activityId: 'act_3', orderId: 'order_1', userId: 'user_art_li', type: 'ASSIGN_TASK', content: '将任务 "制作3张白底主图" 指派给了 <strong>张三</strong>', timestamp: getPastDate(1) },
+        { activityId: 'act_4', orderId: 'order_1', userId: 'user_art_zhang', type: 'COMMENT', content: '白底图初稿已完成，请查收。', timestamp: getPastDate(0) },
     ]
 };
 
@@ -433,7 +439,7 @@ const UI = {
         let completedOrders = [];
 
         if (isProdManager) {
-            unassignedOrders = AppState.work_orders.filter(o => o.status === 'in_progress' && !o.leadId);
+            unassignedOrders = AppState.work_orders.filter(o => o.status === 'pending' || (o.status === 'in_progress' && !o.leadId));
             inProgressOrders = AppState.work_orders.filter(o => o.status === 'in_progress' && o.leadId);
             completedOrders = AppState.work_orders.filter(o => o.status === 'completed');
         } else if (isArtLead) {
@@ -441,7 +447,7 @@ const UI = {
             
             unassignedOrders = myLeadOrders.filter(order => {
                 const orderTasks = AppState.tasks.filter(t => t.orderId === order.orderId);
-                return order.status === 'in_progress' && orderTasks.length > 0 && orderTasks.some(t => !t.assigneeId);
+                return order.status === 'pending' || (order.status === 'in_progress' && orderTasks.length > 0 && orderTasks.some(t => !t.assigneeId));
             });
             
             inProgressOrders = myLeadOrders.filter(order => {
@@ -459,16 +465,14 @@ const UI = {
         const yellowAlerts = allInProgressForStats.filter(o => Helpers.getAlertLevel(o.createdAt).level === 'yellow').length;
         const redAlerts = allInProgressForStats.filter(o => Helpers.getAlertLevel(o.createdAt).level === 'red').length;
 
-        const unassignedColumnHtml = canHaveUnassignedColumn ? `
+        const unassignedColumnHtml = `
             <div class="bg-white/50 rounded-xl flex flex-col border">
-                <h3 class="font-bold text-slate-800 p-4 border-b">待指派 (${unassignedOrders.length})</h3>
+                <h3 class="font-bold text-slate-800 p-4 border-b">未开始 (${unassignedOrders.length})</h3>
                 <div class="p-4 space-y-4 overflow-y-auto flex-1">
                     ${unassignedOrders.map(order => this.renderOrderCard(order)).join('') || '<p class="text-slate-500 text-sm p-2">暂无工单</p>'}
                 </div>
             </div>
-        ` : '';
-
-        const gridColsClass = canHaveUnassignedColumn ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-2';
+        `;
 
         container.innerHTML = `
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -477,7 +481,7 @@ const UI = {
                 <div class="bg-white p-5 rounded-xl shadow-sm border"><p class="text-sm text-slate-500">黄色预警</p><p class="text-3xl font-bold text-yellow-500">${yellowAlerts}</p></div>
                 <div class="bg-white p-5 rounded-xl shadow-sm border"><p class="text-sm text-slate-500">红色预警</p><p class="text-3xl font-bold text-red-500">${redAlerts}</p></div>
             </div>
-            <div class="grid ${gridColsClass} gap-6 flex-1">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
                 ${unassignedColumnHtml}
                 <div class="bg-white/50 rounded-xl flex flex-col border">
                     <h3 class="font-bold text-slate-800 p-4 border-b">进行中 (${inProgressOrders.length})</h3>
@@ -948,59 +952,146 @@ const UI = {
         this.showModal('创建新工单', content);
     },
     renderOrderDetails(orderId) {
+        // This function is now replaced by renderOrderDetailsPanel
+        this.renderOrderDetailsPanel(orderId);
+    },
+    renderOrderDetailsPanel(orderId) {
         const order = AppState.work_orders.find(o => o.orderId === orderId);
-        const client = AppState.clients[order.clientId];
-        const creator = AppState.users[order.createdBy];
+        if (!order) return;
+
         const tasks = AppState.tasks.filter(t => t.orderId === orderId);
-        const currentUserRole = AppState.currentUser.role;
-        
-        let actionButton = '';
-        if (currentUserRole === 'prod_manager' && !order.leadId) {
-            const leads = Object.values(AppState.users).filter(u => u.role.endsWith('_lead'));
-            const leadOptions = leads.map(l => `<option value="${l.userId}">${l.name}</option>`).join('');
-            actionButton = `
-                <div class="flex items-center gap-2">
-                    <select id="assign-lead-select" class="bg-slate-100 border-transparent rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="">选择组长...</option>
-                        ${leadOptions}
-                    </select>
-                    <button data-order-id="${order.orderId}" class="assign-order-to-lead-btn bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-3 rounded-lg">指派</button>
+        const assignees = [...new Set(tasks.map(t => AppState.users[t.assigneeId]).filter(Boolean))];
+        const activities = AppState.activities.filter(a => a.orderId === orderId).sort((a,b) => b.timestamp - a.timestamp);
+        const alertInfo = Helpers.getAlertLevel(order.createdAt);
+
+        const priorityBadges = {
+            'High': 'status-badge-red',
+            'Medium': 'status-badge-yellow',
+            'Low': 'status-badge-blue',
+        };
+
+        const statusBadges = {
+            'in_progress': 'status-badge-yellow',
+            'completed': 'status-badge-green',
+            'pending': 'status-badge-gray',
+        }
+
+        const detailItem = (icon, label, value) => `
+            <div class="grid grid-cols-4 gap-2 py-3">
+                <dt class="col-span-1 flex items-center gap-2 text-sm text-slate-500">
+                    <i data-lucide="${icon}" class="w-4 h-4"></i>
+                    <span>${label}</span>
+                </dt>
+                <dd class="col-span-3 text-sm text-slate-800 font-medium">${value}</dd>
+            </div>
+        `;
+
+        const renderActivity = (activity) => {
+            const user = AppState.users[activity.userId];
+            const timeAgo = Math.round((new Date() - activity.timestamp) / (1000 * 60 * 60)); // hours ago
+            
+            return `
+                <div class="flex gap-3">
+                    <div>${Helpers.getAvatar(user)}</div>
+                    <div class="flex-1">
+                        <p class="text-sm">
+                            <span class="font-semibold">${user.name}</span>
+                            <span>${activity.content}</span>
+                        </p>
+                        <p class="text-xs text-slate-400 mt-0.5">${timeAgo <= 0 ? '刚刚' : `${timeAgo}小时前`}</p>
+                    </div>
                 </div>
             `;
         }
 
-        const tasksHtml = tasks.map(t => {
-            const assignee = t.assigneeId ? AppState.users[t.assigneeId] : null;
-            let taskActionButton = '';
-            if(currentUserRole === 'art_lead' && !assignee) {
-                taskActionButton = `<button class="assign-task-to-member-btn text-xs text-indigo-600 hover:underline" data-task-id="${t.taskId}">分配</button>`;
-            }
-            return `<li class="flex items-center justify-between p-3 rounded-lg bg-slate-50">
-                <span class="text-slate-700">${t.description}</span>
-                <div class="flex items-center gap-2">
-                    ${assignee ? Helpers.getAvatar(assignee) : '<span class="text-xs text-slate-500">待分配</span>'}
-                    ${taskActionButton}
-                </div>
-            </li>`;
-        }).join('');
+        const panelContent = `
+            <div class="h-full flex flex-col">
+                <!-- Panel Header -->
+                <header class="flex-shrink-0 flex items-center justify-between p-4 border-b">
+                    <h2 class="text-lg font-bold text-slate-800">${order.orderName}</h2>
+                    <div class="flex items-center gap-2">
+                        <button class="p-1.5 rounded-full text-slate-500 hover:bg-slate-100"><i data-lucide="star" class="w-5 h-5"></i></button>
+                        <button class="p-1.5 rounded-full text-slate-500 hover:bg-slate-100"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                        <button id="side-panel-close" class="p-1.5 rounded-full text-slate-500 hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    </div>
+                </header>
 
-        const content = `
-            <div class="space-y-5">
-               <div class="grid grid-cols-2 gap-4 text-sm">
-                   <p><strong>客户:</strong> <span class="text-slate-600">${client.name}</span></p>
-                   <p><strong>创建人:</strong> <span class="text-slate-600">${creator.name}</span></p>
-                   <p><strong>创建时间:</strong> <span class="text-slate-600">${new Date(order.createdAt).toLocaleString()}</span></p>
-                   <p><strong>状态:</strong> <span class="text-slate-600">${order.status === 'completed' ? '已完成' : '进行中'}</span></p>
-                   <p><strong>属性:</strong> <span class="text-slate-600">${order.needRendering ? '渲染' : '常规'} / ${order.type === 'shooting' ? '拍摄' : '非拍摄'}</span></p>
-               </div>
-                <hr class="my-4">
-                <h4 class="font-bold text-lg">相关任务</h4>
-                ${tasks.length > 0 ? `<ul class="space-y-2">${tasksHtml}</ul>` : '<p class="text-slate-500">暂无任务</p>'}
+                <!-- Panel Body -->
+                <div class="flex-1 overflow-y-auto p-6">
+                    <dl class="divide-y divide-slate-100">
+                        ${detailItem('clock', '创建时间', new Date(order.createdAt).toLocaleString())}
+                        ${detailItem('shield-alert', '预警状态', `<span class="status-badge status-badge-${alertInfo.level}">${alertInfo.text}</span>`)}
+                        ${detailItem('flag', '状态', `<span class="status-badge ${statusBadges[order.status] || 'status-badge-gray'}">${order.status}</span>`)}
+                        ${detailItem('sliders-horizontal', '进度', `
+                            <div class="flex items-center gap-3">
+                                <input type="range" min="0" max="100" value="${order.progress}" class="w-full progress-slider-panel" data-order-id="${order.orderId}" style="--progress-percent: ${order.progress}%">
+                                <span class="font-bold text-indigo-600 w-12 text-center progress-value-panel">${order.progress}%</span>
+                            </div>
+                        `)}
+                        ${detailItem('arrow-up-circle', '优先级', `<span class="status-badge ${priorityBadges[order.priority] || 'status-badge-gray'}">${order.priority}</span>`)}
+                        ${detailItem('calendar', '开始时间', order.startDate)}
+                        ${detailItem('tags', '标签', `<span class="status-badge status-badge-blue">${order.productCategory}</span><span class="status-badge status-badge-gray">${order.type}</span>`)}
+                        ${detailItem('users', '负责人', `<div class="flex items-center -space-x-2">${assignees.map(u => Helpers.getAvatar(u)).join('') || '<span>-</span>'}</div>`)}
+                    </dl>
+
+                    <div class="mt-6">
+                        <h3 class="text-sm font-semibold text-slate-800 mb-2">项目描述</h3>
+                        <p class="text-sm text-slate-600">${order.description}</p>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <h3 class="text-sm font-semibold text-slate-800 mb-4">动态</h3>
+                        <div class="space-y-6">
+                            ${activities.map(renderActivity).join('') || '<p class="text-sm text-slate-500">暂无动态</p>'}
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="mt-8 flex justify-end">${actionButton}</div>
         `;
-        this.showModal(`工单: ${order.orderName}`, content, 'max-w-2xl');
+        
+        const sidePanel = document.getElementById('side-panel');
+        sidePanel.innerHTML = panelContent;
         lucide.createIcons();
+
+        // --- Event Listeners for the new panel ---
+        const progressSlider = sidePanel.querySelector('.progress-slider-panel');
+        const progressValue = sidePanel.querySelector('.progress-value-panel');
+
+        if (progressSlider && progressValue) {
+            const initialProgress = order.progress; // Store initial progress
+
+            progressSlider.addEventListener('input', (e) => {
+                const percent = e.target.value;
+                progressValue.textContent = `${percent}%`;
+                e.target.style.setProperty('--progress-percent', `${percent}%`);
+            });
+
+            progressSlider.addEventListener('change', (e) => {
+                const newProgress = parseInt(e.target.value);
+                // Open a modal to get a comment for the progress update
+                UI.renderUpdateProgressCommentModal(orderId, initialProgress, newProgress);
+            });
+        }
+
+        this.showSidePanel();
+    },
+    showSidePanel() {
+        const overlay = document.getElementById('side-panel-overlay');
+        const panel = document.getElementById('side-panel');
+        overlay.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            overlay.classList.add('visible');
+            panel.classList.add('open');
+        });
+    },
+    hideSidePanel() {
+        const overlay = document.getElementById('side-panel-overlay');
+        const panel = document.getElementById('side-panel');
+        overlay.classList.remove('visible');
+        panel.classList.remove('open');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+        }, 300);
     },
     renderAssignTaskModal(taskId) {
         const task = AppState.tasks.find(t => t.taskId === taskId);
@@ -1866,6 +1957,37 @@ const UI = {
         `;
         this.showModal('新增职位', content, 'max-w-md');
     },
+    renderUpdateProgressCommentModal(orderId, oldProgress, newProgress) {
+        const content = `
+            <form id="update-progress-comment-form" data-order-id="${orderId}" data-old-progress="${oldProgress}" data-new-progress="${newProgress}">
+                <div class="space-y-4">
+                    <p class="text-sm">您正在将进度从 <strong>${oldProgress}%</strong> 更新至 <strong>${newProgress}%</strong>。</p>
+                    <div>
+                        <label for="progress-comment" class="block text-sm font-medium text-slate-700 mb-1">请填写更新说明 (例如：完成了什么工作)</label>
+                        <textarea id="progress-comment" required class="w-full h-24 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-300" placeholder="例如：完成了线框图初稿..."></textarea>
+                    </div>
+                </div>
+                 <div class="mt-8 flex justify-end gap-3">
+                    <button type="button" class="bg-white py-2 px-4 rounded-lg text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50" id="cancel-progress-update">取消</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg">确认更新</button>
+                </div>
+            </form>
+        `;
+        this.showModal('更新进度说明', content, 'max-w-lg');
+
+        // Add event listener for cancel button
+        document.getElementById('cancel-progress-update').addEventListener('click', () => {
+            // Find the slider in the side panel and reset it
+            const slider = document.querySelector(`.progress-slider-panel[data-order-id="${orderId}"]`);
+            if (slider) {
+                const valueDisplay = slider.parentElement.querySelector('.progress-value-panel');
+                slider.value = oldProgress;
+                slider.style.setProperty('--progress-percent', `${oldProgress}%`);
+                if(valueDisplay) valueDisplay.textContent = `${oldProgress}%`;
+            }
+            this.hideModal();
+        });
+    },
 };
 
 // --- 事件处理和逻辑模块 ---
@@ -1924,6 +2046,9 @@ const App = {
                 AppState.teamChartState = { view: 'departments', departmentId: null };
                 UI.renderTeamChart();
             }
+            if (e.target.closest('#side-panel-close') || e.target.id === 'side-panel-overlay') {
+                UI.hideSidePanel();
+            }
             
             const orderCard = e.target.closest('[data-order-id]');
             if (orderCard && !e.target.closest('button')) UI.renderOrderDetails(orderCard.dataset.orderId);
@@ -1936,17 +2061,19 @@ const App = {
             }
         });
 
-        document.body.addEventListener('submit', (e) => {
-            if (e.target.id === 'daily-report-form') this.handleReportSubmit(e);
+        const handleSubmit = (e) => {
+            if (e.target.id === 'daily-report-form') App.handleReportSubmit(e);
             if (e.target.id === 'new-order-form') { e.preventDefault(); alert("工单已创建（模拟）"); UI.hideModal(); }
-            if (e.target.id === 'add-department-form') this.handleDepartmentFormSubmit(e);
-            if (e.target.id === 'add-position-form') this.handlePositionFormSubmit(e);
-            if (e.target.id === 'progress-update-form') this.handleProgressUpdate(e);
-            if (e.target.id === 'assign-task-form') this.handleAssignTaskToMember(e);
-            if (e.target.id === 'add-follow-up-form') this.handleAddFollowUp(e);
-            if (e.target.id === 'employee-form') this.handleEmployeeFormSubmit(e);
+            if (e.target.id === 'add-department-form') App.handleDepartmentFormSubmit(e);
+            if (e.target.id === 'add-position-form') App.handlePositionFormSubmit(e);
+            if (e.target.id === 'progress-update-form') App.handleProgressUpdate(e);
+            if (e.target.id === 'assign-task-form') App.handleAssignTaskToMember(e);
+            if (e.target.id === 'add-follow-up-form') App.handleAddFollowUp(e);
+            if (e.target.id === 'employee-form') App.handleEmployeeFormSubmit(e);
             if (e.target.id === 'edit-profile-form') { e.preventDefault(); alert('个人信息已更新（模拟）'); UI.hideModal(); }
-        });
+            if (e.target.id === 'update-progress-comment-form') App.handleProgressUpdateWithComment(e);
+        }
+        document.body.addEventListener('submit', handleSubmit);
 
         document.body.addEventListener('change', (e) => {
             if (e.target.id === 'analysis-period') {
@@ -2421,6 +2548,46 @@ const App = {
             this.navigateTo('position_management');
         }
     },
+
+    handleProgressUpdateWithComment(e) {
+        e.preventDefault();
+        const form = e.target;
+        const orderId = form.dataset.orderId;
+        const oldProgress = form.dataset.oldProgress;
+        const newProgress = parseInt(form.dataset.newProgress);
+        const comment = form.querySelector('#progress-comment').value;
+
+        // 1. Update order progress
+        const order = AppState.work_orders.find(o => o.orderId === orderId);
+        if (order) {
+            order.progress = newProgress;
+            if (order.progress === 100) {
+                order.status = 'completed';
+                order.completedAt = new Date();
+            } else {
+                 order.status = 'in_progress';
+                 order.completedAt = null;
+            }
+        }
+
+        // 2. Create new activity
+        if (comment) {
+            const newActivity = {
+                activityId: `act_${Date.now()}`,
+                orderId: orderId,
+                userId: AppState.currentUser.userId,
+                type: 'UPDATE_PROGRESS',
+                content: `将进度从 ${oldProgress}% 更新至 <strong>${newProgress}%</strong>: <span class="text-slate-800">${comment}</span>`,
+                timestamp: new Date()
+            };
+            AppState.activities.push(newActivity);
+        }
+
+        // 3. Close modal and re-render everything
+        UI.hideModal();
+        UI.renderPage(); 
+        UI.renderOrderDetailsPanel(orderId);
+    },
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -2475,6 +2642,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         AppState.locations = {}; // Fallback
     }
 
-    const app = new App();
-    window.App = app;
+    // window.App = App;
 });

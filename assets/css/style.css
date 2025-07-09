@@ -256,3 +256,48 @@ body {
 .form-input[type=number] {
   -moz-appearance: textfield;
 } 
+
+/* Side Panel Styles */
+#side-panel.open {
+    transform: translateX(0);
+}
+#side-panel-overlay {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+#side-panel-overlay.visible {
+    opacity: 1;
+} 
+
+.progress-slider-panel {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(to right, #4f46e5 var(--progress-percent), #e2e8f0 var(--progress-percent));
+    border-radius: 9999px;
+    outline: none;
+    transition: background 0.1s ease;
+}
+
+.progress-slider-panel::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: white;
+    cursor: pointer;
+    border-radius: 50%;
+    border: 3px solid #4f46e5;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.progress-slider-panel::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: white;
+    cursor: pointer;
+    border-radius: 50%;
+    border: 3px solid #4f46e5;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+} 
