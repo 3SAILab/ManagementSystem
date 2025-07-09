@@ -64,13 +64,13 @@ function getPastDate(daysAgo) {
 // --- 数据模拟 ---
 const MOCK_DATA = {
     users: {
-        'user_sales_wang': { userId: 'user_sales_wang', name: '王五', role: 'sales', departmentId: 'dept_sales', initials: 'WW', email: 'wang.wu@example.com', gender: '男', dob: '1990-05-20', hireDate: '2022-01-10', supervisorId: 'user_prod_zhao', onProbation: false, contractInfo: '标准劳动合同, 3年期, 2022-01-10 至 2025-01-09', salaryRecords: '2022: 月薪10k; 2023: 提升至12k', performanceReviews: '2023 Q4: 业绩超额完成, 沟通能力强' },
-        'user_prod_zhao': { userId: 'user_prod_zhao', name: '赵六', role: 'prod_manager', departmentId: 'dept_prod', initials: 'ZL', email: 'zhao.liu@example.com', gender: '男', dob: '1985-11-15', hireDate: '2020-03-01', supervisorId: 'user_supervisor_zhou', onProbation: false, contractInfo: '高级管理合同, 5年期', salaryRecords: '2020: 月薪20k; 2022: 提升至25k', performanceReviews: '项目管理能力突出, 跨部门协调顺畅' },
-        'user_art_li': { userId: 'user_art_li', name: '李四', role: 'art_lead', departmentId: 'dept_art', initials: 'LS', email: 'li.si@example.com', gender: '女', dob: '1992-07-22', hireDate: '2021-06-15', supervisorId: 'user_prod_zhao', onProbation: false, contractInfo: '标准劳动合同, 3年期', salaryRecords: '2021: 月薪15k; 2023: 提升至18k', performanceReviews: '设计作品质量高, 团队领导力有待加强' },
-        'user_art_zhang': { userId: 'user_art_zhang', name: '张三', role: 'art_staff', departmentId: 'dept_art', initials: 'ZS', email: 'zhang.san@example.com', gender: '男', dob: '1995-02-18', hireDate: '2023-08-01', supervisorId: 'user_art_li', onProbation: true, contractInfo: '试用期合同, 6个月', salaryRecords: '2023: 试用期月薪8k', performanceReviews: '新人上手快, 积极主动' },
-        'user_render_sun': { userId: 'user_render_sun', name: '孙七', role: 'render_staff', departmentId: 'dept_render', initials: 'SQ', email: 'sun.qi@example.com', gender: '女', dob: '1993-10-30', hireDate: '2022-11-20', supervisorId: 'user_prod_zhao', onProbation: false, contractInfo: '标准劳动合同, 2年期', salaryRecords: '2022: 月薪12k', performanceReviews: '渲染技术扎实, 能按时完成任务' },
-        'user_supervisor_zhou': { userId: 'user_supervisor_zhou', name: '周一', role: 'kanban_supervisor', departmentId: 'dept_mgmt', initials: 'ZY', email: 'zhou.yi@example.com', gender: '男', dob: '1980-01-01', hireDate: '2018-05-01', supervisorId: null, onProbation: false, contractInfo: '无固定期限劳动合同', salaryRecords: '薪酬保密', performanceReviews: '战略眼光独到, 公司业绩贡献巨大' },
-        'user_hr_chen': { userId: 'user_hr_chen', name: '陈HR', role: 'hr', departmentId: 'dept_hr', initials: 'HR', email: 'chen.hr@example.com', gender: '女', dob: '1888-08-08', hireDate: '2019-01-01', supervisorId: null, onProbation: false, contractInfo: '标准劳动合同, 5年期', salaryRecords: '薪酬保密', performanceReviews: '人事工作处理得当, 员工关系良好' },
+        'user_sales_wang': { userId: 'user_sales_wang', name: '王五', role: 'sales', departmentId: 'dept_sales', initials: 'WW', email: 'wang.wu@example.com', gender: '男', dob: '1990-05-20', hireDate: '2022-01-10', supervisorId: 'user_prod_zhao', onProbation: false, contractInfo: '标准劳动合同, 3年期, 2022-01-10 至 2025-01-09', salaryRecords: '2022: 月薪10k; 2023: 提升至12k', performanceReviews: '2023 Q4: 业绩超额完成, 沟通能力强', roleLevel: '普通员工', emergency_contact: { name: '王父', phone: '13800138001' } },
+        'user_prod_zhao': { userId: 'user_prod_zhao', name: '赵六', role: 'prod_manager', departmentId: 'dept_prod', initials: 'ZL', email: 'zhao.liu@example.com', gender: '男', dob: '1985-11-15', hireDate: '2020-03-01', supervisorId: 'user_supervisor_zhou', onProbation: false, contractInfo: '高级管理合同, 5年期', salaryRecords: '2020: 月薪20k; 2022: 提升至25k', performanceReviews: '项目管理能力突出, 跨部门协调顺畅', roleLevel: '主管', emergency_contact: { name: '赵妻', phone: '13800138002' } },
+        'user_art_li': { userId: 'user_art_li', name: '李四', role: 'art_lead', departmentId: 'dept_art', initials: 'LS', email: 'li.si@example.com', gender: '女', dob: '1992-07-22', hireDate: '2021-06-15', supervisorId: 'user_prod_zhao', onProbation: false, contractInfo: '标准劳动合同, 3年期', salaryRecords: '2021: 月薪15k; 2023: 提升至18k', performanceReviews: '设计作品质量高, 团队领导力有待加强', roleLevel: '组长', emergency_contact: { name: '李母', phone: '13800138003' } },
+        'user_art_zhang': { userId: 'user_art_zhang', name: '张三', role: 'art_staff', departmentId: 'dept_art', initials: 'ZS', email: 'zhang.san@example.com', gender: '男', dob: '1995-02-18', hireDate: '2023-08-01', supervisorId: 'user_art_li', onProbation: true, contractInfo: '试用期合同, 6个月', salaryRecords: '2023: 试用期月薪8k', performanceReviews: '新人上手快, 积极主动', roleLevel: '普通员工', emergency_contact: { name: '张父', phone: '13800138004' } },
+        'user_render_sun': { userId: 'user_render_sun', name: '孙七', role: 'render_staff', departmentId: 'dept_render', initials: 'SQ', email: 'sun.qi@example.com', gender: '女', dob: '1993-10-30', hireDate: '2022-11-20', supervisorId: 'user_prod_zhao', onProbation: false, contractInfo: '标准劳动合同, 2年期', salaryRecords: '2022: 月薪12k', performanceReviews: '渲染技术扎实, 能按时完成任务', roleLevel: '普通员工', emergency_contact: { name: '孙母', phone: '13800138005' } },
+        'user_supervisor_zhou': { userId: 'user_supervisor_zhou', name: '周一', role: 'kanban_supervisor', departmentId: 'dept_mgmt', initials: 'ZY', email: 'zhou.yi@example.com', gender: '男', dob: '1980-01-01', hireDate: '2018-05-01', supervisorId: null, onProbation: false, contractInfo: '无固定期限劳动合同', salaryRecords: '薪酬保密', performanceReviews: '战略眼光独到, 公司业绩贡献巨大', roleLevel: '主管', emergency_contact: { name: '周妻', phone: '13800138006' } },
+        'user_hr_chen': { userId: 'user_hr_chen', name: '陈HR', role: 'hr', departmentId: 'dept_hr', initials: 'HR', email: 'chen.hr@example.com', gender: '女', dob: '1888-08-08', hireDate: '2019-01-01', supervisorId: null, onProbation: false, contractInfo: '标准劳动合同, 5年期', salaryRecords: '薪酬保密', performanceReviews: '人事工作处理得当, 员工关系良好', roleLevel: '普通员工', emergency_contact: { name: '陈先生', phone: '13800138007' } },
     },
     clients: {
         'client_1': { clientId: 'client_1', name: '时尚潮流服饰', contactName: '陈经理', contactPhone: '13812345671', depositPaid: 2000 },
@@ -1555,6 +1555,7 @@ const UI = {
         const statusOptions = ['在职', '离职'].map(s => `<option value="${s}" ${user.status === s ? 'selected' : ''}>${s}</option>`).join('');
         const genderOptions = ['男', '女', '其他'].map(g => `<option value="${g}" ${user.gender === g ? 'selected' : ''}>${g}</option>`).join('');
         const maritalOptions = ['未婚', '已婚', '离异', '丧偶'].map(m => `<option value="${m}" ${user.marital_status === m ? 'selected' : ''}>${m}</option>`).join('');
+        const roleLevelOptions = ['普通员工', '组长', '主管'].map(r => `<option value="${r}" ${user.roleLevel === r ? 'selected' : ''}>${r}</option>`).join('');
 
         const formRow = (label, inputHtml, required = false) => `
             <div>
@@ -1602,6 +1603,12 @@ const UI = {
                                 </div>
                                 <input type="text" name="street_address" value="${user.address?.street || ''}" class="form-input" placeholder="详细街道、楼牌号等">
                             </div>
+                            <div class="md:col-span-3">
+                                ${formRow('紧急联系人姓名', `<input type="text" name="emergency_contact_name" value="${user.emergency_contact?.name || ''}" class="form-input">`)}
+                            </div>
+                            <div class="md:col-span-3">
+                                ${formRow('紧急联系人电话', `<input type="tel" name="emergency_contact_phone" value="${user.emergency_contact?.phone || ''}" class="form-input">`)}
+                            </div>
                         </div>
                     </fieldset>
                     
@@ -1615,14 +1622,17 @@ const UI = {
                             <div class="md:col-span-3">
                                 ${formRow('员工状态', `<select name="status" class="form-select" required>${statusOptions}</select>`, true)}
                             </div>
-                            <div class="md:col-span-3">
+                            <div class="md:col-span-2">
                                 ${formRow('部门', `<select name="departmentId" id="employee-department" class="form-select" required><option value="">选择部门</option>${departmentOptions}</select>`, true)}
                             </div>
-                            <div class="md:col-span-3">
+                            <div class="md:col-span-2">
                                  ${formRow('职位', `<select name="positionId" id="employee-position" class="form-select" required>${getPositionOptions(user.departmentId, user.positionId)}</select>`, true)}
                             </div>
+                            <div class="md:col-span-2">
+                                ${formRow('角色等级', `<select name="roleLevel" class="form-select" required>${roleLevelOptions}</select>`, true)}
+                            </div>
                             <div class="md:col-span-4">
-                                 ${formRow('上级领导', `<select name="manager_id" id="employee-manager" class="form-select">${getManagerOptions(user.departmentId, user.manager_id)}</select>`)}
+                                 ${formRow('上级领导', `<select name="manager_id" id="employee-manager" class="form-select"><option value="">无</option>${getManagerOptions(user.departmentId, user.manager_id)}</select>`)}
                             </div>
                             <div class="md:col-span-2 flex items-end pb-2">
                                  <div class="flex items-center">
