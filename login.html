@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIGMA AI - 登录</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,9 +15,9 @@
 
     <!-- Login View -->
     <div id="login-view" class="auth-view w-full min-h-screen flex items-center justify-center p-4">
-        <div class="flex w-full max-w-6xl lg:min-h-[700px] rounded-2xl shadow-2xl overflow-hidden bg-white">
+        <div id="auth-container" class="flex w-full max-w-6xl lg:min-h-[700px] rounded-2xl shadow-2xl overflow-hidden bg-white">
             <!-- Left Panel (Branding) -->
-            <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-12 flex-col justify-between relative overflow-hidden">
+            <div id="left-panel" class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-12 flex-col justify-between relative overflow-hidden transition-all duration-500 ease-in-out">
                 <!-- Background shapes -->
                 <div class="absolute inset-0 z-0">
                     <div class="shape-1"></div>
@@ -43,7 +43,10 @@
             </div>
 
             <!-- Right Panel (Login Form) -->
-            <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+            <div id="right-panel" class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative transition-all duration-500 ease-in-out">
+                <button id="toggle-sidebar-btn" class="absolute top-1/2 -translate-y-1/2 -left-4 z-20 bg-indigo-600 hover:bg-indigo-700 w-8 h-8 rounded-full text-white transition-all duration-500 ease-in-out focus:outline-none hidden lg:flex items-center justify-center">
+                    <i data-lucide="chevrons-left" class="w-5 h-5"></i>
+                </button>
                 <div class="w-full max-w-md">
                     <div class="lg:hidden text-center mb-10">
                         <div class="flex items-center gap-3 justify-center">
@@ -222,6 +225,43 @@
             sessionStorage.setItem('loggedInUserRole', 'sales'); // Default to sales
             window.location.href = 'index.html';
         });
+
+        // --- Sidebar Toggle Logic ---
+        const toggleBtn = document.getElementById('toggle-sidebar-btn');
+        if (toggleBtn) {
+            const leftPanel = document.getElementById('left-panel');
+            const rightPanel = document.getElementById('right-panel');
+            const toggleIcon = toggleBtn.querySelector('i');
+
+            toggleBtn.addEventListener('click', () => {
+                const isCollapsed = leftPanel.classList.contains('lg:w-0');
+                
+                // Toggle classes for panels
+                leftPanel.classList.toggle('lg:w-1/2', isCollapsed);
+                leftPanel.classList.toggle('p-12', isCollapsed);
+                leftPanel.classList.toggle('lg:w-0', !isCollapsed);
+                leftPanel.classList.toggle('p-0', !isCollapsed);
+
+                rightPanel.classList.toggle('lg:w-1/2', isCollapsed);
+                rightPanel.classList.toggle('lg:w-full', !isCollapsed);
+
+                // Hide/show content in left panel for clean collapse
+                Array.from(leftPanel.children).forEach(child => {
+                    if (child.tagName.toLowerCase() !== 'button') {
+                        child.classList.toggle('hidden');
+                    }
+                });
+                
+                // Update button icon and position
+                toggleBtn.classList.toggle('rotate-180', !isCollapsed);
+                toggleBtn.classList.toggle('-left-4', isCollapsed);
+                toggleBtn.classList.toggle('left-2', !isCollapsed);
+                
+                toggleIcon.setAttribute('data-lucide', isCollapsed ? 'chevrons-left' : 'chevrons-right');
+                lucide.createIcons(); // Redraw icon
+            });
+        }
+
 
         function switchLoginViews(showId, hideId) {
             const showView = document.getElementById(showId);

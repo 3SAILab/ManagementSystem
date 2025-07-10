@@ -1,5 +1,7 @@
 :root {
     --sidebar-width: 256px;
+    --sidebar-collapsed-width: 3rem;
+    --sidebar-collapsed-gap: 1rem;
     --header-height: 64px;
 }
 body {
@@ -8,8 +10,25 @@ body {
 }
 .sidebar {
     width: var(--sidebar-width);
-    transition: transform 0.3s ease-in-out;
+    transition: width 0.3s ease-in-out;
     border-right: 1px solid #e2e8f0;
+    position: relative;
+}
+/* Toggle button always floats at sidebar edge */
+#desktop-sidebar-toggle {
+    position: absolute;
+    top: 1rem;
+    left: 100%;
+    transform: translateX(-50%);
+    background-color: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    z-index: 999;
 }
 .main-content {
     margin-left: var(--sidebar-width);
@@ -30,6 +49,45 @@ body {
         width: 100%;
     }
 }
+
+.sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
+}
+
+.sidebar.collapsed h1 {
+    display: none;     /* 隐藏侧边栏标题 */
+}
+/* Sidebar collapsed hide text labels but show icon popovers */
+.sidebar.collapsed #sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.sidebar.collapsed #sidebar-nav .ms-3 {
+    display: none;     /* 隐藏文本标签 */
+}
+.sidebar.collapsed #sidebar-nav .group {
+    justify-content: center;
+    position: relative;
+}
+.sidebar.collapsed #sidebar-nav .group:hover .ms-3 {
+    display: block;
+    position: absolute;
+    left: 3rem;
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    white-space: nowrap;
+    z-index: 50;
+}
+
+.main-content.collapsed {
+    margin-left: calc(var(--sidebar-collapsed-width) + var(--sidebar-collapsed-gap));
+    width: calc(100% - var(--sidebar-collapsed-width) - var(--sidebar-collapsed-gap));
+}
+
 .kanban-column {
     flex: 1 1 0px;
     min-width: 320px;
@@ -300,4 +358,9 @@ body {
     border-radius: 50%;
     border: 3px solid #4f46e5;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+} 
+
+/* 隐藏折叠状态下的侧边栏底部容器 */
+.sidebar.collapsed .sidebar-footer {
+    display: none;
 } 

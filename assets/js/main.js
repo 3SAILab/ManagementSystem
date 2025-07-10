@@ -153,6 +153,16 @@ const AppState = {
 const Helpers = {
     getAvatar(user) {
         if (!user) return '';
+
+        // Handle unassigned/invalid users that don't have a userId
+        if (!user.userId) {
+            return `
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-slate-200 text-slate-500" title="${user.name || 'Unassigned'}">
+                    ${user.initials || '?'}
+                </div>
+            `;
+        }
+
         const colors = ['#fecaca', '#fed7aa', '#fef08a', '#d9f99d', '#bfdbfe', '#e9d5ff'];
         const textColors = ['#991b1b', '#9a3412', '#854d0e', '#3f6212', '#1e40af', '#581c87'];
         const hash = user.userId.charCodeAt(2) % colors.length;
@@ -328,7 +338,7 @@ const UI = {
                     <i data-lucide="bar-chart-3" class="w-5 h-5 text-slate-500 group-hover:text-slate-900"></i><span class="ms-3">我的看板</span>
                 </a>
                 <a href="#" class="flex items-center p-2 text-slate-900 rounded-lg hover:bg-slate-100 group" data-page="client_follow_ups">
-                    <i data-lucide="book-user" class="w-5 h-5 text-slate-500 group-hover:text-slate-900"></i><span class="ms-3">客户跟踪记录</span>
+                    <i data-lucide="contact" class="w-5 h-5 text-slate-500 group-hover:text-slate-900"></i><span class="ms-3">客户跟踪记录</span>
                 </a>
             `;
         } else if (role === 'kanban_supervisor') {
@@ -1366,6 +1376,7 @@ const UI = {
         });
     },
     renderTeamMembers(container) {
+        const { users, departments } = AppState;
         const lead = AppState.currentUser;
         const departmentData = App.getDepartmentalData([lead.departmentId], lead);
         const members = departmentData[lead.departmentId].members;
@@ -1403,42 +1414,238 @@ const UI = {
         lucide.createIcons();
     },
     renderClientFollowUps(container) {
-        const followUps = AppState.follow_ups.sort((a, b) => new Date(b.followUpDate) - new Date(a.followUpDate));
+        const { clients, users, work_orders, activities } = AppState;
+
+        // We'll treat work orders as "tickets" for this view, similar to the UI mock.
+        const tickets = work_orders.map(order => ({
+            id: order.orderId,
+            name: order.orderName,
+            createdAt: order.createdAt,
+            assignedTo: users[order.leadId] || { name: '未分配', initials: '?' },
+            priority: order.priority, // High, Medium, Low
+            status: order.progress, // Percentage
+            client: clients[order.clientId],
+            activities: activities.filter(a => a.orderId === order.orderId)
+        }));
+
+        const priorityMap = {
+            'High': { text: 'Critical', color: 'rgb(239 68 68)', bg: 'rgb(254 226 226)' },
+            'Medium': { text: 'High', color: 'rgb(234 179 8)', bg: 'rgb(254 249 195)' },
+            'Low': { text: 'Medium', color: 'rgb(59 130 246)', bg: 'rgb(219 234 254)' },
+        };
         
+        const getStatusStyles = (progress) => {
+            if (progress >= 90) return { color: 'rgb(22 163 74)', icon: 'check-circle' };
+            if (progress >= 50) return { color: 'rgb(59 130 246)', icon: 'trending-up' };
+            return { color: 'rgb(249 115 22)', icon: 'loader' };
+        };
+
+        const stats = {
+            tagAccuracy: 87.2,
+            openTickets: tickets.filter(t => t.status < 100).length,
+            criticalIssues: tickets.filter(t => t.priority === 'High' && t.status < 100).length,
+            inDevelopment: tickets.filter(t => t.status > 0 && t.status < 100).length
+        };
+
         container.innerHTML = `
-            <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                <table class="w-full text-left">
-                   <thead class="bg-slate-50">
-                       <tr>
-                           <th class="p-4 text-sm font-semibold text-slate-600">客户名称</th>
-                           <th class="p-4 text-sm font-semibold text-slate-600">跟进日期</th>
-                           <th class="p-4 text-sm font-semibold text-slate-600">跟进类型</th>
-                           <th class="p-4 text-sm font-semibold text-slate-600">跟进人</th>
-                           <th class="p-4 text-sm font-semibold text-slate-600">跟进内容</th>
-                       </tr>
-                   </thead>
-                   <tbody class="divide-y divide-slate-200">
-                   ${followUps.map(followUp => {
-                       const client = AppState.clients[followUp.clientId];
-                       const sales = AppState.users[followUp.salesId];
-                       return `
-                        <tr class="hover:bg-slate-50">
-                           <td class="p-4 font-medium text-slate-800">${client ? client.name : '未知客户'}</td>
-                           <td class="p-4 text-slate-600">${followUp.followUpDate}</td>
-                           <td class="p-4 text-slate-600">${followUp.type === 'call' ? '电话' : '拜访'}</td>
-                           <td class="p-4 text-slate-600">${sales ? sales.name : '未知'}</td>
-                           <td class="p-4 text-slate-600 text-sm max-w-xs truncate" title="${followUp.notes}">${followUp.notes}</td>
-                       </tr>
-                       `
-                   }).join('') || `<tr><td colspan="5" class="p-4 text-center text-slate-500">暂无客户跟进记录</td></tr>`}
-                   </tbody>
-                </table>
-             </div>
+            <div class="flex flex-col h-full bg-slate-50">
+                <!-- Header -->
+                <div class="flex-shrink-0 bg-slate-50 pt-1">
+                    <div class="flex justify-between items-center mb-4">
+                         <div>
+                            <h2 class="text-2xl font-bold text-slate-800">CRM Auto tagging</h2>
+                            <p class="text-sm text-slate-500">Track and resolve issues for automated customer tagging system</p>
+                         </div>
+                         <div class="flex items-center gap-2">
+                            <button class="bg-white border border-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors hover:bg-slate-50">
+                                <i data-lucide="upload-cloud" class="w-4 h-4"></i>Import
+                            </button>
+                            <button class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+                                <i data-lucide="plus" class="w-4 h-4"></i>New ticket
+                            </button>
+                         </div>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-white p-5 rounded-xl shadow-sm border">
+                            <p class="text-sm text-slate-500 mb-1">Tag accuracy</p>
+                            <div class="flex items-baseline gap-2">
+                                <p class="text-3xl font-bold text-slate-800">${stats.tagAccuracy}%</p>
+                                <p class="text-sm font-semibold text-green-500 flex items-center"><i data-lucide="arrow-up" class="w-4 h-4"></i>2.1%</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl shadow-sm border">
+                            <p class="text-sm text-slate-500 mb-1">Open tickets</p>
+                            <div class="flex items-baseline gap-2">
+                                <p class="text-3xl font-bold text-slate-800">${stats.openTickets}</p>
+                                <p class="text-sm font-semibold text-red-500 flex items-center"><i data-lucide="arrow-up" class="w-4 h-4"></i>2 vs last sprint</p>
+                            </div>
+                        </div>
+                         <div class="bg-white p-5 rounded-xl shadow-sm border">
+                            <p class="text-sm text-slate-500 mb-1">Critical issues</p>
+                            <div class="flex items-baseline gap-2">
+                                <p class="text-3xl font-bold text-slate-800">${stats.criticalIssues}</p>
+                                <p class="text-sm font-semibold text-green-500 flex items-center"><i data-lucide="arrow-down" class="w-4 h-4"></i>3 vs last sprint</p>
+                            </div>
+                        </div>
+                         <div class="bg-white p-5 rounded-xl shadow-sm border">
+                            <p class="text-sm text-slate-500 mb-1">In Development</p>
+                            <div class="flex items-baseline gap-2">
+                                <p class="text-3xl font-bold text-slate-800">${stats.inDevelopment}</p>
+                                <p class="text-sm font-semibold text-green-500 flex items-center"><i data-lucide="arrow-down" class="w-4 h-4"></i>2 vs last sprint</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="flex-grow flex gap-6 overflow-hidden">
+                    <!-- Main Table -->
+                    <div class="flex-grow flex flex-col bg-white rounded-xl shadow-sm border overflow-hidden">
+                        <div class="p-4 border-b border-slate-200">
+                             <div class="flex justify-between items-center">
+                                <div class="relative w-full max-w-xs">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
+                                    </div>
+                                    <input type="text" placeholder="Search anything..." class="form-input pl-10 w-full bg-slate-50 border-slate-200">
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button class="bg-white border border-slate-300 text-slate-700 font-medium py-2 px-3 rounded-lg flex items-center gap-2 transition-colors hover:bg-slate-50"><i data-lucide="list" class="w-4 h-4"></i></button>
+                                    <button class="bg-white border border-slate-300 text-slate-700 font-medium py-2 px-3 rounded-lg flex items-center gap-2 transition-colors hover:bg-slate-50"><i data-lucide="filter" class="w-4 h-4"></i> Filters</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-grow overflow-y-auto">
+                            <table class="min-w-full">
+                                <thead class="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        <th class="p-4 w-10"><input type="checkbox" class="form-checkbox rounded text-indigo-600"></th>
+                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
+                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Created at</th>
+                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Assigned to</th>
+                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Priority</th>
+                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                        <th class="p-4 w-16"></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-slate-200">
+                                    ${tickets.map((ticket, index) => `
+                                        <tr data-ticket-id="${ticket.id}" class="hover:bg-slate-50 cursor-pointer ticket-row">
+                                            <td class="p-4"><input type="checkbox" class="form-checkbox rounded text-indigo-600"></td>
+                                            <td class="p-4 text-sm font-semibold text-slate-700">${ticket.name}</td>
+                                            <td class="p-4 text-sm text-slate-500">${new Date(ticket.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
+                                            <td class="p-4 text-sm text-slate-500">${Helpers.getAvatar(ticket.assignedTo)}</td>
+                                            <td class="p-4">
+                                                <span class="px-3 py-1 text-xs font-semibold rounded-full" style="color:${priorityMap[ticket.priority].color}; background-color:${priorityMap[ticket.priority].bg}">
+                                                    ${priorityMap[ticket.priority].text}
+                                                </span>
+                                            </td>
+                                            <td class="p-4">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-24 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                                        <div class="h-full rounded-full" style="width: ${ticket.status}%; background-color:${getStatusStyles(ticket.status).color}"></div>
+                                                    </div>
+                                                    <span class="text-sm font-medium text-slate-600 w-8 text-right">${ticket.status}%</span>
+                                                    <i data-lucide="${getStatusStyles(ticket.status).icon}" class="w-5 h-5" style="color:${getStatusStyles(ticket.status).color}"></i>
+                                                </div>
+                                            </td>
+                                            <td class="p-4 text-slate-500"><i data-lucide="more-horizontal" class="w-5 h-5"></i></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="p-4 border-t border-slate-200 text-sm text-slate-600">
+                            Shows 10 of 281 items &nbsp; &middot; &nbsp; Page 1 of 23
+                        </div>
+                    </div>
+
+                    <!-- Details Panel -->
+                    <div id="ticket-details-panel" class="w-full max-w-md flex-shrink-0">
+                        <!-- Details will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+
+        container.querySelectorAll('.ticket-row').forEach(row => {
+            row.addEventListener('click', (e) => {
+                if (e.target.closest('input[type="checkbox"], a')) return;
+
+                container.querySelectorAll('.ticket-row').forEach(r => r.classList.remove('bg-indigo-50'));
+                row.classList.add('bg-indigo-50');
+                
+                const ticketId = row.dataset.ticketId;
+                this.renderTicketDetailsPanel(ticketId);
+            });
+        });
+        
+        if(tickets.length > 0) {
+            container.querySelector('.ticket-row')?.classList.add('bg-indigo-50');
+            this.renderTicketDetailsPanel(tickets[0].id);
+        }
+    },
+
+    renderTicketDetailsPanel(ticketId) {
+        const panel = document.getElementById('ticket-details-panel');
+        if(!panel) return;
+
+        const ticket = AppState.work_orders.find(o => o.orderId === ticketId);
+        if (!ticket) {
+            panel.innerHTML = '';
+            return;
+        };
+
+        const assignedUser = AppState.users[ticket.leadId] || { name: 'Unassigned', email: '' };
+        const activities = AppState.activities.filter(a => a.orderId === ticketId).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        panel.innerHTML = `
+            <div class="bg-white rounded-xl shadow-sm border h-full flex flex-col">
+                <div class="p-4 border-b border-slate-200">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm text-slate-500">#${ticket.orderId.replace('order_','')}</p>
+                            <h2 class="text-lg font-bold text-slate-800 mt-1">${ticket.orderName}</h2>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex-grow overflow-y-auto p-4 space-y-6">
+                    <div>
+                        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Recent Activity</h3>
+                        <div class="space-y-4">
+                            <div class="bg-slate-50 p-3 rounded-lg">
+                                <p class="text-xs font-bold text-slate-600 mb-1">System Log</p>
+                                <p class="text-sm text-red-600">Error rate increased to 15% on payment-api-prod-3</p>
+                                <p class="text-xs text-slate-400 mt-1">2 hours ago</p>
+                            </div>
+
+                            ${activities.length > 0 ? activities.map(act => `
+                                <div class="flex gap-3">
+                                    <div>${Helpers.getAvatar(AppState.users[act.userId])}</div>
+                                    <div class="text-sm flex-grow">
+                                        <div class="bg-slate-50 p-3 rounded-lg">
+                                            <p class="font-semibold text-slate-700">${AppState.users[act.userId].name} commented</p>
+                                            <p class="text-slate-600 mt-1">${act.content}</p>
+                                        </div>
+                                        <p class="text-xs text-slate-400 mt-1">${new Date(act.timestamp).toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            `).join('') : '<p class="text-sm text-slate-500">No recent activity.</p>'}
+                        </div>
+                    </div>
+                </div>
+            </div>
         `;
         lucide.createIcons();
     },
+
     renderEmployeeManagement(container) {
-        const users = Object.values(AppState.users);
+        const { users, departments, positions } = AppState;
+        const containerId = 'employee-management-container';
         container.innerHTML = `
             <div class="bg-white p-6 rounded-lg shadow-sm">
                 <div class="flex justify-between items-center mb-4">
@@ -1988,6 +2195,22 @@ const UI = {
             this.hideModal();
         });
     },
+    toggleDesktopSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const button = document.getElementById('desktop-sidebar-toggle');
+        if (!sidebar || !mainContent || !button) return;
+    
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('collapsed');
+    
+        if (sidebar.classList.contains('collapsed')) {
+            button.innerHTML = `<i data-lucide="panel-right-close" class="w-6 h-6"></i>`;
+        } else {
+            button.innerHTML = `<i data-lucide="panel-left-close" class="w-6 h-6"></i>`;
+        }
+        lucide.createIcons();
+    },
 };
 
 // --- 事件处理和逻辑模块 ---
@@ -2005,9 +2228,10 @@ const App = {
     },
     
     setupEventListeners() {
-        document.getElementById('role-switcher').addEventListener('change', this.handleRoleChange.bind(this));
-        document.getElementById('menu-toggle').addEventListener('click', this.toggleSidebar.bind(this));
-        document.getElementById('sidebar-nav').addEventListener('click', this.handleNavClick.bind(this));
+        document.getElementById('role-switcher')?.addEventListener('change', () => this.handleRoleChange());
+        document.getElementById('menu-toggle')?.addEventListener('click', () => UI.toggleSidebar());
+        document.getElementById('desktop-sidebar-toggle')?.addEventListener('click', () => UI.toggleDesktopSidebar());
+        document.getElementById('sidebar-nav')?.addEventListener('click', (e) => this.handleNavClick(e));
         
         document.body.addEventListener('click', (e) => {
             if (e.target.closest('#new-order-btn')) UI.renderNewOrderForm();
@@ -2501,6 +2725,19 @@ const App = {
         this.renderPage();
     },
 
+    toggleDesktopSidebar() {
+        const body = document.body;
+        const icon = document.querySelector('#desktop-sidebar-toggle i');
+        body.classList.toggle('sidebar-collapsed');
+
+        if (body.classList.contains('sidebar-collapsed')) {
+            icon.setAttribute('data-lucide', 'panel-right-close');
+        } else {
+            icon.setAttribute('data-lucide', 'panel-left-close');
+        }
+        lucide.createIcons();
+    },
+
     handleDepartmentFormSubmit(e) {
         e.preventDefault();
         const form = e.target;
@@ -2587,6 +2824,19 @@ const App = {
         UI.hideModal();
         UI.renderPage(); 
         UI.renderOrderDetailsPanel(orderId);
+    },
+
+    toggleDesktopSidebar() {
+        const body = document.body;
+        const icon = document.querySelector('#desktop-sidebar-toggle i');
+        body.classList.toggle('sidebar-collapsed');
+
+        if (body.classList.contains('sidebar-collapsed')) {
+            icon.setAttribute('data-lucide', 'panel-right-close');
+        } else {
+            icon.setAttribute('data-lucide', 'panel-left-close');
+        }
+        lucide.createIcons();
     },
 };
 
