@@ -1,52 +1,26 @@
 import { useState } from 'react';
 import { Mail, Lock, BrainCircuit } from 'lucide-react';
-import Typewriter from './components/Typewriter'
+import { useNavigate } from 'react-router-dom';
+import Typewriter from '../components/Typewriter'
+import {login} from '../services/authService'
+import '../index.css';
 
-function App() {
+function LoginPage() {
+  console.log('成功进入LoginPage');
   const [email, setEmail] = useState('demo@example.com');
   const [password, setPassword] = useState('********');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const navigate = useNavigate();
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       alert('请输入账号和密码');
       return;
     }
-  
-    setError('');
-  
-    const formData = new FormData();
-    formData.append('username', email); // 注意字段名是 username
-    formData.append('password', password);
-  
-    try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        body: formData, // 不需要设置 Content-Type，浏览器会自动处理
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        alert('登录失败，请检查账号或密码');
-        throw new Error(errorData.detail || '登录失败，请检查账号或密码');
-      }
-  
-      const data = await response.json();
-  
-      console.log('登录成功:', data);
-  
-      // 存储 token
-      localStorage.setItem('access_token', data.access_token);
-  
-      // 跳转页面
-
-      alert('登录成功！');
-      //navigate('/dashboard');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    const result = await login(email, password);
+    if (result.success) {
+      navigate('/', { replace: true });
+    } else {
+      alert(result.error || '登录失败，请检查账号和密码');
     }
   };
 
@@ -154,4 +128,4 @@ function App() {
   );
 }
 
-export default App;
+export default LoginPage;

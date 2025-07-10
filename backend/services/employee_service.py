@@ -5,13 +5,14 @@ from fastapi import HTTPException, status
 import bcrypt
 from jose import JWTError, jwt
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from backend.models.employee import Employee
-from backend.schemas.employee import EmployeeCreate
+from backend.schemas.employee import EmployeeCreate, EmployeeInfo
 
 # JWT相关配置
 SECRET_KEY = "your-secret-key"  # 在生产环境中应该使用环境变量
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24小时
+ACCESS_TOKEN_EXPIRE_MINUTES = 5  # 五分钟
 
 class EmployeeService:
     #验证密码
@@ -37,7 +38,15 @@ class EmployeeService:
     #登录验证
     @staticmethod
     async def authenticate_user(db: AsyncSession, email: str, password: str) -> Optional[Employee]:
-        result = await db.execute(select(Employee).where(Employee.email == email))
+        result = await db.execute(
+            select(Employee)
+            .options(
+                selectinload(Employee.department),
+                selectinload(Employee.position),
+                selectinload(Employee.manager),
+            )
+            .where(Employee.email == email)
+        )
         employee = result.scalars().first()
         if not employee or not EmployeeService.verify_password(password, employee.password_hash):
             return None
@@ -62,8 +71,8 @@ class EmployeeService:
             gender=newEmployee.gender,
             email=newEmployee.email,
             hire_date=newEmployee.hire_date,
-            department=newEmployee.department,
-            position=newEmployee.position,
+            department_id=newEmployee.department_id,
+            position_id=newEmployee.position_id,
             status=newEmployee.status,
             role=newEmployee.role,
             is_probation=newEmployee.is_probation,
@@ -86,4 +95,31 @@ class EmployeeService:
                 detail="注册失败，请稍后重试"
             )
     
-    #更新员工
+    #获取当前用户信息
+    @staticmethod
+    async def get_current_employee(db: AsyncSession, token: str) -> EmployeeInfo:
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            email: str = payload.get("sub")
+            if email is None:
+                raise credentials_exception
+        except JWTError:
+            raise credentials_exception
+        result = await db.execute(
+            select(Employee)
+            .options(
+                selectinload(Employee.department),
+                selectinload(Employee.position),
+                selectinload(Employee.manager),
+            )
+            .where(Employee.email == email)
+        )
+        employee = result.scalars().first()
+        if not employee:
+            raise credentials_exception
+        return EmployeeInfo.from_model(employee)

@@ -1,7 +1,7 @@
 # models/employee.py
 
 import enum
-from sqlalchemy import Column, Integer, String, Numeric, Date, Boolean, ForeignKey, JSON, DateTime, Enum
+from sqlalchemy import Column, Integer, String, Numeric, Date, Boolean, ForeignKey, JSON, DateTime, Enum, func
 from sqlalchemy.orm import relationship
 from ..db.session import Base
 
@@ -32,9 +32,9 @@ class Employee(Base):
     phone = Column(String(20))
     birth_date = Column(Date)
     hire_date = Column(Date, nullable=False)
-    department = Column(String(100), nullable=False)
-    position = Column(String(100), nullable=False)
-    manager_id = Column(Integer, ForeignKey("employee.id"), nullable=True)
+    department_id = Column(Integer, ForeignKey("department.id"))
+    position_id = Column(Integer, ForeignKey("position.id"))
+    manager_id = Column(Integer, ForeignKey("employee.id"))
 
     base_salary = Column(Numeric(12, 2), nullable=False)
     work_performance_score = Column(Numeric(5, 2))
@@ -44,8 +44,8 @@ class Employee(Base):
     is_probation = Column(Boolean, nullable=False)
     password_hash = Column(String(255), nullable=False)
     status = Column(Enum(EmployeeStatus), nullable=False)
-    created_at = Column(DateTime(timezone=True), nullable=False)
-    updated_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     address = Column(String)
     role = Column(Enum(EmployeeRole), nullable=False)
@@ -61,3 +61,7 @@ class Employee(Base):
 
     # 如果需要自引用外键关系，可以加上下面这一行
     manager = relationship("Employee", remote_side=[id])
+    # 定义与 Department 的多对一关系
+    department = relationship("Department", back_populates="employees")
+    # 定义与 Position 的多对一关系
+    position = relationship("Position", back_populates="employees")
