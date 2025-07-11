@@ -11,7 +11,7 @@ class DepartmentService:
 
     #增加部门
     @staticmethod
-    async def create_department(db: AsyncSession, name: str):
+    async def create_department(db: AsyncSession, name: str) -> bool:
         result = await db.execute(select(Department).where(Department.name == name))
         if result.scalars().first():
             raise HTTPException(
@@ -26,7 +26,7 @@ class DepartmentService:
             await db.commit()
             print("注册成功", department.name)
             await db.refresh(department)
-            return department
+            return True
         except Exception as e:
             await db.rollback()
             print(f"数据库提交失败，原始错误: {e}")  # 打印详细错误
@@ -64,7 +64,7 @@ class DepartmentService:
 
     #列出所有部门
     @staticmethod
-    async def search_all_departments(db: AsyncSession) -> List[Department]:
+    async def search_all_departments(db: AsyncSession) -> List[DepartmentOut]:
         try:
             # 查询所有部门（无过滤条件）
             result = await db.execute(select(Department))
@@ -86,4 +86,15 @@ class DepartmentService:
                 detail="获取部门列表失败"
             )
         
-        
+
+    #获取部门名称
+    @staticmethod
+    async def get_department_name(db: AsyncSession, id: int) -> str:
+        result = await db.execute(select(Department).where(Department.id == id))
+        department = result.scalars().first()
+        if not department:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="部门不存在"
+            )
+        return department.name

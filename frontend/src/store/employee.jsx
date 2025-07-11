@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 
-const useUserStore = create((set) => ({
+const useEmployeeStore = create((set) => ({
   // 用户信息初始状态
-  user: {
+  employee: {
     name: '',
     gender: '',
     email: '',
@@ -12,25 +12,24 @@ const useUserStore = create((set) => ({
     manager: '',
     hire_date: '',
     is_probation: '',
-    token: ''
   },
   
   // 更新用户邮箱
   updateEmail: (email) => set((state) => ({
-    user: { ...state.user, email }
+    employee: { ...state.employee, email }
   })),
   //更新生日
   updateBirthDate: (birth_date) => set((state) => ({
-    user: { ...state.user, birth_date }
+    employee: { ...state.employee, birth_date }
   })),
   // 设置token
   setToken: (token) => set((state) => ({
-    user: { ...state.user, token }
+    employee: { ...state.employee, token }
   })),
   
   // 清除用户信息
-  clearUser: () => set({ 
-    user: {
+  clearEmployee: () => set({ 
+    employee: {
         name: '',
         gender: '',
         email: '',
@@ -40,10 +39,9 @@ const useUserStore = create((set) => ({
         manager: '',
         hire_date: '',
         is_probation: '',
-        token: ''
     }
   })
 }));
 
-export default useUserStore;
-export { useUserStore };
+export default useEmployeeStore;
+export { useEmployeeStore };

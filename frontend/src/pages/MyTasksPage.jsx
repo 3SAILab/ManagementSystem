@@ -1,12 +1,12 @@
 import React from 'react';
-import { useUserStore } from '../store/user';
+import { useEmployeeStore } from '../store/employee';
 
 export default function MyTasksPage() {
-  const { user } = useUserStore();
+  const { employee } = useEmployeeStore();
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-4">员工管理</h2>
-      {/* TODO: 在此添加员工管理表格或其他 UI */}
+    <div className="p-8">
+      <h1 className="text-3xl font-bold">欢迎回来，{employee?.email}</h1>
+      <p>这是你的任务管理页面。</p>
     </div>
   );
 }

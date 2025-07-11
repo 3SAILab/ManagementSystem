@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import logging
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
@@ -28,7 +29,7 @@ class EmployeeService:
     
     #创建Token
     @staticmethod
-    def create_access_token(data: dict) -> str:
+    def create_token(data: dict) -> str:
         to_encode = data.copy()
         expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         to_encode.update({"exp": expire})
@@ -100,12 +101,13 @@ class EmployeeService:
     async def get_current_employee(db: AsyncSession, token: str) -> EmployeeInfo:
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
+            detail="无法验证凭据",
             headers={"WWW-Authenticate": "Bearer"},
         )
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
             email: str = payload.get("sub")
+            logging.info(f"当前用户邮箱: {email}")
             if email is None:
                 raise credentials_exception
         except JWTError:

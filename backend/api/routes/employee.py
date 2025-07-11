@@ -5,7 +5,7 @@ from backend.models.employee import Employee
 from backend.services.employee_service import EmployeeService
 from backend.utils.response import api_response
 from ...db.session import get_async_db
-from ...schemas.employee import EmployeeCreate, EmployeeInfo, LoginResponse, Token
+from ...schemas.employee import EmployeeCreate, EmployeeInfo, Token
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 router = APIRouter()
@@ -19,7 +19,7 @@ async def get_current_employee(
     return await EmployeeService.get_current_employee(db, token)
 
 #员工登录
-@router.post("/token", response_model=LoginResponse)
+@router.post("/token", response_model=Token)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_async_db)
@@ -32,11 +32,10 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     #创建Token
-    access_token = EmployeeService.create_access_token(data={"sub": employee.email})
-    #返回Token以及Token类型
+    token = EmployeeService.create_token(data={"sub": employee.email})
+    # 返回包含部门和职位名称的员工信息及 Token
     return {
-        "employee": EmployeeInfo.from_model(employee),
-        "token": {"access_token": access_token}
+        "access_token": token
     }
 
 #员工注册
@@ -50,7 +49,7 @@ async def register(
     return api_response(data={"employeeName": employee.name})
 
 #获取员工信息
-@router.get("/get_employee_info", response_model=EmployeeInfo)
+@router.get("/me", response_model=EmployeeInfo)
 async def get_employee_info(
     current_employee: Employee = Depends(get_current_employee)
 ):

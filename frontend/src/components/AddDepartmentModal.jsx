@@ -8,7 +8,7 @@ export default function AddDepartmentModal({ isOpen, onClose, onAdd }) {
     if (!departmentName.trim()) return;
 
     // 调用父组件传来的 onAdd 方法
-    onAdd({ name: departmentName });
+    onAdd(departmentName);
 
     // 提交后清空输入框 & 关闭模态框
     setDepartmentName('');

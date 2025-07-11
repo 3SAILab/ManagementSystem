@@ -2,14 +2,14 @@ import React from 'react';
 import '../index.css';
 import { useEmployeeStore } from '../store/employee';
 
-function PositionPage() {
+function DailyReportPage() {
   const { employee } = useEmployeeStore();
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold">欢迎回来，{employee?.email}</h1>
-      <p>这是你的职位管理页面。</p>
+      <p>这是你的日报管理页面。</p>
     </div>
   );
 }
 
-export default PositionPage;
+export default DailyReportPage;

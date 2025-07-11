@@ -77,11 +77,6 @@ class EmployeeInfo(BaseModel):
             is_probation=self.is_probation,
         )
 
-# 登录返回
-class LoginResponse(BaseModel):
-    employee: EmployeeInfo
-    token: Token
-
 # 注册返回
 class RegisterResponse(BaseModel):
     employee: EmployeeInfo

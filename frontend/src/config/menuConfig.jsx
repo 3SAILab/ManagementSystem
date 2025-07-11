@@ -1,7 +1,13 @@
 export const menuItems = [
-  { label: '工单看板', path: '/', icon: 'layout-dashboard' },
-  { label: '我的任务', path: '/my_tasks', icon: 'check-square' },
-
+  
+  {
+    label: '基础信息',
+    children: [
+      { label: '工单看板', path: '/', icon: 'layout-dashboard' },
+      { label: '我的任务', path: '/my_tasks', icon: 'check-square' },
+      { label: '写日报', path: '/daily_report', icon: 'edit-2' },
+    ]
+  },
   {
     label: '人事管理',
     access: {

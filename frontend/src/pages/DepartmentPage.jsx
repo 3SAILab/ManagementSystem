@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getDepartments, addDepartment, deleteDepartment } from '../services/departmentService'; // 假设你有这些 API 方法
+import { getDepartments, addDepartment, deleteDepartment } from '../services/departmentService';
 import AddDepartmentModal from '../components/AddDepartmentModal';
 
 export default function DepartmentPage() {
@@ -11,7 +11,11 @@ export default function DepartmentPage() {
     async function fetchDepartments() {
       try {
         const res = await getDepartments();
-        setDepartments(res.data);
+        if (res.success) {
+          setDepartments(res.data);
+        } else {
+          console.error('获取部门列表失败:', res.error);
+        }
       } catch (error) {
         console.error('获取部门列表失败:', error);
       }
@@ -23,8 +27,13 @@ export default function DepartmentPage() {
   // 新增部门
   const handleAdd = async (newDepartment) => {
     try {
-      const createdDept = await addDepartment(newDepartment); // 调用接口添加部门
-      setDepartments([...departments, createdDept]); // 更新列表
+      const res = await addDepartment(newDepartment); // 调用接口添加部门
+      if (res.success) {
+        setDepartments(res.data); // 更新列表
+        setIsModalOpen(false);    // 关闭模态框
+      } else {
+        alert(res.error || '新增失败，请重试');
+      }
     } catch (error) {
       alert('新增失败，请重试');
       console.error('新增部门失败:', error);
@@ -70,8 +79,8 @@ export default function DepartmentPage() {
           <tbody className="divide-y divide-slate-200">
             {departments.length > 0 ? (
               departments.map((dept) => (
-                <tr key={dept.departmentId} className="hover:bg-slate-50">
-                  <td className="p-4 font-medium text-slate-800">{dept.departmentId}</td>
+                <tr key={dept.id} className="hover:bg-slate-50">
+                  <td className="p-4 font-medium text-slate-800">{dept.id}</td>
                   <td className="p-4 text-slate-600">{dept.name}</td>
                   <td className="p-4 text-slate-600 text-right">
                     <button

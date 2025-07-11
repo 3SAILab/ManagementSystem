@@ -8,6 +8,8 @@ import Layout from '../components/Layout';
 import RequireAuth from '../components/RequireAuth';
 import DepartmentPage from '../pages/DepartmentPage';
 import PositionPage from '../pages/PositionPage';
+import DailyReportPage from '../pages/DailyReportPage';
+import PersonnelFilePage from '../pages/PersonnelFilePage';
 
 const router = createBrowserRouter([
   {
@@ -24,7 +26,7 @@ const router = createBrowserRouter([
           {
             index: true,
             element: <DashboardPage />, 
-            meta: { title: '工单看板' },
+            handle: { title: '工单看板' },
           },
           {
             path: 'my_tasks',
@@ -33,7 +35,16 @@ const router = createBrowserRouter([
                 <MyTasksPage />
               </PrivateRoute>
             ),
-            meta: { title: '我的任务' },
+            handle: { title: '我的任务' },
+          },
+          {
+            path: 'daily_report',
+            element: (
+              <PrivateRoute currentPath='daily_report'>
+                <DailyReportPage />
+              </PrivateRoute>
+            ),
+            handle: { title: '写日报' },
           },
           {
             path: 'employee_management',
@@ -42,8 +53,35 @@ const router = createBrowserRouter([
                 <EmployeeManagementPage />
               </PrivateRoute>
             ),
-            meta: { title: '员工管理' },
+            handle: { title: '员工管理' },
           },
+          {
+            path: 'department_management',
+            element: (
+              <PrivateRoute currentPath='department_management'>
+                <DepartmentPage />
+              </PrivateRoute>
+            ),
+            handle: { title: '部门管理' },
+          },
+          {
+            path: 'position_management',
+            element: (
+              <PrivateRoute currentPath='position_management'>
+                <PositionPage />
+              </PrivateRoute>
+            ),
+            handle: { title: '职位管理' },
+          },
+          {
+            path: 'personnel_file',
+            element: (
+              <PrivateRoute currentPath='personnel_file'>
+                <PersonnelFilePage />
+              </PrivateRoute>
+            ),
+            handle: { title: '人事档案' },
+          }
         ],
       },
     ],

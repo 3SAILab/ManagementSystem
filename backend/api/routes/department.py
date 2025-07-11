@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...db.session import get_async_db
 from backend.api.routes.employee import get_current_employee
@@ -12,19 +12,23 @@ router = APIRouter()
 
 
 #增加部门
-@router.post("/add_departments", status_code=201)
+@router.post("/add_departments", response_model=List[DepartmentOut], status_code=201)
 async def create_department(
-    name: str,
+    name: str = Body(..., embed=True),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    if current_employee.department != "HR" or current_employee.position != "HR":
+    #判断当前用户身份
+    if current_employee.department != "人力资源部" or current_employee.position != "人事":
         raise HTTPException(status_code=403, detail="无权限访问")
     # 业务逻辑
 
-    dept = await DepartmentService.create_department(db, name)
-
-    return {"name": dept.name}
+    result = await DepartmentService.create_department(db, name)
+    if result:
+        depts = await DepartmentService.search_all_departments(db)
+        return depts
+    else:
+        raise HTTPException(status_code=400, detail="部门创建失败")
 
 #获取部门
 @router.get("/get_departments", response_model=List[DepartmentOut], status_code=200)
