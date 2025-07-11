@@ -317,6 +317,7 @@ const UI = {
                 const followUpBtn = e.target.closest('.follow-up-btn');
                 const filterBtn = e.target.closest('#filter-btn');
                 const ticketRow = e.target.closest('.ticket-row');
+                const orderCard = e.target.closest('.bg-white[data-order-id]'); // 工单卡片通用选择器
 
                 if (followUpBtn) {
                     e.stopPropagation();
@@ -342,6 +343,16 @@ const UI = {
                     UI.renderTicketDetailsPanel(ticketRow.dataset.ticketId);
                     return;
                 }
+                
+                // 通用工单卡片点击处理 - 适用于所有角色（包括美工）
+                if (orderCard && !e.target.closest('input, a, button')) {
+                    const orderId = orderCard.dataset.orderId;
+                    if (orderId) {
+                        UI.renderTicketDetailsPanel(orderId);
+                        UI.showSidePanel();
+                    }
+                    return;
+                }
             });
 
             appContainer.addEventListener('change', (e) => {
@@ -359,6 +370,72 @@ const UI = {
                 }
             });
         }
+        
+        // 处理动态创建的按钮
+        document.body.addEventListener('click', (e) => {
+            // 新建员工按钮
+            if (e.target.closest('#add-employee-btn')) {
+                this.renderEmployeeModal(null); // 传null表示创建新员工
+                return;
+            }
+            
+            // 编辑员工按钮
+            if (e.target.closest('.edit-employee-btn')) {
+                const userId = e.target.closest('.edit-employee-btn').dataset.userId;
+                if (userId) {
+                    this.renderEmployeeModal(userId);
+                }
+                return;
+            }
+            
+            // 新建工单按钮
+            if (e.target.closest('#new-order-btn')) {
+                this.renderNewOrderForm();
+                return;
+            }
+            
+            // 添加客户按钮
+            if (e.target.closest('#add-client-btn')) {
+                this.renderAddClientModal();
+                return;
+            }
+            
+            // 新增部门按钮
+            if (e.target.closest('#add-department-btn')) {
+                this.renderAddDepartmentModal();
+                return;
+            }
+            
+            // 新增职位按钮
+            if (e.target.closest('#add-position-btn')) {
+                this.renderAddPositionModal();
+                return;
+            }
+            
+            // 删除部门按钮
+            if (e.target.closest('.delete-department-btn')) {
+                const departmentId = e.target.closest('.delete-department-btn').dataset.departmentId;
+                if (departmentId && confirm('确定要删除该部门吗？')) {
+                    // 这里应该有删除部门的逻辑
+                    delete AppState.departments[departmentId];
+                    // 重新渲染部门管理页面
+                    this.renderDepartmentManagement(document.getElementById('app'));
+                }
+                return;
+            }
+            
+            // 删除职位按钮
+            if (e.target.closest('.delete-position-btn')) {
+                const positionId = e.target.closest('.delete-position-btn').dataset.positionId;
+                if (positionId && confirm('确定要删除该职位吗？')) {
+                    // 这里应该有删除职位的逻辑
+                    delete AppState.positions[positionId];
+                    // 重新渲染职位管理页面
+                    this.renderPositionManagement(document.getElementById('app'));
+                }
+                return;
+            }
+        });
         
         // Global listener to close filter dropdown
         document.body.addEventListener('click', (e) => {
@@ -2003,6 +2080,9 @@ const UI = {
                                             </div>
                                         </div>
                                     </div>
+                                    <button id="add-client-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+                                        <i data-lucide="plus" class="w-4 h-4"></i>添加客户
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -2100,19 +2180,30 @@ const UI = {
     },
 
     renderTicketDetailsPanel(ticketId) {
+        // 确保侧边栏存在
+        this.ensureSidePanelExists();
+        
+        // 获取面板元素
         const panel = document.getElementById('ticket-details-panel');
-        if(!panel) return;
-
+        if (!panel) {
+            console.error('无法找到工单详情面板元素');
+            return;
+        }
+        
+        // 获取工单信息
         const ticket = AppState.work_orders.find(o => o.orderId === ticketId);
         if (!ticket) {
-            panel.innerHTML = '';
+            panel.innerHTML = '<p class="text-center text-slate-500 py-8">未找到工单信息</p>';
             return;
-        };
-
-        const assignedUser = AppState.users[ticket.leadId] || { name: 'Unassigned', email: '' };
-        const activities = AppState.activities.filter(a => a.orderId === ticketId).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-        const client = ticket.clientId ? AppState.clients[ticket.clientId] : null;
+        }
         
+        // 获取相关数据
+        const assignedUser = AppState.users[ticket.leadId] || { name: 'Unassigned', email: '' };
+        const activities = AppState.activities ? AppState.activities.filter(a => a.orderId === ticketId).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)) : [];
+        const client = ticket.clientId ? AppState.clients[ticket.clientId] : null;
+        const tasks = AppState.tasks ? AppState.tasks.filter(t => t.orderId === ticketId) : [];
+        
+        // 渲染面板内容
         panel.innerHTML = `
             <div class="bg-white rounded-xl shadow-sm border h-full flex flex-col">
                 <div class="p-4 border-b border-slate-200">
@@ -2125,29 +2216,70 @@ const UI = {
                 </div>
                 
                 <div class="flex-grow overflow-y-auto p-4 space-y-6">
-                    <div>
-                        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Recent Activity</h3>
-                        <div class="space-y-4">
-                            <div class="bg-slate-50 p-3 rounded-lg">
-                                <div class="text-sm">
-                                    <div class="font-semibold text-slate-700 mb-1">联系人信息</div>
-                                    <div>联系人：${client ? client.contactName : '未知'}</div>
-                                    <div>电话：${client ? client.contactPhone : '未知'}</div>
-                                </div>
+                    <!-- 工单基本信息 -->
+                    <div class="bg-slate-50 p-3 rounded-lg">
+                        <div class="text-sm">
+                            <div class="font-semibold text-slate-700 mb-2">工单信息</div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>类别：${ticket.productCategory || '未分类'}</div>
+                                <div>进度：${ticket.progress || 0}%</div>
+                                <div>状态：${ticket.status === 'completed' ? '已完成' : ticket.status === 'in_progress' ? '进行中' : '未开始'}</div>
+                                <div>负责人：${assignedUser.name}</div>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 客户信息 -->
+                    ${client ? `
+                    <div class="bg-slate-50 p-3 rounded-lg">
+                        <div class="text-sm">
+                            <div class="font-semibold text-slate-700 mb-1">客户信息</div>
+                            <div>客户名称：${client.name || '未知'}</div>
+                            <div>联系人：${client.contactName || '未知'}</div>
+                            <div>电话：${client.contactPhone || '未知'}</div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <!-- 任务列表 -->
+                    ${tasks.length > 0 ? `
+                    <div>
+                        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">任务列表</h3>
+                        <div class="space-y-2">
+                            ${tasks.map(task => {
+                                const assignee = AppState.users[task.assigneeId];
+                                return `
+                                <div class="bg-slate-50 p-3 rounded-lg">
+                                    <div class="flex justify-between items-center">
+                                        <div class="text-sm font-medium">${task.description || '未命名任务'}</div>
+                                        <span class="px-2 py-1 text-xs rounded-full ${task.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
+                                            ${task.status === 'completed' ? '已完成' : '进行中'}
+                                        </span>
+                                    </div>
+                                    <div class="text-xs text-slate-500 mt-1">负责人：${assignee ? assignee.name : '未分配'}</div>
+                                </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
 
+                    <!-- 活动记录 -->
+                    <div>
+                        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">活动记录</h3>
+                        <div class="space-y-4">
                             ${activities.length > 0 ? activities.map(act => `
                                 <div class="flex gap-3">
                                     <div>${Helpers.getAvatar(AppState.users[act.userId])}</div>
                                     <div class="text-sm flex-grow">
                                         <div class="bg-slate-50 p-3 rounded-lg">
-                                            <p class="font-semibold text-slate-700">${AppState.users[act.userId].name} commented</p>
+                                            <p class="font-semibold text-slate-700">${AppState.users[act.userId].name}</p>
                                             <p class="text-slate-600 mt-1">${act.content}</p>
                                         </div>
                                         <p class="text-xs text-slate-400 mt-1">${new Date(act.timestamp).toLocaleString()}</p>
                                     </div>
                                 </div>
-                            `).join('') : '<p class="text-sm text-slate-500">No recent activity.</p>'}
+                            `).join('') : '<p class="text-sm text-slate-500">暂无活动记录</p>'}
                         </div>
                     </div>
                 </div>
@@ -2155,9 +2287,53 @@ const UI = {
         `;
         lucide.createIcons();
     },
+    
+    // 确保侧边栏存在
+    ensureSidePanelExists() {
+        let sidePanel = document.getElementById('side-panel');
+        let panel = document.getElementById('ticket-details-panel');
+        let overlay = document.getElementById('side-panel-overlay');
+        
+        // 如果侧边栏不存在，创建所有必要元素
+        if (!sidePanel || !panel || !overlay) {
+            // 先移除可能存在但不完整的元素
+            if (sidePanel) sidePanel.remove();
+            if (overlay) overlay.remove();
+            
+            // 创建新元素
+            sidePanel = document.createElement('div');
+            sidePanel.id = 'side-panel';
+            sidePanel.className = 'fixed top-0 right-0 h-full bg-white shadow-lg w-full max-w-md transform translate-x-full transition-transform duration-300 z-50 flex flex-col';
+            
+            overlay = document.createElement('div');
+            overlay.id = 'side-panel-overlay';
+            overlay.className = 'fixed inset-0 bg-black/30 opacity-0 transition-opacity duration-300 hidden z-40';
+            
+            // 添加HTML内容
+            sidePanel.innerHTML = `
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800">工单详情</h3>
+                    <button id="close-side-panel" class="text-slate-500 hover:text-slate-700">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div id="ticket-details-panel" class="flex-grow overflow-y-auto p-4"></div>
+            `;
+            
+            // 添加到DOM
+            document.body.appendChild(overlay);
+            document.body.appendChild(sidePanel);
+            
+            // 添加事件监听器
+            overlay.addEventListener('click', () => this.hideSidePanel());
+            document.getElementById('close-side-panel').addEventListener('click', () => this.hideSidePanel());
+        }
+    },
 
     renderEmployeeManagement(container) {
         const { users, departments, positions } = AppState;
+        // 将users对象转换为数组
+        const usersArray = Object.values(users || {});
         const containerId = 'employee-management-container';
         container.innerHTML = `
             <div class="bg-white p-6 rounded-lg shadow-sm">
@@ -2179,7 +2355,7 @@ const UI = {
                            </tr>
                        </thead>
                        <tbody class="divide-y divide-slate-200">
-                       ${users.map(user => {
+                       ${usersArray.map(user => {
                            const department = AppState.departments[user.departmentId];
                            const roleDisplayNames = {
                                'sales': '销售', 'prod_manager': '生产主管', 'art_lead': '美工组长',
@@ -2621,6 +2797,34 @@ const UI = {
             </form>
         `;
         this.showModal('新增部门', content, 'max-w-md');
+        
+        // 添加表单提交事件监听
+        document.getElementById('add-department-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const departmentName = form.departmentName.value.trim();
+            
+            if (!departmentName) {
+                alert('部门名称不能为空');
+                return;
+            }
+            
+            // 生成唯一ID
+            const departmentId = `dept_${Date.now()}`;
+            
+            // 添加新部门到AppState
+            AppState.departments[departmentId] = {
+                departmentId,
+                name: departmentName,
+                createdAt: new Date()
+            };
+            
+            // 关闭模态框
+            this.hideModal();
+            
+            // 重新渲染部门管理页面
+            this.renderDepartmentManagement(document.getElementById('app'));
+        });
     },
 
     renderPositionManagement(container) {
@@ -2676,6 +2880,36 @@ const UI = {
             </form>
         `;
         this.showModal('新增职位', content, 'max-w-md');
+        
+        // 添加表单提交事件监听
+        document.getElementById('add-position-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const departmentId = form.departmentId.value;
+            const positionName = form.positionName.value.trim();
+            
+            if (!departmentId || !positionName) {
+                alert('所属部门和职位名称不能为空');
+                return;
+            }
+            
+            // 生成唯一ID
+            const positionId = `pos_${Date.now()}`;
+            
+            // 添加新职位到AppState
+            AppState.positions[positionId] = {
+                positionId,
+                name: positionName,
+                departmentId,
+                createdAt: new Date()
+            };
+            
+            // 关闭模态框
+            this.hideModal();
+            
+            // 重新渲染职位管理页面
+            this.renderPositionManagement(document.getElementById('app'));
+        });
     },
     renderUpdateProgressCommentModal(orderId, oldProgress, newProgress) {
         const content = `
@@ -2798,31 +3032,46 @@ const UI = {
         `;
 
         this.showModal('添加跟进记录', content);
-
-        document.getElementById('cancel-follow-up').addEventListener('click', () => {
-            this.hideModal();
+        
+        // 添加状态改变监听器
+        const statusSelect = document.getElementById('follow-up-status');
+        const orderFormWarning = document.createElement('div');
+        orderFormWarning.className = 'mt-2 text-sm text-amber-600';
+        orderFormWarning.id = 'order-form-warning';
+        statusSelect.parentNode.appendChild(orderFormWarning);
+        
+        statusSelect.addEventListener('change', (e) => {
+            // 如果选择已成交，显示提示信息
+            if (e.target.value === 'closed') {
+                orderFormWarning.textContent = '注意：保存后将需要填写订单信息';
+                
+                // 添加一个标记，表示需要显示订单表单
+                document.getElementById('follow-up-record-form').dataset.showOrderForm = 'true';
+            } else {
+                orderFormWarning.textContent = '';
+                document.getElementById('follow-up-record-form').dataset.showOrderForm = 'false';
+            }
         });
-
-        document.getElementById('follow-up-record-form').addEventListener('submit', (e) => {
+        
+        // 处理表单提交事件
+        document.getElementById('follow-up-record-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const statusValue = document.getElementById('follow-up-status').value;
+            // 保存当前表单值
             const timeValue = document.getElementById('follow-up-time').value;
-            const contentValue = document.getElementById('follow-up-content').value;
-
-            if (!contentValue.trim()) {
-                alert('请输入跟进内容');
-                return;
-            }
-
+            const contentValue = document.getElementById('follow-up-content').value || '';
+            const statusValue = statusSelect.value;
+            
             // 更新工单状态
             const order = AppState.work_orders.find(o => o.orderId === ticketId);
             if (order) {
+                // 记录旧状态
+                const oldStatus = order.followUpStatus;
+                // 更新新状态
                 order.followUpStatus = statusValue;
                 
                 // 创建活动记录
                 const statusText = statusOptions.find(option => option.value === statusValue).text;
-                const formattedTime = new Date(timeValue).toLocaleString('zh-CN');
                 const activityContent = `将状态更新为 <strong>${statusText}</strong>：${contentValue}`;
                 
                 App.addActivity(ticketId, AppState.currentUser.userId, 'FOLLOW_UP', activityContent, {
@@ -2831,258 +3080,409 @@ const UI = {
                     timestamp: new Date(timeValue)
                 });
 
-                // 重新渲染
-                UI.renderClientFollowUps(document.getElementById('app'));
-                this.hideModal();
+                // 关闭当前模态框
+                UI.hideModal();
+                
+                // 如果状态是"已成交"，打开订单表单
+                if (statusValue === 'closed') {
+                    // 使用延时确保模态框完全关闭后再打开新模态框
+                    setTimeout(function() {
+                        console.log('准备显示订单表单');
+                        // 使用UI对象的renderOrderFormModal方法
+                        UI.renderOrderFormModal(ticketId);
+                    }, 300);
+                } else {
+                    // 重新渲染客户跟踪记录页面
+                    setTimeout(function() {
+                        UI.renderClientFollowUps(document.getElementById('app'));
+                    }, 100);
+                }
             }
+        });
+
+        document.getElementById('cancel-follow-up').addEventListener('click', () => {
+            this.hideModal();
         });
     },
     
-    // 渲染销售订单看板
-    renderOrderBoard(container) {
-        const orderId = AppState.selectedOrderId;
-        if (!orderId) {
-            container.innerHTML = '<div class="p-6 text-center text-slate-500">未找到订单信息</div>';
+    // 渲染订单表单模态框
+    renderOrderFormModal(ticketId) {
+        const ticket = AppState.work_orders.find(o => o.orderId === ticketId);
+        if (!ticket) {
+            console.error('未找到工单信息', ticketId);
             return;
         }
         
-        const order = AppState.work_orders.find(o => o.orderId === orderId);
-        if (!order) {
-            container.innerHTML = '<div class="p-6 text-center text-slate-500">未找到订单信息</div>';
-            return;
-        }
-        
-        const client = AppState.clients[order.clientId];
-        const tasks = AppState.tasks.filter(t => t.orderId === orderId);
-        const activities = AppState.activities ? AppState.activities.filter(a => a.orderId === orderId) : [];
-        
-        // 计算提点
-        const commissionRate = 0.05; // 5%的提点率
-        const commission = Math.round(order.contractAmount * commissionRate);
-        
-        // 已付金额
-        const paymentStatus = order.finalPaymentStatus;
-        const paidAmount = paymentStatus === '已结算' ? order.contractAmount : Math.round(order.contractAmount * 0.7);
-        
-        // 模拟数据：详情页套数、视频套数、图片张数、工作流个数
-        const detailPageCount = 3;
-        const videoCount = 1;
-        const imageCount = 12;
-        const workflowCount = 2;
-        
-        // 模拟数据：待开始、已完成、黄色预警和红色预警
-        const pendingCount = 0;
-        const completedCount = 4;
-        const yellowAlertCount = 1;
-        const redAlertCount = 0;
-        
-        container.innerHTML = `
-            <div class="mb-6">
-                <h1 class="text-xl font-bold text-slate-800">工单详情：${order.orderName}</h1>
-            </div>
-            
-            <div class="mb-6">
-                <button id="back-to-sales-dashboard" class="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition-colors">
-                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                    <span>返回销售看板</span>
-                </button>
-            </div>
-            
-            <!-- 状态卡片 -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                <!-- 待开始 -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border">
-                    <p class="text-sm text-slate-500 mb-1">待开始</p>
-                    <p class="text-3xl font-bold text-slate-800">${pendingCount}</p>
-                    <div class="mt-2 text-xs text-slate-600">
-                        <div>详情页：${detailPageCount}套</div>
-                        <div>视频：${videoCount}套</div>
-                        <div>图片：${imageCount}张</div>
-                        <div>工作流：${workflowCount}个</div>
-                    </div>
-                </div>
-                
-                <!-- 已完成 -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border">
-                    <p class="text-sm text-slate-500 mb-1">已完成</p>
-                    <p class="text-3xl font-bold text-slate-800">${completedCount}</p>
-                </div>
-                
-                <!-- 黄色预警 -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border">
-                    <p class="text-sm text-slate-500 mb-1">黄色预警</p>
-                    <p class="text-3xl font-bold text-yellow-500">${yellowAlertCount}</p>
-                </div>
-                
-                <!-- 红色预警 -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border">
-                    <p class="text-sm text-slate-500 mb-1">红色预警</p>
-                    <p class="text-3xl font-bold text-red-500">${redAlertCount}</p>
-                </div>
-            </div>
-            
-            <!-- 工单详情面板 -->
-            <div class="bg-white rounded-xl shadow-sm border p-6 mb-6">
-                <div class="mb-6">
-                    <h2 class="text-xl font-bold text-slate-800">${order.orderName}</h2>
-                    <p class="text-slate-500 mt-1">客户：${client.name}</p>
-                    <div class="mt-2 bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-semibold inline-block">
-                        ${order.status === 'completed' ? '已完成' : order.status === 'in_progress' ? '进行中' : '待处理'}
-                    </div>
-                </div>
-                
-                <!-- 财务信息 -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                    <div class="flex flex-col">
-                        <span class="text-sm text-slate-500">合同金额</span>
-                        <span class="text-xl font-semibold text-slate-800">¥${order.contractAmount.toLocaleString()}</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-sm text-slate-500">已付金额</span>
-                        <span class="text-xl font-semibold text-slate-800">¥${paidAmount.toLocaleString()}</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-sm text-slate-500">提点金额</span>
-                        <span class="text-xl font-semibold text-green-600">¥${commission.toLocaleString()}</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-sm text-slate-500">接入日期</span>
-                        <span class="text-xl font-semibold text-slate-800">${new Date(order.startDate).toLocaleDateString()}</span>
-                    </div>
-                </div>
-                
-                <!-- 工单进度 -->
-                <div class="mb-6">
-                    <h3 class="font-semibold text-slate-700 mb-2">工单进度</h3>
-                    <div class="w-full bg-slate-200 rounded-full h-2.5 mb-1">
-                        <div class="bg-indigo-600 h-2.5 rounded-full" style="width: ${order.progress}%"></div>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-slate-500">当前进度：${order.progress}%</span>
-                        <span class="text-slate-500">预计完成时间：${new Date(order.dueDate).toLocaleDateString()}</span>
-                    </div>
-                </div>
-                
-                <!-- 工单说明 -->
-                <div>
-                    <h3 class="font-semibold text-slate-700 mb-3">工单说明</h3>
-                    <p class="text-slate-600 bg-slate-50 p-4 rounded-lg">${order.description || '设计制作春季新款夹克的电商详情页，包含模特图、细节图和尺码表。'}</p>
-                </div>
-            </div>
-            
-            <!-- 任务列表和活动记录 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- 任务列表 -->
-                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                    <h3 class="p-4 text-lg font-semibold text-slate-800 border-b">任务列表</h3>
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50">
-                            <tr>
-                                <th class="p-4 text-sm font-semibold text-slate-600">任务内容</th>
-                                <th class="p-4 text-sm font-semibold text-slate-600">负责人</th>
-                                <th class="p-4 text-sm font-semibold text-slate-600">状态</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-200">
-                            ${tasks.length > 0 ? tasks.map(task => {
-                                const assignee = AppState.users[task.assigneeId];
-                                const statusClass = task.status === 'completed' ? 'status-badge-green' : 'status-badge-yellow';
-                                const statusText = task.status === 'completed' ? '已完成' : '进行中';
-                                return `
-                                    <tr class="hover:bg-slate-50">
-                                        <td class="p-4 font-medium text-slate-800">${task.description || '完成夹克详情页切图'}</td>
-                                        <td class="p-4">
-                                            ${assignee ? `
-                                                <div class="flex items-center gap-2">
-                                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-rose-200 text-rose-800" title="${assignee.name}">
-                                                        ZS
-                                                    </div>
-                                                    <span class="text-slate-600">${assignee.name}</span>
-                                                </div>
-                                            ` : '<span class="text-slate-400">未分配</span>'}
-                                        </td>
-                                        <td class="p-4">
-                                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">已完成</span>
-                                        </td>
-                                    </tr>
-                                `;
-                            }).join('') : `
-                                <tr>
-                                    <td class="p-4 font-medium text-slate-800">完成夹克详情页切图</td>
-                                    <td class="p-4">
-                                        <div class="flex items-center gap-2">
-                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-rose-200 text-rose-800">
-                                                ZS
-                                            </div>
-                                            <span class="text-slate-600">张三</span>
-                                        </div>
-                                    </td>
-                                    <td class="p-4">
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">已完成</span>
-                                    </td>
-                                </tr>
-                            `}
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- 活动记录 -->
-                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                    <div class="flex items-center justify-between p-4 border-b">
-                        <h3 class="text-lg font-semibold text-slate-800">活动记录</h3>
-                        <button id="add-follow-up-btn" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium flex items-center gap-1">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                            添加跟进
-                        </button>
+        const client = AppState.clients[ticket.clientId] || { name: '未知客户' };
+        const modalContent = `
+            <form id="order-form" data-ticket-id="${ticketId}">
+                <!-- 表单内容 -->
+                <div class="space-y-5">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <div class="text-lg font-medium text-slate-800">${client.name}</div>
+                            <div class="text-sm text-slate-500">${ticket.orderName}</div>
+                        </div>
                     </div>
                     
-                    <div class="p-4">
-                        ${activities.length > 0 ? `
-                            <div class="space-y-4 max-h-[400px] overflow-y-auto">
-                                ${activities.map(activity => {
-                                    const user = AppState.users[activity.userId];
-                                    const time = new Date(activity.timestamp).toLocaleString();
-                                    return `
-                                        <div class="flex gap-3">
-                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-rose-200 text-rose-800">
-                                                ${user.initials || 'ZS'}
-                                            </div>
-                                            <div class="flex-1">
-                                                <div class="flex justify-between mb-1">
-                                                    <div class="font-medium text-slate-800">${user.name}</div>
-                                                    <div class="text-xs text-slate-500">${time}</div>
-                                                </div>
-                                                <div class="text-sm text-slate-600">${activity.content}</div>
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        ` : '<div class="text-center text-slate-500 py-4">暂无活动记录</div>'}
+                    <!-- 基本客户信息 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                        <div>
+                            <label for="client-name" class="block text-sm font-medium text-slate-700">客户名称 <span class="text-red-500">*</span></label>
+                            <input type="text" id="client-name" name="client-name" 
+                                class="form-input block w-full mt-1 rounded-md" value="${client.name || ''}" required>
+                        </div>
+                        
+                        <div>
+                            <label for="contact-person" class="block text-sm font-medium text-slate-700">联系人 <span class="text-red-500">*</span></label>
+                            <input type="text" id="contact-person" name="contact-person" 
+                                class="form-input block w-full mt-1 rounded-md" value="${client.contactPerson || ''}" required>
+                        </div>
+                        
+                        <div>
+                            <label for="contact-phone" class="block text-sm font-medium text-slate-700">联系电话 <span class="text-red-500">*</span></label>
+                            <input type="text" id="contact-phone" name="contact-phone" 
+                                class="form-input block w-full mt-1 rounded-md" value="${client.phone || ''}" required>
+                        </div>
+                        
+                        <div>
+                            <label for="client-source" class="block text-sm font-medium text-slate-700">客户来源 <span class="text-red-500">*</span></label>
+                            <select id="client-source" name="client-source" class="form-select block w-full mt-1 rounded-md" required>
+                                <option value="">请选择客户来源</option>
+                                <option value="网络推广" ${client.source === '网络推广' ? 'selected' : ''}>网络推广</option>
+                                <option value="老客户推荐" ${client.source === '老客户推荐' ? 'selected' : ''}>老客户推荐</option>
+                                <option value="电话营销" ${client.source === '电话营销' ? 'selected' : ''}>电话营销</option>
+                                <option value="展会活动" ${client.source === '展会活动' ? 'selected' : ''}>展会活动</option>
+                                <option value="社交媒体" ${client.source === '社交媒体' ? 'selected' : ''}>社交媒体</option>
+                                <option value="其他" ${client.source === '其他' ? 'selected' : ''}>其他</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="product-type" class="block text-sm font-medium text-slate-700">产品类型 <span class="text-red-500">*</span></label>
+                            <select id="product-type" name="product-type" class="form-select block w-full mt-1 rounded-md" required>
+                                <option value="">请选择产品类型</option>
+                                <option value="营销类">营销类</option>
+                                <option value="管理类">管理类</option>
+                                <option value="数据类">数据类</option>
+                                <option value="平台类">平台类</option>
+                                <option value="集成类">集成类</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="client-size" class="block text-sm font-medium text-slate-700">客户规模 <span class="text-red-500">*</span></label>
+                            <select id="client-size" name="client-size" class="form-select block w-full mt-1 rounded-md" required>
+                                <option value="">请选择客户规模</option>
+                                <option value="小型企业">小型企业（50人以下）</option>
+                                <option value="中型企业">中型企业（50-200人）</option>
+                                <option value="大型企业">大型企业（200-1000人）</option>
+                                <option value="超大型企业">超大型企业（1000人以上）</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- 位置信息 -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
+                        <div>
+                            <label for="province" class="block text-sm font-medium text-slate-700">省份 <span class="text-red-500">*</span></label>
+                            <select id="province" name="province" class="form-select block w-full mt-1 rounded-md" required>
+                                <option value="">请选择省份</option>
+                                <option value="北京市">北京市</option>
+                                <option value="上海市">上海市</option>
+                                <option value="广东省">广东省</option>
+                                <option value="江苏省">江苏省</option>
+                                <option value="浙江省">浙江省</option>
+                                <!-- 其他省份选项 -->
+                            </select>
+                        </div>
+                        <div>
+                            <label for="city" class="block text-sm font-medium text-slate-700">城市 <span class="text-red-500">*</span></label>
+                            <select id="city" name="city" class="form-select block w-full mt-1 rounded-md" required>
+                                <option value="">请先选择省份</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="district" class="block text-sm font-medium text-slate-700">区/县</label>
+                            <select id="district" name="district" class="form-select block w-full mt-1 rounded-md">
+                                <option value="">请先选择城市</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-3">
+                            <label for="address-detail" class="block text-sm font-medium text-slate-700">详细地址</label>
+                            <input type="text" id="address-detail" name="address-detail" 
+                                class="form-input block w-full mt-1 rounded-md" placeholder="街道、门牌号等">
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h3 class="text-base font-semibold text-slate-800">订单金额信息</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                        <div>
+                            <label for="contract-amount" class="block text-sm font-medium text-slate-700">订单金额 (元) <span class="text-red-500">*</span></label>
+                            <input type="number" id="contract-amount" name="contract-amount" min="0" step="0.01" 
+                                class="form-input block w-full mt-1 rounded-md" required>
+                        </div>
+                        
+                        <div>
+                            <label for="paid-amount" class="block text-sm font-medium text-slate-700">已付金额 (元) <span class="text-red-500">*</span></label>
+                            <input type="number" id="paid-amount" name="paid-amount" min="0" step="0.01" 
+                                class="form-input block w-full mt-1 rounded-md" required>
+                        </div>
+                        
+                        <div>
+                            <label for="commission-rate" class="block text-sm font-medium text-slate-700">提点 (%) <span class="text-red-500">*</span></label>
+                            <input type="number" id="commission-rate" name="commission-rate" min="0" max="100" step="0.1" value="5"
+                                class="form-input block w-full mt-1 rounded-md" required>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h3 class="text-base font-semibold text-slate-800">订单需求明细</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                        <div>
+                            <label for="detail-pages" class="block text-sm font-medium text-slate-700">详情页 (套)</label>
+                            <input type="number" id="detail-pages" name="detail-pages" min="0" step="1" value="0"
+                                class="form-input block w-full mt-1 rounded-md">
+                        </div>
+                        
+                        <div>
+                            <label for="videos" class="block text-sm font-medium text-slate-700">视频 (套)</label>
+                            <input type="number" id="videos" name="videos" min="0" step="1" value="0"
+                                class="form-input block w-full mt-1 rounded-md">
+                        </div>
+                        
+                        <div>
+                            <label for="images" class="block text-sm font-medium text-slate-700">图片 (张)</label>
+                            <input type="number" id="images" name="images" min="0" step="1" value="0"
+                                class="form-input block w-full mt-1 rounded-md">
+                        </div>
+                        
+                        <div>
+                            <label for="workflows" class="block text-sm font-medium text-slate-700">工作流 (个)</label>
+                            <input type="number" id="workflows" name="workflows" min="0" step="1" value="0"
+                                class="form-input block w-full mt-1 rounded-md">
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label for="order-notes" class="block text-sm font-medium text-slate-700">备注</label>
+                        <textarea id="order-notes" name="order-notes" rows="3"
+                            class="form-textarea block w-full mt-1 rounded-md"
+                            placeholder="请输入订单备注信息..."></textarea>
                     </div>
                 </div>
-            </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" id="cancel-order-form" class="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-md hover:bg-slate-50">取消</button>
+                    <button type="submit" id="submit-order-form" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">保存订单</button>
+                </div>
+            </form>
         `;
+
+        this.showModal('创建销售订单', modalContent, 'max-w-4xl');
+
+        // 添加省市区联动
+        const provinceSelect = document.getElementById('province');
+        const citySelect = document.getElementById('city');
+        const districtSelect = document.getElementById('district');
         
-        // 添加事件监听
-        lucide.createIcons();
+        // 省份变更时更新城市列表
+        provinceSelect.addEventListener('change', function() {
+            const province = this.value;
+            populateCities(province);
+            // 清空区县
+            districtSelect.innerHTML = '<option value="">请先选择城市</option>';
+        });
         
-        // 返回销售看板按钮
-        const backBtn = document.getElementById('back-to-sales-dashboard');
-        if (backBtn) {
-            backBtn.addEventListener('click', () => {
-                App.navigateTo('sales_dashboard');
+        // 城市变更时更新区县列表
+        citySelect.addEventListener('change', function() {
+            const province = provinceSelect.value;
+            const city = this.value;
+            populateDistricts(province, city);
+        });
+        
+        // 填充城市选项的函数
+        function populateCities(province) {
+            citySelect.innerHTML = '<option value="">请选择城市</option>';
+            
+            if (!province) return;
+            
+            // 这里简化示例，实际应该从数据源获取
+            const cityMap = {
+                '北京市': ['北京市'],
+                '上海市': ['上海市'],
+                '广东省': ['广州市', '深圳市', '东莞市', '佛山市', '珠海市'],
+                '江苏省': ['南京市', '苏州市', '无锡市', '常州市', '南通市'],
+                '浙江省': ['杭州市', '宁波市', '温州市', '嘉兴市', '湖州市']
+            };
+            
+            const cities = cityMap[province] || [];
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
             });
         }
         
-        // 添加跟进按钮
-        const addFollowUpBtn = document.getElementById('add-follow-up-btn');
-        if (addFollowUpBtn) {
-            addFollowUpBtn.addEventListener('click', () => {
-                this.renderFollowUpRecordModal(orderId);
+        // 填充区县选项的函数
+        function populateDistricts(province, city) {
+            districtSelect.innerHTML = '<option value="">请选择区/县</option>';
+            
+            if (!province || !city) return;
+            
+            // 简化示例，实际应该从数据源获取
+            const districtMap = {
+                '北京市': {
+                    '北京市': ['东城区', '西城区', '朝阳区', '海淀区', '丰台区']
+                },
+                '上海市': {
+                    '上海市': ['黄浦区', '徐汇区', '长宁区', '静安区', '普陀区']
+                },
+                '广东省': {
+                    '广州市': ['天河区', '越秀区', '海珠区', '荔湾区', '白云区'],
+                    '深圳市': ['福田区', '罗湖区', '南山区', '宝安区', '龙岗区']
+                }
+            };
+            
+            const districts = districtMap[province]?.[city] || [];
+            districts.forEach(district => {
+                const option = document.createElement('option');
+                option.value = district;
+                option.textContent = district;
+                districtSelect.appendChild(option);
             });
         }
-    },
+
+        document.getElementById('cancel-order-form').addEventListener('click', () => {
+            this.hideModal();
+            // 回退到跟进记录表单
+            this.renderFollowUpRecordModal(ticketId);
+        });
+
+        document.getElementById('order-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // 基本客户信息
+            const clientName = document.getElementById('client-name').value.trim();
+            const contactPerson = document.getElementById('contact-person').value.trim();
+            const contactPhone = document.getElementById('contact-phone').value.trim();
+            const clientSource = document.getElementById('client-source').value;
+            const productType = document.getElementById('product-type').value;
+            const clientSize = document.getElementById('client-size').value;
+            
+            // 位置信息
+            const province = document.getElementById('province').value;
+            const city = document.getElementById('city').value;
+            const district = document.getElementById('district').value;
+            const addressDetail = document.getElementById('address-detail').value.trim();
+            
+            // 订单金额
+            const contractAmount = parseFloat(document.getElementById('contract-amount').value);
+            const paidAmount = parseFloat(document.getElementById('paid-amount').value);
+            const commissionRate = parseFloat(document.getElementById('commission-rate').value);
+            
+            // 订单明细
+            const detailPages = parseInt(document.getElementById('detail-pages').value);
+            const videos = parseInt(document.getElementById('videos').value);
+            const images = parseInt(document.getElementById('images').value);
+            const workflows = parseInt(document.getElementById('workflows').value);
+            const notes = document.getElementById('order-notes').value.trim();
+
+            // 基本验证
+            if (!clientName || !contactPerson || !contactPhone || !clientSource || !productType || !clientSize || !province || !city) {
+                alert('请填写所有必填字段');
+                return;
+            }
+
+            if (isNaN(contractAmount) || contractAmount <= 0) {
+                alert('请输入有效的订单金额');
+                return;
+            }
+
+            if (isNaN(paidAmount) || paidAmount < 0) {
+                alert('请输入有效的已付金额');
+                return;
+            }
+
+            if (paidAmount > contractAmount) {
+                alert('已付金额不能大于订单金额');
+                return;
+            }
+
+            // 更新工单信息
+            const order = AppState.work_orders.find(o => o.orderId === ticketId);
+            if (order) {
+                // 更新订单基本信息
+                order.clientName = clientName;
+                order.contactPerson = contactPerson;
+                order.contactPhone = contactPhone;
+                order.clientSource = clientSource;
+                order.productType = productType;
+                order.clientSize = clientSize;
+                
+                // 更新位置信息
+                order.location = {
+                    province,
+                    city,
+                    district,
+                    addressDetail
+                };
+                
+                // 更新订单金额
+                order.contractAmount = contractAmount;
+                order.paidAmount = paidAmount;
+                order.commissionRate = commissionRate;
+                
+                // 更新订单明细
+                order.orderDetails = {
+                    detailPages,
+                    videos,
+                    images,
+                    workflows
+                };
+                order.notes = notes;
+                order.orderCreatedAt = new Date();
+                
+                // 创建活动记录
+                const activityContent = `创建了销售订单，金额：¥${contractAmount.toFixed(2)}`;
+                
+                App.addActivity(ticketId, AppState.currentUser.userId, 'ORDER_CREATED', activityContent, {
+                    clientName,
+                    contactPerson,
+                    contactPhone,
+                    clientSource,
+                    productType,
+                    clientSize,
+                    location: {
+                        province,
+                        city,
+                        district,
+                        addressDetail
+                    },
+                    contractAmount,
+                    paidAmount,
+                    commissionRate,
+                    orderDetails: {
+                        detailPages,
+                        videos,
+                        images,
+                        workflows
+                    }
+                });
+
+                // 重新渲染
+                UI.renderClientFollowUps(document.getElementById('app'));
+                this.hideModal();
+                
+                // 显示成功消息
+                alert('订单创建成功！');
+            }
+        });
+    }
 };
 
 // --- 事件处理和逻辑模块 ---
