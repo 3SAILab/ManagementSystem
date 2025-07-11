@@ -2858,13 +2858,29 @@ const UI = {
         
         // 计算提点
         const commissionRate = 0.05; // 5%的提点率
-        const commission = order.contractAmount * commissionRate;
+        const commission = Math.round(order.contractAmount * commissionRate);
         
         // 已付金额
         const paymentStatus = order.finalPaymentStatus;
         const paidAmount = paymentStatus === '已结算' ? order.contractAmount : Math.round(order.contractAmount * 0.7);
         
+        // 模拟数据：详情页套数、视频套数、图片张数、工作流个数
+        const detailPageCount = 3;
+        const videoCount = 1;
+        const imageCount = 12;
+        const workflowCount = 2;
+        
+        // 模拟数据：待开始、已完成、黄色预警和红色预警
+        const pendingCount = 0;
+        const completedCount = 4;
+        const yellowAlertCount = 1;
+        const redAlertCount = 0;
+        
         container.innerHTML = `
+            <div class="mb-6">
+                <h1 class="text-xl font-bold text-slate-800">工单详情：${order.orderName}</h1>
+            </div>
+            
             <div class="mb-6">
                 <button id="back-to-sales-dashboard" class="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition-colors">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i>
@@ -2872,93 +2888,142 @@ const UI = {
                 </button>
             </div>
             
-            <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-6">
-                <div class="p-6">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h2 class="text-2xl font-bold text-slate-800">${order.orderName}</h2>
-                            <div class="text-slate-500 mt-1">客户：${client.name}</div>
-                        </div>
-                        <div class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-semibold">
-                            ${order.status === 'completed' ? '已完成' : order.status === 'in_progress' ? '进行中' : '待处理'}
-                        </div>
+            <!-- 状态卡片 -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                <!-- 待开始 -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border">
+                    <p class="text-sm text-slate-500 mb-1">待开始</p>
+                    <p class="text-3xl font-bold text-slate-800">${pendingCount}</p>
+                    <div class="mt-2 text-xs text-slate-600">
+                        <div>详情页：${detailPageCount}套</div>
+                        <div>视频：${videoCount}套</div>
+                        <div>图片：${imageCount}张</div>
+                        <div>工作流：${workflowCount}个</div>
                     </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                        <div class="flex flex-col">
-                            <span class="text-sm text-slate-500">合同金额</span>
-                            <span class="text-xl font-semibold text-slate-800">¥${order.contractAmount.toLocaleString()}</span>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="text-sm text-slate-500">已付金额</span>
-                            <span class="text-xl font-semibold text-slate-800">¥${paidAmount.toLocaleString()}</span>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="text-sm text-slate-500">提点金额</span>
-                            <span class="text-xl font-semibold text-green-600">¥${commission.toLocaleString()}</span>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="text-sm text-slate-500">接入日期</span>
-                            <span class="text-xl font-semibold text-slate-800">${new Date(order.startDate).toLocaleDateString()}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-6">
-                        <h3 class="font-semibold text-slate-700 mb-2">工单进度</h3>
-                        <div class="w-full bg-slate-200 rounded-full h-2.5 mb-1">
-                            <div class="bg-indigo-600 h-2.5 rounded-full" style="width: ${order.progress}%"></div>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-slate-500">当前进度：${order.progress}%</span>
-                            <span class="text-slate-500">预计完成时间：${new Date(order.dueDate).toLocaleDateString()}</span>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <h3 class="font-semibold text-slate-700 mb-3">工单说明</h3>
-                        <p class="text-slate-600 bg-slate-50 p-4 rounded-lg">${order.description || '暂无工单说明'}</p>
-                    </div>
+                </div>
+                
+                <!-- 已完成 -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border">
+                    <p class="text-sm text-slate-500 mb-1">已完成</p>
+                    <p class="text-3xl font-bold text-slate-800">${completedCount}</p>
+                </div>
+                
+                <!-- 黄色预警 -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border">
+                    <p class="text-sm text-slate-500 mb-1">黄色预警</p>
+                    <p class="text-3xl font-bold text-yellow-500">${yellowAlertCount}</p>
+                </div>
+                
+                <!-- 红色预警 -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border">
+                    <p class="text-sm text-slate-500 mb-1">红色预警</p>
+                    <p class="text-3xl font-bold text-red-500">${redAlertCount}</p>
                 </div>
             </div>
             
+            <!-- 工单详情面板 -->
+            <div class="bg-white rounded-xl shadow-sm border p-6 mb-6">
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold text-slate-800">${order.orderName}</h2>
+                    <p class="text-slate-500 mt-1">客户：${client.name}</p>
+                    <div class="mt-2 bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-semibold inline-block">
+                        ${order.status === 'completed' ? '已完成' : order.status === 'in_progress' ? '进行中' : '待处理'}
+                    </div>
+                </div>
+                
+                <!-- 财务信息 -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                    <div class="flex flex-col">
+                        <span class="text-sm text-slate-500">合同金额</span>
+                        <span class="text-xl font-semibold text-slate-800">¥${order.contractAmount.toLocaleString()}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-sm text-slate-500">已付金额</span>
+                        <span class="text-xl font-semibold text-slate-800">¥${paidAmount.toLocaleString()}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-sm text-slate-500">提点金额</span>
+                        <span class="text-xl font-semibold text-green-600">¥${commission.toLocaleString()}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-sm text-slate-500">接入日期</span>
+                        <span class="text-xl font-semibold text-slate-800">${new Date(order.startDate).toLocaleDateString()}</span>
+                    </div>
+                </div>
+                
+                <!-- 工单进度 -->
+                <div class="mb-6">
+                    <h3 class="font-semibold text-slate-700 mb-2">工单进度</h3>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mb-1">
+                        <div class="bg-indigo-600 h-2.5 rounded-full" style="width: ${order.progress}%"></div>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500">当前进度：${order.progress}%</span>
+                        <span class="text-slate-500">预计完成时间：${new Date(order.dueDate).toLocaleDateString()}</span>
+                    </div>
+                </div>
+                
+                <!-- 工单说明 -->
+                <div>
+                    <h3 class="font-semibold text-slate-700 mb-3">工单说明</h3>
+                    <p class="text-slate-600 bg-slate-50 p-4 rounded-lg">${order.description || '设计制作春季新款夹克的电商详情页，包含模特图、细节图和尺码表。'}</p>
+                </div>
+            </div>
+            
+            <!-- 任务列表和活动记录 -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- 任务列表 -->
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
                     <h3 class="p-4 text-lg font-semibold text-slate-800 border-b">任务列表</h3>
-                    ${tasks.length > 0 ? `
-                        <table class="w-full text-left">
-                            <thead class="bg-slate-50">
-                                <tr>
-                                    <th class="p-4 text-sm font-semibold text-slate-600">任务内容</th>
-                                    <th class="p-4 text-sm font-semibold text-slate-600">负责人</th>
-                                    <th class="p-4 text-sm font-semibold text-slate-600">状态</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-200">
-                                ${tasks.map(task => {
-                                    const assignee = AppState.users[task.assigneeId];
-                                    const statusClass = task.status === 'completed' ? 'status-badge-green' : 'status-badge-yellow';
-                                    const statusText = task.status === 'completed' ? '已完成' : '进行中';
-                                    return `
-                                        <tr class="hover:bg-slate-50">
-                                            <td class="p-4 font-medium text-slate-800">${task.description}</td>
-                                            <td class="p-4">
-                                                ${assignee ? `
-                                                    <div class="flex items-center gap-2">
-                                                        ${Helpers.getAvatar(assignee)}
-                                                        <span class="text-slate-600">${assignee.name}</span>
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="p-4 text-sm font-semibold text-slate-600">任务内容</th>
+                                <th class="p-4 text-sm font-semibold text-slate-600">负责人</th>
+                                <th class="p-4 text-sm font-semibold text-slate-600">状态</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            ${tasks.length > 0 ? tasks.map(task => {
+                                const assignee = AppState.users[task.assigneeId];
+                                const statusClass = task.status === 'completed' ? 'status-badge-green' : 'status-badge-yellow';
+                                const statusText = task.status === 'completed' ? '已完成' : '进行中';
+                                return `
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="p-4 font-medium text-slate-800">${task.description || '完成夹克详情页切图'}</td>
+                                        <td class="p-4">
+                                            ${assignee ? `
+                                                <div class="flex items-center gap-2">
+                                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-rose-200 text-rose-800" title="${assignee.name}">
+                                                        ZS
                                                     </div>
-                                                ` : '<span class="text-slate-400">未分配</span>'}
-                                            </td>
-                                            <td class="p-4">
-                                                <span class="status-badge ${statusClass}">${statusText}</span>
-                                            </td>
-                                        </tr>
-                                    `;
-                                }).join('')}
-                            </tbody>
-                        </table>
-                    ` : '<div class="p-6 text-center text-slate-500">暂无任务</div>'}
+                                                    <span class="text-slate-600">${assignee.name}</span>
+                                                </div>
+                                            ` : '<span class="text-slate-400">未分配</span>'}
+                                        </td>
+                                        <td class="p-4">
+                                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">已完成</span>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('') : `
+                                <tr>
+                                    <td class="p-4 font-medium text-slate-800">完成夹克详情页切图</td>
+                                    <td class="p-4">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-rose-200 text-rose-800">
+                                                ZS
+                                            </div>
+                                            <span class="text-slate-600">张三</span>
+                                        </div>
+                                    </td>
+                                    <td class="p-4">
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">已完成</span>
+                                    </td>
+                                </tr>
+                            `}
+                        </tbody>
+                    </table>
                 </div>
                 
                 <!-- 活动记录 -->
@@ -2979,7 +3044,9 @@ const UI = {
                                     const time = new Date(activity.timestamp).toLocaleString();
                                     return `
                                         <div class="flex gap-3">
-                                            ${Helpers.getAvatar(user)}
+                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-rose-200 text-rose-800">
+                                                ${user.initials || 'ZS'}
+                                            </div>
                                             <div class="flex-1">
                                                 <div class="flex justify-between mb-1">
                                                     <div class="font-medium text-slate-800">${user.name}</div>
