@@ -9,7 +9,7 @@ export default function DepartmentPage() {
 
   // 获取部门数据
   useEffect(() => {
-    async function fetchDepartments() {
+    async function get() {
       try {
         const res = await getDepartments();
         if (res.success) {
@@ -22,7 +22,7 @@ export default function DepartmentPage() {
       }
     }
 
-    fetchDepartments();
+    get();
   }, []);
 
   // 新增部门

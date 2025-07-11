@@ -1,15 +1,97 @@
-import React from 'react';
-import '../index.css';
-import { useEmployeeStore } from '../store/employee';
+import React, { useState, useEffect } from 'react';
+import AddPositionModal from '../components/AddPositonModal';
+import { getPositions } from '../services/positionService'; 
 
-function PositionPage() {
-  const { employee } = useEmployeeStore();
+const PositionPage = () => {
+  const [positions, setPositions] = useState([]);
+  const [departments, setDepartments] = useState({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getPositions(); // 获取职位和部门数据
+        if (res.success) {
+          setPositions(res.data.positions);
+          setDepartments(res.data.departments);
+        } else {
+          console.error('获取职位列表失败:', res.error);
+        }
+      } catch (error) {
+        console.error('获取数据失败:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleAdd = async (positionName, departmentId) => {
+    try {
+      const result = await addPosition(positionName, departmentId);
+      if (result.success) {
+        setPositions(result.data);
+        setIsModalOpen(false);    // 关闭模态框
+        toast.success('新增职位成功！');
+      }
+    } catch (error) {
+      console.error('新增职位失败:', error);
+    }
+  };
+
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold">欢迎回来，{employee?.email}</h1>
-      <p>这是你的职位管理页面。</p>
+    <div className="bg-white p-6 rounded-lg shadow-sm">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-slate-800">职位列表</h2>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
+        >
+          新增职位
+        </button>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border overflow-hidden mt-4">
+        <table className="w-full text-left">
+          <thead className="bg-slate-50">
+            <tr>
+              <th className="p-4 text-sm font-semibold text-slate-600">职位ID</th>
+              <th className="p-4 text-sm font-semibold text-slate-600">职位名称</th>
+              <th className="p-4 text-sm font-semibold text-slate-600">所属部门</th>
+              <th className="p-4 text-sm font-semibold text-slate-600 text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200">
+            {positions.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="p-4 text-center text-slate-500">
+                  暂无职位数据
+                </td>
+              </tr>
+            ) : (
+              positions.map((pos) => (
+                <tr key={pos.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="p-4 font-medium text-slate-800">{pos.id}</td>
+                  <td className="p-4 text-slate-600">{pos.name}</td>
+                  <td className="p-4 text-slate-600">
+                    {pos?.department_name || '未分配'}
+                  </td>
+                  <td className="p-4 text-slate-600 text-right">
+                    <button
+                      className="delete-position-btn text-red-500 hover:text-red-700 font-medium"
+                    >
+                      删除
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <AddPositionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} departments={departments} onAdd={handleAdd} />
     </div>
   );
-}
+};
 
 export default PositionPage;

@@ -36,8 +36,10 @@ async def get_departments(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
+    #判断当前用户身份
     if current_employee.department != "人力资源部" or current_employee.position != "人事":
         raise HTTPException(status_code=403, detail="无权限访问")
+    #获取部门
     depts = await DepartmentService.search_all_departments(db)
     return depts
 
@@ -48,7 +50,10 @@ async def delete_department(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
+    #判断当前用户身份
     if current_employee.department != "人力资源部" or current_employee.position != "人事":
         raise HTTPException(status_code=403, detail="无权限访问")
+    
+    #删除部门
     await DepartmentService.delete_department(db, id)
     return api_response(data={"message": "部门删除成功"})
