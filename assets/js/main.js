@@ -278,6 +278,106 @@ const Gemini = {
 
 // --- UI渲染模块 ---
 const UI = {
+    init() {
+        // 确保AppState中的数据结构已初始化
+        if (!AppState.users) AppState.users = {};
+        if (!AppState.clients) AppState.clients = {};
+        if (!AppState.work_orders) AppState.work_orders = [];
+        if (!AppState.activities) AppState.activities = [];
+        if (!AppState.userRoles) {
+            AppState.userRoles = {
+                'sales': { defaultPage: 'client_followups' },
+                'prod_manager': { defaultPage: 'dashboard' },
+                'art_lead': { defaultPage: 'team' },
+                'art_staff': { defaultPage: 'my_tasks' },
+                'render_staff': { defaultPage: 'my_tasks' },
+                'kanban_supervisor': { defaultPage: 'analysis' },
+                'hr': { defaultPage: 'hr_management' }
+            };
+        }
+        
+        // 初始化过滤器状态
+        if (!AppState.filters) {
+            AppState.filters = {
+                status: [],
+                source: []
+            };
+        }
+        
+        this.setupEventListeners();
+    },
+
+    // 完全移除bindEvents方法
+
+    setupEventListeners() {
+        // Delegated event listeners for dynamic content in #app
+        const appContainer = document.getElementById('app');
+        if (appContainer) {
+            appContainer.addEventListener('click', (e) => {
+                const followUpBtn = e.target.closest('.follow-up-btn');
+                const filterBtn = e.target.closest('#filter-btn');
+                const ticketRow = e.target.closest('.ticket-row');
+
+                if (followUpBtn) {
+                    e.stopPropagation();
+                    // 使用直接引用而不是this
+                    const ticketId = followUpBtn.dataset.ticketId;
+                    if (ticketId) {
+                        const ticket = AppState.work_orders.find(o => o.orderId === ticketId);
+                        if (ticket) {
+                            UI.renderFollowUpRecordModal(ticketId);
+                        }
+                    }
+                    return;
+                }
+                
+                if (filterBtn) {
+                    document.getElementById('filter-dropdown').classList.toggle('hidden');
+                    return;
+                }
+
+                if (ticketRow && !e.target.closest('input, a, button')) {
+                    appContainer.querySelectorAll('.ticket-row').forEach(r => r.classList.remove('bg-indigo-50'));
+                    ticketRow.classList.add('bg-indigo-50');
+                    UI.renderTicketDetailsPanel(ticketRow.dataset.ticketId);
+                    return;
+                }
+            });
+
+            appContainer.addEventListener('change', (e) => {
+                const filterCheckbox = e.target.closest('input[type="checkbox"][data-filter-type]');
+                if (filterCheckbox) {
+                    const { filterType, value } = filterCheckbox.dataset;
+                    const isChecked = filterCheckbox.checked;
+                    
+                    if (isChecked) {
+                        AppState.filters[filterType].push(value);
+                    } else {
+                        AppState.filters[filterType] = AppState.filters[filterType].filter(item => item !== value);
+                    }
+                    UI.renderClientFollowUps(appContainer);
+                }
+            });
+        }
+        
+        // Global listener to close filter dropdown
+        document.body.addEventListener('click', (e) => {
+            const filterDropdown = document.getElementById('filter-dropdown');
+            if (filterDropdown && !e.target.closest('#filter-btn, #filter-dropdown')) {
+                filterDropdown.classList.add('hidden');
+            }
+        }, true);
+
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target.id === 'modal' || e.target.closest('.modal-close-btn')) {
+                UI.hideModal();
+            }
+        });
+        
+        document.getElementById('menu-toggle')?.addEventListener('click', () => UI.toggleSidebar());
+        document.getElementById('desktop-sidebar-toggle')?.addEventListener('click', () => UI.toggleDesktopSidebar());
+    },
+
     renderPage() {
         const { currentUser, currentPage } = AppState;
         if (!currentUser) return;
@@ -304,8 +404,10 @@ const UI = {
                 this.renderSalesDashboard(appContentEl);
                 break;
             case 'client_follow_ups':
+            case 'client_followups':
                 pageTitleEl.textContent = '客户跟踪记录';
                 this.renderClientFollowUps(appContentEl);
+                // 客户跟踪记录页面的特殊处理会在renderClientFollowUps中完成
                 break;
             case 'dashboard':
                 pageTitleEl.textContent = '工单看板';
@@ -347,6 +449,9 @@ const UI = {
                 break;
         }
         lucide.createIcons();
+        
+        // 移除对未定义tickets变量的引用
+        // 客户跟踪记录页面的初始选择已经在renderClientFollowUps中处理
     },
     
     renderSidebarNav(role) {
@@ -385,7 +490,7 @@ const UI = {
                 <a href="#" class="flex items-center p-2 text-slate-900 rounded-lg hover:bg-slate-100 group" data-page="sales_dashboard">
                     <i data-lucide="bar-chart-3" class="w-5 h-5 text-slate-500 group-hover:text-slate-900"></i><span class="ms-3">我的看板</span>
                 </a>
-                <a href="#" class="flex items-center p-2 text-slate-900 rounded-lg hover:bg-slate-100 group" data-page="client_follow_ups">
+                <a href="#" class="flex items-center p-2 text-slate-900 rounded-lg hover:bg-slate-100 group" data-page="client_followups">
                     <i data-lucide="contact" class="w-5 h-5 text-slate-500 group-hover:text-slate-900"></i><span class="ms-3">客户跟踪记录</span>
                 </a>
             `;
@@ -420,22 +525,239 @@ const UI = {
         const salesId = AppState.currentUser.userId;
         const myOrders = AppState.work_orders.filter(o => o.createdBy === salesId);
         
-        const totalAmount = myOrders.reduce((sum, order) => sum + order.contractAmount, 0);
-        const pendingPaymentOrders = myOrders.filter(o => o.status === 'completed' && o.finalPaymentStatus === '待结算').length;
+        // 计算本月和上月的数据
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        
+        // 过滤本月和上月的订单
+        const currentMonthOrders = myOrders.filter(o => {
+            const orderDate = new Date(o.createdAt);
+            return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
+        });
+        
+        const lastMonthOrders = myOrders.filter(o => {
+            const orderDate = new Date(o.createdAt);
+            return orderDate.getMonth() === lastMonth && orderDate.getFullYear() === lastMonthYear;
+        });
+        
+        // 计算销售额数据
+        const currentMonthSales = currentMonthOrders.reduce((sum, order) => sum + order.contractAmount, 0);
+        const lastMonthSales = lastMonthOrders.reduce((sum, order) => sum + order.contractAmount, 0);
+        const salesChange = lastMonthSales === 0 ? 100 : ((currentMonthSales - lastMonthSales) / lastMonthSales * 100);
+        
+        // 计算我的提点数据（假设提点为销售额的5%）
+        const commissionRate = 0.05;
+        const currentMonthCommission = currentMonthSales * commissionRate;
+        const lastMonthCommission = lastMonthSales * commissionRate;
+        const commissionChange = lastMonthCommission === 0 ? 100 : ((currentMonthCommission - lastMonthCommission) / lastMonthCommission * 100);
+        
+        // 计算订单数量数据
+        const currentMonthOrderCount = currentMonthOrders.length;
+        const lastMonthOrderCount = lastMonthOrders.length;
+        const orderCountChange = lastMonthOrderCount === 0 ? 100 : ((currentMonthOrderCount - lastMonthOrderCount) / lastMonthOrderCount * 100);
+        
+        // 计算待结算订单数据
+        const currentMonthPendingOrders = currentMonthOrders.filter(o => o.status === 'completed' && o.finalPaymentStatus === '待结算').length;
+        const lastMonthPendingOrders = lastMonthOrders.filter(o => o.status === 'completed' && o.finalPaymentStatus === '待结算').length;
+        const pendingOrdersChange = lastMonthPendingOrders === 0 ? 100 : ((currentMonthPendingOrders - lastMonthPendingOrders) / lastMonthPendingOrders * 100);
+        
+        // 辅助函数：生成趋势指示器
+        const getTrendIndicator = (change) => {
+            const isPositive = change > 0;
+            const icon = isPositive ? 'trending-up' : 'trending-down';
+            const colorClass = isPositive ? 'text-red-500' : 'text-green-500';
+            return `<span class="${colorClass} flex items-center text-sm ml-1">
+                      <i data-lucide="${icon}" class="w-4 h-4 mr-1"></i>${Math.abs(change).toFixed(1)}%
+                    </span>`;
+        };
 
         container.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <!-- 1. 销售额 -->
                 <div class="bg-white p-5 rounded-xl shadow-sm border flex items-center gap-4">
                     <div class="p-3 bg-indigo-100 rounded-lg"><i data-lucide="dollar-sign" class="w-7 h-7 text-indigo-600"></i></div>
-                    <div><p class="text-sm text-slate-500">总销售额</p><p class="text-3xl font-bold text-slate-800">¥${totalAmount.toLocaleString()}</p></div>
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <p class="text-sm text-slate-500">本月销售额</p>
+                            ${getTrendIndicator(salesChange)}
+                        </div>
+                        <p class="text-3xl font-bold text-slate-800">¥${currentMonthSales.toLocaleString()}</p>
+                    </div>
                 </div>
+                
+                <!-- 2. 我的提点 -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border flex items-center gap-4">
+                    <div class="p-3 bg-green-100 rounded-lg"><i data-lucide="piggy-bank" class="w-7 h-7 text-green-600"></i></div>
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <p class="text-sm text-slate-500">本月提点</p>
+                            ${getTrendIndicator(commissionChange)}
+                        </div>
+                        <p class="text-3xl font-bold text-slate-800">¥${currentMonthCommission.toLocaleString()}</p>
+                    </div>
+                </div>
+                
+                <!-- 3. 订单数量 -->
                 <div class="bg-white p-5 rounded-xl shadow-sm border flex items-center gap-4">
                     <div class="p-3 bg-blue-100 rounded-lg"><i data-lucide="package" class="w-7 h-7 text-blue-600"></i></div>
-                    <div><p class="text-sm text-slate-500">总订单数</p><p class="text-3xl font-bold text-slate-800">${myOrders.length}</p></div>
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <p class="text-sm text-slate-500">本月订单数</p>
+                            ${getTrendIndicator(orderCountChange)}
+                        </div>
+                        <p class="text-3xl font-bold text-slate-800">${currentMonthOrderCount}</p>
+                    </div>
                 </div>
+                
+                <!-- 4. 待结算订单 -->
                 <div class="bg-white p-5 rounded-xl shadow-sm border flex items-center gap-4">
-                     <div class="p-3 bg-yellow-100 rounded-lg"><i data-lucide="receipt" class="w-7 h-7 text-yellow-600"></i></div>
-                    <div><p class="text-sm text-slate-500">待结算订单</p><p class="text-3xl font-bold text-yellow-500">${pendingPaymentOrders}</p></div>
+                    <div class="p-3 bg-yellow-100 rounded-lg"><i data-lucide="receipt" class="w-7 h-7 text-yellow-600"></i></div>
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <p class="text-sm text-slate-500">待结算订单</p>
+                            ${getTrendIndicator(pendingOrdersChange)}
+                        </div>
+                        <p class="text-3xl font-bold text-yellow-500">${currentMonthPendingOrders}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 收入预测和来源详情 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- 收入预测 -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-slate-800">收入预测</h3>
+                        <div class="flex bg-slate-100 rounded-lg p-1 text-sm">
+                            <button class="px-3 py-1 rounded-md bg-white shadow-sm">月度</button>
+                            <button class="px-3 py-1 text-slate-600">季度</button>
+                            <button class="px-3 py-1 text-slate-600">年度</button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center mb-5">
+                        <h2 class="text-2xl font-bold">¥301,800</h2>
+                        <span class="text-green-500 flex items-center text-sm ml-2">
+                            <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i>5.2%
+                        </span>
+                        <span class="text-slate-500 text-sm ml-2">同比上期</span>
+                    </div>
+                    
+                    <div class="h-64 mb-4">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    
+                    <div class="flex gap-8 text-sm">
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 rounded-full bg-indigo-500 mr-2"></span>
+                            <span>收入</span>
+                            <span class="ml-2 font-medium">¥50,300</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 rounded-full bg-blue-400 mr-2"></span>
+                            <span>目标</span>
+                            <span class="ml-2 font-medium">¥65,390</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 来源详情 -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-slate-800">来源</h3>
+                        <div class="relative">
+                            <button class="px-3 py-1.5 bg-white border rounded-lg text-sm flex items-center">
+                                周度
+                                <i data-lucide="chevron-down" class="w-4 h-4 ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center mb-4">
+                        <h2 class="text-2xl font-bold">12,569</h2>
+                        <span class="text-green-500 flex items-center text-sm ml-2">
+                            <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i>2.1%
+                        </span>
+                    </div>
+                    
+                    <div class="flex gap-2 mb-4 h-16">
+                        <div class="flex-1 flex items-end">
+                            ${Array.from({length: 15}, () => Math.floor(Math.random() * 30) + 10)
+                                .map(h => `<div class="w-2 bg-indigo-400 mx-0.5" style="height: ${h}px"></div>`)
+                                .join('')}
+                        </div>
+                        <div class="flex-1 flex items-end">
+                            ${Array.from({length: 15}, () => Math.floor(Math.random() * 30) + 5)
+                                .map(h => `<div class="w-2 bg-blue-300 mx-0.5" style="height: ${h}px"></div>`)
+                                .join('')}
+                        </div>
+                        <div class="flex-1 flex items-end">
+                            ${Array.from({length: 15}, () => Math.floor(Math.random() * 20) + 5)
+                                .map(h => `<div class="w-2 bg-indigo-200 mx-0.5" style="height: ${h}px"></div>`)
+                                .join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4 mb-6">
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 rounded-full bg-indigo-400 mr-2"></span>
+                            <span class="text-sm">线上</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 rounded-full bg-blue-300 mr-2"></span>
+                            <span class="text-sm">线下</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 rounded-full bg-indigo-200 mr-2"></span>
+                            <span class="text-sm">活动</span>
+                        </div>
+                    </div>
+                    
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-slate-500">
+                                <th class="text-left font-medium pb-2">详情</th>
+                                <th class="text-left font-medium pb-2">指标</th>
+                                <th class="text-right font-medium pb-2">总计</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="py-2">平均单价</td>
+                                <td class="py-2">¥${currentMonthOrderCount > 0 ? (currentMonthSales/currentMonthOrderCount).toFixed(2) : 0}</td>
+                                <td class="py-2 text-right">
+                                    <span class="text-green-500 flex items-center justify-end">
+                                        <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i>1.1%
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="py-2">平均回款周期</td>
+                                <td class="py-2">15.2 天</td>
+                                <td class="py-2 text-right">
+                                    <span class="text-red-500 flex items-center justify-end">
+                                        <i data-lucide="trending-down" class="w-4 h-4 mr-1"></i>2.0%
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="py-2">ROI</td>
+                                <td class="py-2">98%</td>
+                                <td class="py-2 text-right">
+                                    <span class="text-green-500 flex items-center justify-end">
+                                        <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i>1.7%
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="mt-4 text-center">
+                        <button class="text-indigo-600 font-medium text-sm">查看报告</button>
+                    </div>
                 </div>
             </div>
 
@@ -478,6 +800,128 @@ const UI = {
              </div>
         `;
         lucide.createIcons();
+        
+        // 初始化收入预测图表
+        setTimeout(() => {
+            const ctx = document.getElementById('revenueChart');
+            if (ctx && typeof Chart !== 'undefined') {
+                // 生成月度数据
+                const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月'];
+                
+                // 示例数据 - 根据参考图片的曲线
+                const revenueData = [10000, 12000, 11000, 13000, 16000, 17000, 16500, 12000, 15000];
+                const targetData = [5000, 8000, 6000, 6000, 9000, 7000, 6000, 9000, 10000];
+                
+                try {
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: months,
+                            datasets: [
+                                {
+                                    label: '收入',
+                                    data: revenueData,
+                                    borderColor: '#6366f1',
+                                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                    fill: true,
+                                    tension: 0.4,
+                                    borderWidth: 2,
+                                    pointRadius: 3,
+                                    pointBackgroundColor: '#6366f1'
+                                },
+                                {
+                                    label: '目标',
+                                    data: targetData,
+                                    borderColor: '#60a5fa',
+                                    tension: 0.4,
+                                    borderWidth: 2,
+                                    pointRadius: 2,
+                                    pointBackgroundColor: '#60a5fa'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed.y !== null) {
+                                                label += '¥' + context.parsed.y.toLocaleString();
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    grid: {
+                                        drawBorder: false,
+                                        color: 'rgba(0, 0, 0, 0.05)'
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            if (value >= 1000) {
+                                                return '¥' + value / 1000 + 'k';
+                                            }
+                                            return '¥' + value;
+                                        }
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            },
+                            interaction: {
+                                intersect: false,
+                                mode: 'index'
+                            },
+                            elements: {
+                                point: {
+                                    radius: 0,
+                                    hoverRadius: 5
+                                }
+                            }
+                        }
+                    });
+                } catch (error) {
+                    console.error('Chart initialization error:', error);
+                    // 如果Chart.js未加载，显示简单的替代内容
+                    ctx.parentNode.innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center bg-slate-50 rounded">
+                            <div class="text-center text-slate-400">
+                                <p>图表加载失败</p>
+                                <p class="text-xs">请检查Chart.js库是否正确加载</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else if (ctx) {
+                // Chart.js未加载，显示提示
+                ctx.parentNode.innerHTML = `
+                    <div class="w-full h-full flex items-center justify-center bg-slate-50 rounded">
+                        <div class="text-center text-slate-400">
+                            <p>图表库未加载</p>
+                            <p class="text-xs">请确保已引入Chart.js</p>
+                        </div>
+                    </div>
+                `;
+                console.error('Chart.js is not defined. Please include the Chart.js library.');
+            }
+        }, 100);
     },
 
     renderDashboard(container) {
@@ -1232,102 +1676,65 @@ const UI = {
         lucide.createIcons();
     },
     renderFollowUpModal(clientId) {
-         const content = `
+        const client = AppState.clients[clientId];
+        const content = `
             <form id="add-follow-up-form" data-client-id="${clientId}">
-                <div class="space-y-4">
-                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">跟进类型</label>
-                        <select id="follow-up-type" class="w-full mt-1 block rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                           <option value="call">电话沟通</option>
-                           <option value="visit">上门拜访</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">跟进内容</label>
-                        <textarea id="follow-up-notes" required class="w-full h-32 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-300"></textarea>
-                    </div>
+                <div>
+                    <label for="follow-up-type" class="block text-sm font-medium text-slate-700 mb-2">跟进类型</label>
+                    <select id="follow-up-type" name="type" class="form-select w-full">
+                        <option value="call">电话</option>
+                        <option value="visit">上门拜访</option>
+                        <option value="online">线上会议</option>
+                        <option value="email">邮件</option>
+                    </select>
                 </div>
-                 <div class="mt-8 flex justify-end">
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg">保存记录</button>
+                <div class="mt-4">
+                    <label for="follow-up-notes" class="block text-sm font-medium text-slate-700 mb-2">跟进内容</label>
+                    <textarea id="follow-up-notes" name="notes" rows="4" class="form-textarea w-full"></textarea>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" class="modal-close-btn px-4 py-2 bg-white border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">添加跟进</button>
                 </div>
             </form>
         `;
-        this.showModal('添加跟进记录', content, 'max-w-md');
+        this.showModal(`添加跟进 - ${client.name}`, content, 'max-w-lg');
     },
     renderEditProfileModal() {
-         const user = AppState.currentUser;
-         const department = AppState.departments[user.departmentId].name;
-         const supervisor = user.supervisorId ? AppState.users[user.supervisorId].name : '无';
-         const roleDisplayNames = {
-            'sales': '销售',
-            'prod_manager': '生产主管',
-            'art_lead': '美工组长',
-            'art_staff': '美工',
-            'render_staff': '渲染师',
-            'kanban_supervisor': '看板总监',
-            'hr': '人事'
-         };
-         const roleName = roleDisplayNames[user.role] || user.role;
-         
-         const content = `
+        const content = `
             <form id="edit-profile-form">
-                <div class="space-y-8">
-                    <!-- Personal & Contact Info -->
-                    <fieldset>
-                        <legend class="text-lg font-semibold text-slate-800 pb-3 border-b">基本信息</legend>
-                        <dl class="mt-4 divide-y divide-slate-100">
-                            ${Helpers.renderInfoRow('姓名', user.name)}
-                            ${Helpers.renderEditableRow('性别', `
-                                <select class="w-full mt-1 block rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-2">
-                                   <option value="男" ${user.gender === '男' ? 'selected' : ''}>男</option>
-                                   <option value="女" ${user.gender === '女' ? 'selected' : ''}>女</option>
-                                </select>
-                            `)}
-                            ${Helpers.renderEditableRow('出生日期', `<input type="date" class="w-full mt-1 block rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-2" value="${user.dob}">`)}
-                            ${Helpers.renderEditableRow('个人邮箱', `<input type="email" required class="w-full mt-1 block rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-2" value="${user.email}">`)}
-                        </dl>
-                    </fieldset>
-
-                    <!-- Employment Info -->
-                    <fieldset>
-                        <legend class="text-lg font-semibold text-slate-800 pb-3 border-b">任职信息</legend>
-                        <dl class="mt-4 divide-y divide-slate-100">
-                            ${Helpers.renderInfoRow('入职时间', user.hireDate)}
-                            ${Helpers.renderInfoRow('部门', department)}
-                            ${Helpers.renderInfoRow('岗位名称', roleName)}
-                            ${Helpers.renderInfoRow('直接上级', supervisor)}
-                            ${Helpers.renderInfoRow('是否试用期', user.onProbation ? '是' : '否')}
-                        </dl>
-                    </fieldset>
-
-                    <!-- Password Change -->
-                    <fieldset>
-                        <legend class="text-lg font-semibold text-slate-800 pb-3 border-b">修改密码</legend>
-                        <div class="space-y-4 mt-4">
-                             <div class="grid grid-cols-3 gap-4 items-center">
-                                <label class="text-sm font-medium text-slate-500">当前密码</label>
-                                <div class="col-span-2">
-                                    <input type="password" class="w-full mt-1 block rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-2" placeholder="留空则不修改">
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4 items-center">
-                                <label class="text-sm font-medium text-slate-500">新密码</label>
-                                <div class="col-span-2">
-                                    <input type="password" class="w-full mt-1 block rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-2">
-                                </div>
-                            </div>
-                             <div class="grid grid-cols-3 gap-4 items-center">
-                                <label class="text-sm font-medium text-slate-500">确认新密码</label>
-                                <div class="col-span-2">
-                                    <input type="password" class="w-full mt-1 block rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-2">
-                                </div>
-                            </div>
-                        </div>
-                    </fieldset>
+                <div>
+                    <h3 class="text-lg font-medium text-slate-800">个人信息</h3>
+                    <p class="text-slate-500 text-sm mt-1">修改您的个人资料和设置</p>
                 </div>
-                 <div class="mt-8 flex justify-end gap-3 border-t pt-6">
-                    <button type="button" class="bg-slate-100 py-2 px-4 rounded-lg text-sm font-semibold hover:bg-slate-200" onclick="UI.hideModal()">取消</button>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg">保存更改</button>
+
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-slate-700 mb-1">用户名</label>
+                        <input type="text" id="username" class="form-input w-full" value="${AppState.currentUser.name}" readonly>
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-slate-700 mb-1">电子邮件</label>
+                        <input type="email" id="email" class="form-input w-full" value="${AppState.currentUser.email}">
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-slate-700 mb-1">手机号</label>
+                        <input type="tel" id="phone" class="form-input w-full" value="13900001234">
+                    </div>
+                    <div>
+                        <label for="position" class="block text-sm font-medium text-slate-700 mb-1">职位</label>
+                        <input type="text" id="position" class="form-input w-full" value="${AppState.currentUser.role.replace('_', ' ')}" readonly>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <label for="bio" class="block text-sm font-medium text-slate-700 mb-1">个人简介</label>
+                    <textarea id="bio" rows="4" class="form-textarea w-full">专注于用户体验和界面设计的产品开发人员，有5年相关工作经验。</textarea>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" class="modal-close-btn px-4 py-2 bg-white border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">保存修改</button>
                 </div>
             </form>
         `;
@@ -1667,60 +2074,14 @@ const UI = {
             </div>
         `;
         lucide.createIcons();
-
-        // Event Delegation
-        container.addEventListener('click', (e) => {
-            // Toggle Filter Dropdown
-            const filterBtn = e.target.closest('#filter-btn');
-            if (filterBtn) {
-                document.getElementById('filter-dropdown').classList.toggle('hidden');
-                return;
-            }
-
-            // Row Click
-            const ticketRow = e.target.closest('.ticket-row');
-            if (ticketRow && !e.target.closest('input, a, button')) {
-                 container.querySelectorAll('.ticket-row').forEach(r => r.classList.remove('bg-indigo-50'));
-                ticketRow.classList.add('bg-indigo-50');
-                this.renderTicketDetailsPanel(ticketRow.dataset.ticketId);
-                return;
-            }
-            
-            // Follow-up Button Click
-            const followUpBtn = e.target.closest('.follow-up-btn');
-            if (followUpBtn) {
-                this.renderFollowUpRecordModal(followUpBtn.dataset.ticketId);
-                return;
-            }
-        });
-
-        container.addEventListener('change', (e) => {
-            // Filter Checkbox Change
-            const filterCheckbox = e.target.closest('input[type="checkbox"][data-filter-type]');
-            if (filterCheckbox) {
-                const { filterType, value } = filterCheckbox.dataset;
-                const isChecked = filterCheckbox.checked;
-                
-                if (isChecked) {
-                    AppState.filters[filterType].push(value);
-                } else {
-                    AppState.filters[filterType] = AppState.filters[filterType].filter(item => item !== value);
-                }
-                this.renderClientFollowUps(container);
-            }
-        });
-
-        document.body.addEventListener('click', (e) => {
-            if (!e.target.closest('#filter-btn, #filter-dropdown')) {
-                document.getElementById('filter-dropdown')?.classList.add('hidden');
-            }
-        }, true);
         
-        if (tickets.length > 0) {
-            const firstRow = container.querySelector('.ticket-row');
-            if(firstRow) {
-                // Automatically select and show details for the first ticket
-                firstRow.classList.add('bg-indigo-50');
+        // 如果有工单，默认选中第一个并显示详情
+        if (tickets && tickets.length > 0) {
+            // 选择第一行
+            const firstTicketRow = container.querySelector('.ticket-row');
+            if (firstTicketRow) {
+                firstTicketRow.classList.add('bg-indigo-50');
+                // 显示详情
                 this.renderTicketDetailsPanel(tickets[0].id);
             }
         }
@@ -2348,761 +2709,6 @@ const UI = {
         }
         lucide.createIcons();
     },
-};
-
-// --- 事件处理和逻辑模块 ---
-const App = {
-    init() {
-        this.setupEventListeners();
-        
-        const loggedInRole = sessionStorage.getItem('loggedInUserRole');
-        const roleSwitcher = document.getElementById('role-switcher');
-        if (roleSwitcher && loggedInRole) {
-            roleSwitcher.value = loggedInRole;
-        }
-        
-        this.handleRoleChange();
-    },
-    
-    setupEventListeners() {
-        document.getElementById('role-switcher')?.addEventListener('change', () => this.handleRoleChange());
-        document.getElementById('menu-toggle')?.addEventListener('click', () => UI.toggleSidebar());
-        document.getElementById('desktop-sidebar-toggle')?.addEventListener('click', () => UI.toggleDesktopSidebar());
-        document.getElementById('sidebar-nav')?.addEventListener('click', (e) => this.handleNavClick(e));
-        
-        document.body.addEventListener('click', (e) => {
-            if (e.target.closest('#new-order-btn')) UI.renderNewOrderForm();
-            if (e.target.closest('#add-employee-btn')) UI.renderEmployeeModal(null);
-            if (e.target.closest('#add-department-btn')) UI.renderAddDepartmentModal();
-            if (e.target.closest('#add-position-btn')) UI.renderAddPositionModal();
-            if (e.target.closest('.delete-department-btn')) {
-                const departmentId = e.target.closest('.delete-department-btn').dataset.departmentId;
-                const departmentName = AppState.departments[departmentId]?.name;
-                 if (confirm(`确定要删除部门 "${departmentName}" 吗？此操作不可逆！`)) {
-                    this.handleDeleteDepartment(departmentId);
-                }
-            }
-            if (e.target.closest('.delete-position-btn')) {
-                const positionId = e.target.closest('.delete-position-btn').dataset.positionId;
-                const positionName = AppState.positions[positionId]?.name;
-                if (confirm(`确定要删除职位 "${positionName}" 吗？此操作不可逆！`)) {
-                    this.handleDeletePosition(positionId);
-                }
-            }
-            if (e.target.closest('.edit-employee-btn')) {
-                const userId = e.target.closest('.edit-employee-btn').dataset.userId;
-                UI.renderEmployeeModal(userId);
-            }
-            if (e.target.closest('#write-report-btn')) UI.renderDailyReportModal();
-            if (e.target.closest('#optimize-report-btn')) this.handleOptimizeReport(e);
-            if (e.target.closest('#generate-summary-btn')) this.handleGenerateSummary(e);
-            if (e.target.closest('.update-progress-btn')) UI.renderProgressModal(e.target.dataset.taskId);
-            if (e.target.closest('.assign-order-to-lead-btn')) this.handleAssignOrderToLead(e);
-            if (e.target.closest('.assign-task-to-member-btn')) UI.renderAssignTaskModal(e.target.dataset.taskId);
-            if (e.target.closest('.view-client-details')) { e.preventDefault(); UI.renderClientDetailsModal(e.target.dataset.clientId); }
-            if (e.target.closest('#add-follow-up-btn')) { e.preventDefault(); UI.renderFollowUpModal(e.target.dataset.clientId); }
-            if (e.target.closest('#edit-profile-btn')) { e.preventDefault(); UI.renderEditProfileModal(); }
-            if (e.target.closest('#logout-btn')) { e.preventDefault(); this.handleLogout(); }
-            if (e.target.closest('#team-chart-back-btn')) {
-                AppState.teamChartState = { view: 'departments', departmentId: null };
-                UI.renderTeamChart();
-            }
-            if (e.target.closest('#side-panel-close') || e.target.id === 'side-panel-overlay') {
-                UI.hideSidePanel();
-            }
-            
-            const orderCard = e.target.closest('[data-order-id]');
-            if (orderCard && !e.target.closest('button')) UI.renderOrderDetails(orderCard.dataset.orderId);
-            if (e.target.closest('.edit-personnel-btn')) {
-                const userId = e.target.closest('.edit-personnel-btn').dataset.userId;
-                UI.renderPersonnelFileModal(userId);
-            }
-            if (e.target.id === 'add-employee-btn') {
-                this.renderEmployeeModal(null);
-            }
-        });
-
-        const handleSubmit = (e) => {
-            if (e.target.id === 'daily-report-form') App.handleReportSubmit(e);
-            if (e.target.id === 'new-order-form') { e.preventDefault(); alert("工单已创建（模拟）"); UI.hideModal(); }
-            if (e.target.id === 'add-department-form') App.handleDepartmentFormSubmit(e);
-            if (e.target.id === 'add-position-form') App.handlePositionFormSubmit(e);
-            if (e.target.id === 'progress-update-form') App.handleProgressUpdate(e);
-            if (e.target.id === 'assign-task-form') App.handleAssignTaskToMember(e);
-            if (e.target.id === 'add-follow-up-form') App.handleAddFollowUp(e);
-            if (e.target.id === 'employee-form') App.handleEmployeeFormSubmit(e);
-            if (e.target.id === 'edit-profile-form') { e.preventDefault(); alert('个人信息已更新（模拟）'); UI.hideModal(); }
-            if (e.target.id === 'update-progress-comment-form') App.handleProgressUpdateWithComment(e);
-        }
-        document.body.addEventListener('submit', handleSubmit);
-
-        document.body.addEventListener('change', (e) => {
-            if (e.target.id === 'analysis-period') {
-                UI.updateAnalysisCharts(parseInt(e.target.value));
-            }
-            if (e.target.matches('.task-status-select')) {
-                this.handleTaskStatusChange(e);
-            }
-        });
-
-        // Nav links
-        document.getElementById('sidebar-nav').addEventListener('click', (e) => this.handleNavClick(e));
-
-        // Modal close
-        document.getElementById('modal').addEventListener('click', (e) => {
-            if (e.target.id === 'modal' || e.target.closest('.modal-close-btn')) {
-                this.hideModal();
-            }
-        });
-
-        // Delegated event listeners for dynamic content in #app
-        const appContainer = document.getElementById('app');
-        if (appContainer) {
-            appContainer.addEventListener('click', (e) => {
-                const followUpBtn = e.target.closest('.follow-up-btn');
-                const filterBtn = e.target.closest('#filter-btn');
-                const ticketRow = e.target.closest('.ticket-row');
-
-                if (followUpBtn) {
-                    e.stopPropagation();
-                    this.renderFollowUpRecordModal(followUpBtn.dataset.ticketId);
-                    return;
-                }
-                
-                if (filterBtn) {
-                    document.getElementById('filter-dropdown').classList.toggle('hidden');
-                    return;
-                }
-
-                if (ticketRow && !e.target.closest('input, a, button')) {
-                    appContainer.querySelectorAll('.ticket-row').forEach(r => r.classList.remove('bg-indigo-50'));
-                    ticketRow.classList.add('bg-indigo-50');
-                    this.renderTicketDetailsPanel(ticketRow.dataset.ticketId);
-                    return;
-                }
-            });
-
-            appContainer.addEventListener('change', (e) => {
-                const filterCheckbox = e.target.closest('input[type="checkbox"][data-filter-type]');
-                if (filterCheckbox) {
-                    const { filterType, value } = filterCheckbox.dataset;
-                    const isChecked = filterCheckbox.checked;
-                    
-                    if (isChecked) {
-                        AppState.filters[filterType].push(value);
-                    } else {
-                        AppState.filters[filterType] = AppState.filters[filterType].filter(item => item !== value);
-                    }
-                    this.renderClientFollowUps(appContainer);
-                }
-            });
-        }
-        
-        // Global listener to close filter dropdown
-        document.body.addEventListener('click', (e) => {
-            const filterDropdown = document.getElementById('filter-dropdown');
-            if (filterDropdown && !e.target.closest('#filter-btn, #filter-dropdown')) {
-                filterDropdown.classList.add('hidden');
-            }
-        }, true);
-    },
-
-    handleLogout() {
-        sessionStorage.removeItem('loggedInUserRole');
-        window.location.href = 'login.html';
-    },
-
-    handleAssignOrderToLead(e) {
-        const orderId = e.target.dataset.orderId;
-        const selectedLeadId = document.getElementById('assign-lead-select').value;
-        if (!selectedLeadId) {
-            alert('请选择一个组长进行指派。');
-            return;
-        }
-        const order = AppState.work_orders.find(o => o.orderId === orderId);
-        if (order) {
-            order.leadId = selectedLeadId;
-            alert(`工单 "${order.orderName}" 已成功指派。`);
-            UI.hideModal();
-            this.renderPage();
-        }
-    },
-
-    handleAssignTaskToMember(e) {
-        e.preventDefault();
-        const form = e.target;
-        const taskId = form.dataset.taskId;
-        const memberId = document.getElementById('assign-member-select').value;
-        
-        const task = AppState.tasks.find(t => t.taskId === taskId);
-        if (task) {
-            task.assigneeId = memberId;
-            task.status = 'in_progress';
-            alert(`任务已分配给 ${AppState.users[memberId].name}。`);
-            UI.hideModal();
-            UI.renderOrderDetails(task.orderId); // Re-render the order details modal
-        }
-    },
-    
-    handleAddFollowUp(e) {
-        e.preventDefault();
-        const form = e.target;
-        const clientId = form.dataset.clientId;
-        const type = document.getElementById('follow-up-type').value;
-        const notes = document.getElementById('follow-up-notes').value;
-
-        if (!notes.trim()) {
-            alert('请填写跟进内容。');
-            return;
-        }
-
-        const newFollowUp = {
-            followUpId: `fu_${Date.now()}`,
-            clientId: clientId,
-            salesId: AppState.currentUser.userId,
-            followUpDate: new Date().toISOString().split('T')[0],
-            type: type,
-            notes: notes
-        };
-
-        AppState.follow_ups.push(newFollowUp);
-        alert('跟进记录已添加。');
-        UI.hideModal();
-        UI.renderClientDetailsModal(clientId);
-    },
-
-
-    handleTaskStatusChange(e) {
-        const selectEl = e.target;
-        const taskId = selectEl.dataset.taskId;
-        const newStatus = selectEl.value;
-
-        const task = AppState.tasks.find(t => t.taskId === taskId);
-        if (task) {
-            task.status = newStatus;
-            
-            const orderTasks = AppState.tasks.filter(t => t.orderId === task.orderId);
-            const allTasksCompleted = orderTasks.every(t => t.status === 'completed');
-            
-            if (allTasksCompleted) {
-                const order = AppState.work_orders.find(o => o.orderId === task.orderId);
-                if(order) {
-                    order.status = 'completed';
-                    order.progress = 100;
-                    order.completedAt = new Date();
-                     alert(`工单 "${order.orderName}" 的所有任务已完成，工单状态已自动更新！`);
-                }
-            }
-            this.renderPage();
-        }
-    },
-
-    handleProgressUpdate(e) {
-        e.preventDefault();
-        const form = e.target;
-        const orderId = form.dataset.orderId;
-        const newProgress = document.getElementById('progress-slider').value;
-
-        const order = AppState.work_orders.find(o => o.orderId === orderId);
-        if (order) {
-            order.progress = parseInt(newProgress);
-            if (order.progress === 100) {
-                order.status = 'completed';
-                order.completedAt = new Date();
-            } else {
-                 order.status = 'in_progress';
-                 order.completedAt = null;
-            }
-        }
-        UI.hideModal();
-        this.renderPage();
-        alert('工单进度已更新！');
-    },
-
-    handleOptimizeReport(e) {
-        // Functionality disabled as per request.
-        alert('AI 功能当前已禁用。');
-    },
-    
-    handleGenerateSummary(e) {
-        // Functionality disabled as per request.
-        alert('AI 功能当前已禁用。');
-    },
-
-    handleReportSubmit(e) {
-        e.preventDefault();
-        const content = document.getElementById('report-content').value;
-        if (!content.trim()) {
-            alert('日报内容不能为空。');
-            return;
-        }
-        const newReport = {
-            reportId: `report_${Date.now()}`,
-            employeeId: AppState.currentUser.userId,
-            reportDate: new Date().toISOString().split('T')[0],
-            content: content.trim()
-        };
-        AppState.daily_reports.push(newReport);
-        UI.hideModal();
-        UI.renderDailyReport(document.getElementById('app'));
-        alert('日报提交成功！');
-    },
-
-    getAnalysisData(days) {
-        const isManager = ['prod_manager', 'art_lead'].includes(AppState.currentUser.role);
-        const currentUserId = AppState.currentUser.userId;
-        const startDate = getPastDate(days);
-        
-        const trendLabels = [];
-        const trendDataMap = new Map();
-        for (let i = days - 1; i >= 0; i--) {
-            const d = getPastDate(i);
-            const label = `${d.getMonth() + 1}/${d.getDate()}`;
-            trendLabels.push(label);
-            trendDataMap.set(label, { completedOrders: 0, detailPages: 0, imageCounts: 0 });
-        }
-
-        const categoryDataMap = new Map();
-
-        const relevantLogs = isManager 
-            ? AppState.performance_logs 
-            : AppState.performance_logs.filter(log => log.employeeId === currentUserId);
-        
-        const relevantCompletedOrders = AppState.work_orders.filter(order => {
-            if (order.status !== 'completed' || new Date(order.completedAt) < startDate) {
-                return false;
-            }
-            if (isManager) return true;
-            return AppState.tasks.some(task => task.orderId === order.orderId && task.assigneeId === currentUserId);
-        });
-
-        relevantCompletedOrders.forEach(order => {
-            const trendLabel = `${new Date(order.completedAt).getMonth() + 1}/${new Date(order.completedAt).getDate()}`;
-            if (trendDataMap.has(trendLabel)) {
-                trendDataMap.get(trendLabel).completedOrders++;
-            }
-            const category = order.productCategory || '未分类';
-            categoryDataMap.set(category, (categoryDataMap.get(category) || 0) + 1);
-        });
-
-        relevantLogs.forEach(log => {
-            const logDate = new Date(log.logDate);
-             if (logDate >= startDate) {
-                 const label = `${logDate.getMonth() + 1}/${logDate.getDate()}`;
-                 if (trendDataMap.has(label)) {
-                    trendDataMap.get(label).detailPages += log.detailCount;
-                    trendDataMap.get(label).imageCounts += log.imageCount;
-                }
-            }
-        });
-        
-        return {
-            trend: {
-                labels: trendLabels,
-                completedOrders: trendLabels.map(l => trendDataMap.get(l).completedOrders),
-                detailPages: trendLabels.map(l => trendDataMap.get(l).detailPages),
-                imageCounts: trendLabels.map(l => trendDataMap.get(l).imageCounts),
-            },
-            category: {
-                labels: Array.from(categoryDataMap.keys()),
-                data: Array.from(categoryDataMap.values()),
-            }
-        };
-    },
-
-    handleRoleChange() {
-        const roleSwitcher = document.getElementById('role-switcher');
-        const selectedRole = roleSwitcher.value;
-        const userMap = {
-            'sales': 'user_sales_wang',
-            'prod_manager': 'user_prod_zhao',
-            'art_lead': 'user_art_li',
-            'art_staff': 'user_art_zhang',
-            'render_staff': 'user_render_sun',
-            'kanban_supervisor': 'user_supervisor_zhou',
-            'hr': 'user_hr_chen'
-        };
-        AppState.currentUser = AppState.users[userMap[selectedRole]];
-        
-        sessionStorage.setItem('loggedInUserRole', selectedRole);
-
-        if (selectedRole === 'sales') {
-            AppState.currentPage = 'sales_dashboard';
-        } else if (selectedRole === 'kanban_supervisor') {
-            AppState.currentPage = 'supervisor_dashboard';
-        } else if (selectedRole === 'hr') {
-            AppState.currentPage = 'employee_management';
-        } else {
-            AppState.currentPage = 'dashboard';
-        }
-        
-        document.getElementById('user-info').innerHTML = `
-            <div class="flex items-center gap-3">
-                ${Helpers.getAvatar(AppState.currentUser)}
-                <div>
-                    <p class="font-semibold text-sm text-slate-800">${AppState.currentUser.name}</p>
-                    <p class="text-xs text-slate-500 capitalize">${AppState.currentUser.role.replace('_', ' ')}</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <button id="edit-profile-btn" class="text-slate-500 hover:text-indigo-600" title="个人中心">
-                    <i data-lucide="settings-2" class="w-4 h-4"></i>
-                </button>
-                <button id="logout-btn" class="text-slate-500 hover:text-red-600" title="退出登录">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                </button>
-            </div>
-        `;
-
-        lucide.createIcons();
-        this.renderPage();
-    },
-
-    renderPage() {
-        UI.renderPage();
-    },
-
-    handleNavClick(e) {
-        e.preventDefault();
-        const link = e.target.closest('a[data-page]');
-        if (link && link.dataset.page !== AppState.currentPage) {
-            App.navigateTo(link.dataset.page);
-        }
-    },
-
-    toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-    },
-
-    getDepartmentalData(departmentIds, currentUser) {
-        const result = {};
-
-        departmentIds.forEach(deptId => {
-            result[deptId] = {
-                name: AppState.departments[deptId].name,
-                inProgressCount: 0,
-                members: []
-            };
-            
-            let members;
-            if (currentUser.role === 'kanban_supervisor') {
-                members = Object.values(AppState.users).filter(u => u.departmentId === deptId && (u.role.endsWith('_staff') || u.role.endsWith('_lead')));
-            } else { // Team lead view
-                members = Object.values(AppState.users).filter(u => u.departmentId === deptId && u.role.endsWith('_staff'));
-            }
-            
-            members.forEach(member => {
-                const memberTasks = AppState.tasks.filter(t => t.assigneeId === member.userId);
-                const inProgressCount = memberTasks.filter(t => t.status === 'in_progress').length;
-                const completedTasks = memberTasks.filter(t => t.status === 'completed');
-                
-                result[deptId].inProgressCount += inProgressCount;
-
-                const logs = AppState.performance_logs.filter(l => l.employeeId === member.userId);
-                const totalHours = logs.reduce((sum, log) => sum + log.workHours, 0);
-                
-                result[deptId].members.push({
-                    ...member,
-                    inProgressCount: inProgressCount,
-                    completedCount: completedTasks.length,
-                    avgHours: logs.length > 0 ? totalHours / logs.length : 0
-                });
-            });
-        });
-
-        return result;
-    },
-
-    async submitDailyReport(content) {
-        if (!content.trim()) {
-            alert('日报内容不能为空。');
-            return;
-        }
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        const newReport = {
-            reportId: 'rep' + (AppState.daily_reports.length + 1),
-            employeeId: AppState.currentUser.userId,
-            reportDate: new Date().toISOString(),
-            content: content.trim()
-        };
-        AppState.daily_reports.push(newReport);
-        
-        // We don't need to manually re-render, the note gets updated in place.
-    },
-
-    async handleLoginForm(e) {
-        // ... existing code ...
-    },
-
-    handleEmployeeFormSubmit(e) {
-        e.preventDefault();
-        const form = e.target;
-        const userId = form.dataset.userId;
-        const isNew = !userId;
-
-        const newUserId = isNew ? `user_${Date.now()}` : userId;
-        
-        const userData = {
-            userId: newUserId,
-            name: form.elements.name.value,
-            gender: form.elements.gender.value,
-            email: form.elements.email.value,
-            phone: form.elements.phone.value,
-            birth_date: form.elements.birth_date.value,
-            hire_date: form.elements.hire_date.value,
-            departmentId: form.elements.departmentId.value,
-            department: AppState.departments[form.elements.departmentId.value]?.name,
-            positionId: form.elements.positionId.value,
-            position: AppState.positions[form.elements.positionId.value]?.name,
-            manager_id: form.elements.manager_id.value,
-            base_salary: parseFloat(form.elements.base_salary.value),
-            performance_salary: parseFloat(form.elements.performance_salary.value) || 0,
-            is_probation: form.elements.is_probation.checked,
-            status: form.elements.status.value,
-            address: {
-                province: form.elements.province.value,
-                city: form.elements.city.value,
-                district: form.elements.district.value,
-                street: form.elements.street_address.value
-            },
-            emergency_contact: {
-                name: form.elements.emergency_contact_name.value,
-                phone: form.elements.emergency_contact_phone.value
-            },
-            education: form.elements.education.value,
-            university: form.elements.university.value,
-            major: form.elements.major.value,
-            graduation_date: form.elements.graduation_date.value,
-            id_number: form.elements.id_number.value,
-            nationality: form.elements.nationality.value,
-            marital_status: form.elements.marital_status.value,
-            bank_account: form.elements.bank_account.value,
-            // Fields not in the form but need to be preserved or initialized
-            role: isNew ? 'engineer' : AppState.users[userId].role, // default role
-            avatar: isNew ? `https://i.pravatar.cc/150?u=${newUserId}` : AppState.users[userId].avatar,
-            password: isNew ? 'password123' : AppState.users[userId].password,
-            created_at: isNew ? new Date().toISOString() : AppState.users[userId].created_at,
-            updated_at: new Date().toISOString(),
-            // These performance fields are now on the form
-            work_performance_score: parseFloat(form.elements.work_performance_score.value) || 0,
-            attendance_performance_score: parseFloat(form.elements.attendance_performance_score.value) || 0,
-        };
-
-        AppState.users[newUserId] = userData;
-        
-        UI.hideModal();
-        if (AppState.currentPage === 'employee_management') {
-            this.navigateTo('employee_management');
-        } else {
-            // If editing from another page, e.g. personnel file, refresh that
-            this.navigateTo(AppState.currentPage);
-        }
-    },
-
-    handlePersonnelFileFormSubmit(e) {
-        e.preventDefault();
-        const form = e.target;
-        const userId = form.dataset.userId;
-        if (!userId) return;
-
-        const user = AppState.users[userId];
-        user.contractInfo = form.elements.contractInfo.value;
-        user.salaryRecords = form.elements.salaryRecords.value;
-        user.performanceReviews = form.elements.performanceReviews.value;
-
-        UI.hideModal();
-        
-        // Re-render the list to be safe, though no new data is displayed in the table itself.
-        UI._renderPersonnelFileList(Object.values(AppState.users));
-    },
-    
-    navigateTo(page) {
-        AppState.currentPage = page;
-        this.renderPage();
-    },
-
-    toggleDesktopSidebar() {
-        const body = document.body;
-        const icon = document.querySelector('#desktop-sidebar-toggle i');
-        body.classList.toggle('sidebar-collapsed');
-
-        if (body.classList.contains('sidebar-collapsed')) {
-            icon.setAttribute('data-lucide', 'panel-right-close');
-        } else {
-            icon.setAttribute('data-lucide', 'panel-left-close');
-        }
-        lucide.createIcons();
-    },
-
-    handleDepartmentFormSubmit(e) {
-        e.preventDefault();
-        const form = e.target;
-        const departmentName = form.elements.departmentName.value;
-
-        if (departmentName) {
-            const newDepartmentId = `dept_${departmentName.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`;
-            AppState.departments[newDepartmentId] = {
-                departmentId: newDepartmentId,
-                name: departmentName
-            };
-            UI.hideModal();
-            this.navigateTo('department_management');
-        }
-    },
-
-    handleDeleteDepartment(departmentId) {
-        if (AppState.departments[departmentId]) {
-            delete AppState.departments[departmentId];
-            this.navigateTo('department_management');
-        }
-    },
-
-    handleDeletePosition(positionId) {
-        if (AppState.positions[positionId]) {
-            delete AppState.positions[positionId];
-            this.navigateTo('position_management');
-        }
-    },
-
-    handlePositionFormSubmit(e) {
-        e.preventDefault();
-        const form = e.target;
-        const positionName = form.elements.positionName.value;
-        const departmentId = form.elements.departmentId.value;
-
-        if (positionName && departmentId) {
-            const newPositionId = `pos_${positionName.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`;
-            AppState.positions[newPositionId] = {
-                positionId: newPositionId,
-                name: positionName,
-                departmentId: departmentId
-            };
-            UI.hideModal();
-            this.navigateTo('position_management');
-        }
-    },
-
-    handleProgressUpdateWithComment(e) {
-        e.preventDefault();
-        const form = e.target;
-        const orderId = form.dataset.orderId;
-        const oldProgress = form.dataset.oldProgress;
-        const newProgress = parseInt(form.dataset.newProgress);
-        const comment = form.querySelector('#progress-comment').value;
-
-        // 1. Update order progress
-        const order = AppState.work_orders.find(o => o.orderId === orderId);
-        if (order) {
-            order.progress = newProgress;
-            if (order.progress === 100) {
-                order.status = 'completed';
-                order.completedAt = new Date();
-            } else {
-                 order.status = 'in_progress';
-                 order.completedAt = null;
-            }
-        }
-
-        // 2. Create new activity
-        if (comment) {
-            const newActivity = {
-                activityId: `act_${Date.now()}`,
-                orderId: orderId,
-                userId: AppState.currentUser.userId,
-                type: 'UPDATE_PROGRESS',
-                content: `将进度从 ${oldProgress}% 更新至 <strong>${newProgress}%</strong>: <span class="text-slate-800">${comment}</span>`,
-                timestamp: new Date()
-            };
-            AppState.activities.push(newActivity);
-        }
-
-        // 3. Close modal and re-render everything
-        UI.hideModal();
-        UI.renderPage(); 
-        UI.renderOrderDetailsPanel(orderId);
-    },
-
-    toggleDesktopSidebar() {
-        const body = document.body;
-        const icon = document.querySelector('#desktop-sidebar-toggle i');
-        body.classList.toggle('sidebar-collapsed');
-
-        if (body.classList.contains('sidebar-collapsed')) {
-            icon.setAttribute('data-lucide', 'panel-right-close');
-        } else {
-            icon.setAttribute('data-lucide', 'panel-left-close');
-        }
-        lucide.createIcons();
-    },
-
-    updateTicketStatus(ticketId, newStatus, comment) {
-        const ticket = AppState.work_orders.find(o => o.orderId === ticketId);
-        if (!ticket) return;
-
-        const oldStatusKey = ticket.followUpStatus;
-        ticket.followUpStatus = newStatus;
-
-        const statusMap = {
-            just_started: '刚开始跟进',
-            following_up: '跟进中',
-            about_to_close: '即将成交',
-            closed: '已成交',
-        };
-
-        this.addComment(ticketId, comment, AppState.currentUser.userId, true);
-        this.addActivity(ticketId, AppState.currentUser.userId, 'STATUS_CHANGE', 
-            `将状态从 ${statusMap[oldStatusKey]} 更新为 ${statusMap[newStatus]}`, 
-            { oldStatus: statusMap[oldStatusKey], newStatus: statusMap[newStatus], comment: comment }
-        );
-
-        UI.renderPage(); 
-        
-        setTimeout(() => {
-            const row = document.querySelector(`.ticket-row[data-ticket-id="${ticketId}"]`);
-            if (row) {
-                 row.classList.add('bg-indigo-50');
-                 this.renderTicketDetailsPanel(ticketId);
-            }
-        }, 100);
-
-        if (newStatus === 'closed') {
-            setTimeout(() => UI.renderContractFormModal(), 400);
-        }
-    },
-    
-    addComment(ticketId, text, userId, isStatusChange = false) {
-        if (!AppState.comments[ticketId]) {
-            AppState.comments[ticketId] = [];
-        }
-        const comment = {
-            commentId: `comment_${Date.now()}`,
-            text: text,
-            userId: userId,
-            timestamp: new Date().toISOString()
-        };
-        AppState.comments[ticketId].unshift(comment);
-
-        if (!isStatusChange) {
-            const ticket = AppState.work_orders.find(t => t.orderId === ticketId);
-            this.addActivity(ticketId, userId, 'COMMENT', `在 <strong>${ticket.orderName}</strong> 中发表了评论`, { comment: text });
-        }
-    },
-
-    addActivity(orderId, userId, type, content, details = {}) {
-        const activity = {
-            activityId: `act_${Date.now()}`,
-            orderId: orderId,
-            userId: userId,
-            type: type,
-            content: content,
-            details: details,
-            timestamp: new Date().toISOString()
-        };
-        AppState.activities.unshift(activity);
-    },
-
     renderFollowUpRecordModal(ticketId) {
         const ticket = AppState.work_orders.find(o => o.orderId === ticketId);
         if (!ticket) return;
@@ -3136,7 +2742,7 @@ const App = {
         const currentDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
 
         const content = `
-            <form id="follow-up-record-form">
+            <form id="follow-up-record-form" data-ticket-id="${ticketId}">
                 <div class="space-y-5">
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
@@ -3211,71 +2817,155 @@ const App = {
                 const formattedTime = new Date(timeValue).toLocaleString('zh-CN');
                 const activityContent = `将状态更新为 <strong>${statusText}</strong>：${contentValue}`;
                 
-                this.addActivity(ticketId, AppState.currentUser.userId, 'FOLLOW_UP', activityContent, {
+                App.addActivity(ticketId, AppState.currentUser.userId, 'FOLLOW_UP', activityContent, {
                     status: statusValue,
                     content: contentValue,
                     timestamp: new Date(timeValue)
                 });
 
                 // 重新渲染
-                this.renderClientFollowUps(document.getElementById('app'));
+                UI.renderClientFollowUps(document.getElementById('app'));
                 this.hideModal();
             }
         });
     },
 };
 
-document.addEventListener('DOMContentLoaded', async () => {
-    // This script runs on index.html, which contains the main app view.
-    // The login page (login.html) has its own, separate script.
-    if (document.getElementById('app-view')) {
-        lucide.createIcons();
-        App.init();
-    }
+// --- 事件处理和逻辑模块 ---
+const App = {
+    init() {
+        UI.init();
+        
+        const loggedInRole = sessionStorage.getItem('loggedInUserRole');
+        const roleSwitcher = document.getElementById('role-switcher');
+        if (roleSwitcher && loggedInRole) {
+            roleSwitcher.value = loggedInRole;
+        }
 
-    // Fetch and prepare location data
-    try {
-        // In a real app, this would be an API call. Here we simulate it.
-        const locationData = [
-            {
-                "province": "北京市",
-                "citys": [
-                  {
-                    "city": "北京市",
-                    "areas": [
-                      { "area": "东城区" }, { "area": "西城区" }, { "area": "朝阳区" }, { "area": "丰台区" }, { "area": "石景山区" }, { "area": "海淀区" }, { "area": "门头沟区" }, { "area": "房山区" }, { "area": "通州区" }, { "area": "顺义区" }, { "area": "昌平区" }, { "area": "大兴区" }, { "area": "怀柔区" }, { "area": "平谷区" }, { "area": "密云区" }, { "area": "延庆区" }
-                    ]
-                  }
-                ]
-              },
-              {
-                "province": "天津市",
-                "citys": [
-                  {
-                    "city": "天津市",
-                    "areas": [
-                      { "area": "和平区" }, { "area": "河东区" }, { "area": "河西区" }, { "area": "南开区" }, { "area": "河北区" }, { "area": "红桥区" }, { "area": "东丽区" }, { "area": "西青区" }, { "area": "津南区" }, { "area": "北辰区" }, { "area": "武清区" }, { "area": "宝坻区" }, { "area": "滨海新区" }, { "area": "宁河区" }, { "area": "静海区" }, { "area": "蓟州区" }
-                    ]
-                  }
-                ]
-              },
-              {
-                "province": "河北省",
-                "citys": [
-                  {
-                    "city": "石家庄市",
-                    "areas": [
-                      { "area": "长安区" }, { "area": "桥西区" }, { "area": "新华区" }, { "area": "井陉矿区" }, { "area": "裕华区" }, { "area": "藁城区" }, { "area": "鹿泉区" }, { "area": "栾城区" }, { "area": "井陉县" }, { "area": "正定县" }, { "area": "行唐县" }, { "area": "灵寿县" }
-                    ]
-                  }
-                ]
+        this.setupEventListeners();
+        this.handleRoleChange();
+    },
+
+    setupEventListeners() {
+        const roleSwitcher = document.getElementById('role-switcher');
+        const sidebarNav = document.getElementById('sidebar-nav');
+        
+        if (roleSwitcher) {
+            roleSwitcher.addEventListener('change', () => this.handleRoleChange());
+        }
+        
+        if (sidebarNav) {
+            sidebarNav.addEventListener('click', (e) => this.handleNavClick(e));
+        }
+        
+        // 添加登出按钮的点击事件
+        document.body.addEventListener('click', (e) => {
+            const logoutBtn = e.target.closest('#logout-btn');
+            if (logoutBtn) {
+                // 清除会话并返回登录页面
+                sessionStorage.removeItem('loggedInUserRole');
+                window.location.href = 'login.html';
             }
-        ];
-        AppState.locations = locationData;
-    } catch (error) {
-        console.error("无法加载地区数据:", error);
-        AppState.locations = {}; // Fallback
-    }
+        });
+    },
 
-    // window.App = App;
+    handleRoleChange() {
+        const roleSwitcher = document.getElementById('role-switcher');
+        const role = roleSwitcher.value;
+        const userMap = {
+            'sales': 'user_sales_wang',
+            'prod_manager': 'user_prod_zhao',
+            'art_lead': 'user_art_li',
+            'art_staff': 'user_art_zhang',
+            'render_staff': 'user_render_sun',
+            'kanban_supervisor': 'user_supervisor_zhou',
+            'hr': 'user_hr_chen'
+        };
+        const userId = userMap[role];
+        AppState.currentUser = AppState.users[userId];
+        
+        sessionStorage.setItem('loggedInUserRole', role);
+
+        document.getElementById('user-info').innerHTML = `
+            <div class="flex items-center gap-3">
+                ${Helpers.getAvatar(AppState.currentUser)}
+                <div>
+                    <p class="font-semibold text-sm text-slate-800">${AppState.currentUser.name}</p>
+                    <p class="text-xs text-slate-500 capitalize">${AppState.currentUser.role.replace('_', ' ')}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                 <button id="logout-btn" class="text-slate-500 hover:text-red-600" title="退出登录">
+                     <i data-lucide="log-out" class="w-4 h-4"></i>
+                 </button>
+             </div>
+        `;
+        
+        // 确保AppState.userRoles存在，并为不同角色设置默认页面
+        if (!AppState.userRoles) {
+            AppState.userRoles = {
+                'sales': { defaultPage: 'client_followups' },
+                'prod_manager': { defaultPage: 'dashboard' },
+                'art_lead': { defaultPage: 'team' },
+                'art_staff': { defaultPage: 'my_tasks' },
+                'render_staff': { defaultPage: 'my_tasks' },
+                'kanban_supervisor': { defaultPage: 'analysis' },
+                'hr': { defaultPage: 'hr_management' }
+            };
+        }
+        
+        const defaultPage = AppState.userRoles[role]?.defaultPage || 'dashboard';
+        this.navigateTo(defaultPage);
+    },
+    
+    handleNavClick(e) {
+        e.preventDefault();
+        const link = e.target.closest('a[data-page]');
+        if (link && link.dataset.page !== AppState.currentPage) {
+            this.navigateTo(link.dataset.page);
+        }
+    },
+
+    navigateTo(page) {
+        AppState.currentPage = page;
+        UI.renderPage();
+    },
+    
+    addActivity(orderId, userId, activityType, content, metadata = {}) {
+        // 确保活动数组已初始化
+        if (!AppState.activities) {
+            AppState.activities = [];
+        }
+        
+        // 创建新的活动记录
+        const activityId = `activity_${Date.now()}`;
+        const newActivity = {
+            activityId,
+            orderId,
+            userId,
+            type: activityType,
+            content,
+            timestamp: metadata.timestamp || new Date(),
+            metadata
+        };
+        
+        // 添加到活动列表
+        AppState.activities.unshift(newActivity);
+        
+        // 如果是工单状态变更，更新工单
+        if (activityType === 'FOLLOW_UP' && metadata.status) {
+            const order = AppState.work_orders.find(o => o.orderId === orderId);
+            if (order) {
+                order.lastActivity = new Date();
+                order.lastActivityContent = content;
+            }
+        }
+        
+        return newActivity;
+    }
+};
+
+// --- App Initialization ---
+document.addEventListener('DOMContentLoaded', () => {
+    App.init();
 });
