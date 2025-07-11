@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Typewriter from '../components/Typewriter'
 import {login} from '../services/authService'
 import '../index.css';
+import { toast } from 'react-toastify';
 
 function LoginPage() {
   console.log('成功进入LoginPage');
@@ -19,8 +20,10 @@ function LoginPage() {
     const result = await login(email, password);
     if (result.success) {
       navigate('/', { replace: true });
+      toast.success('登录成功！');
     } else {
       alert(result.error || '登录失败，请检查账号和密码');
+      toast.error('登录失败，请检查账号和密码');
     }
   };
 

@@ -13,7 +13,7 @@ from backend.schemas.employee import EmployeeCreate, EmployeeInfo
 # JWT相关配置
 SECRET_KEY = "your-secret-key"  # 在生产环境中应该使用环境变量
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 5  # 五分钟
+ACCESS_TOKEN_EXPIRE_MINUTES = 60*24  # 二十四小时
 
 class EmployeeService:
     #验证密码

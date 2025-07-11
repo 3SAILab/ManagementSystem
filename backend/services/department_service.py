@@ -37,12 +37,12 @@ class DepartmentService:
     
     #删除部门
     @staticmethod
-    async def delete_department(db:AsyncSession,id:str):
+    async def delete_department(db:AsyncSession,id:int):
         # 1. 查询部门是否存在
         result = await db.execute(select(Department).where(Department.id == id))
         department = result.scalars().first()
-
         if not department:
+            print(f"部门不存在，部门ID: {id},部门名称: {department.name}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="部门不存在"
@@ -51,7 +51,7 @@ class DepartmentService:
         try:
             await db.delete(department)
             await db.commit()
-            print(f"删除成功，部门ID: {id}")
+            print(f"删除成功，部门ID: {department.id},部门名称: {department.name}")
             return {"message": "部门删除成功"}
             
         except Exception as e:

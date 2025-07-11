@@ -17,9 +17,7 @@ export const getDepartments = async () => {
   
       const data = response.data;
   
-  
-      toast.success('获取部门成功！');
-      return { success: true, data };
+        return { success: true, data };
       
     } catch (err) {
       console.error('获取部门错误:', err.response.data.detail);
@@ -55,15 +53,15 @@ export const addDepartment = async (name) => {
 
 //删除部门
 export const deleteDepartment = async (id) => {
-  const token = localStorage.getItem('access_token')
+  console.log('准备删除部门:', id);
   try {
-    const response = await api.delete(
-      `/delete_department/${id}`,
-      { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } }
-    );
+    // 将 id 放在请求体中，匹配后端 Body(..., embed=True) 参数
+    const response = await api.delete('/delete_department', {
+      data: { id }
+    });
     return { success: true, data: response.data };
   } catch (err) {
-    console.error('删除部门错误:', err.response.data.detail);
-    return { success: false, error: err.response.data.detail };
+    console.error('删除部门错误:', err.response?.data?.detail || err.message);
+    return { success: false, error: err.response?.data?.detail || err.message };
   }
 };

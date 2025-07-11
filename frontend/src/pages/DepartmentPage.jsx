@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getDepartments, addDepartment, deleteDepartment } from '../services/departmentService';
 import AddDepartmentModal from '../components/AddDepartmentModal';
+import { toast } from 'react-toastify';
 
 export default function DepartmentPage() {
   const [departments, setDepartments] = useState([]);
@@ -31,6 +32,7 @@ export default function DepartmentPage() {
       if (res.success) {
         setDepartments(res.data); // 更新列表
         setIsModalOpen(false);    // 关闭模态框
+        toast.success('新增部门成功！');
       } else {
         alert(res.error || '新增失败，请重试');
       }
@@ -45,10 +47,11 @@ export default function DepartmentPage() {
     if (!window.confirm(`确定要删除 "${department.name}" 吗？`)) return;
 
     try {
-      await deleteDepartment(department.departmentId); // 假设你有这个方法
+      await deleteDepartment(department.id);
       setDepartments((prev) =>
-        prev.filter((dept) => dept.departmentId !== department.departmentId)
+        prev.filter((dept) => dept.id !== department.id)
       );
+      toast.success('删除部门成功！');
     } catch (error) {
       alert('删除失败，请重试');
       console.error('删除部门失败:', error);

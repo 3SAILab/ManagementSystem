@@ -44,7 +44,7 @@ async def get_departments(
 #删除部门
 @router.delete("/delete_department", response_model=api_response, status_code=200)
 async def delete_department(
-    id: int,
+    id: int = Body(..., embed=True),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
