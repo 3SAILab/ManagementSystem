@@ -2111,6 +2111,7 @@ const UI = {
 
         const assignedUser = AppState.users[ticket.leadId] || { name: 'Unassigned', email: '' };
         const activities = AppState.activities.filter(a => a.orderId === ticketId).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+        const client = ticket.clientId ? AppState.clients[ticket.clientId] : null;
         
         panel.innerHTML = `
             <div class="bg-white rounded-xl shadow-sm border h-full flex flex-col">
@@ -2128,9 +2129,11 @@ const UI = {
                         <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Recent Activity</h3>
                         <div class="space-y-4">
                             <div class="bg-slate-50 p-3 rounded-lg">
-                                <p class="text-xs font-bold text-slate-600 mb-1">System Log</p>
-                                <p class="text-sm text-red-600">Error rate increased to 15% on payment-api-prod-3</p>
-                                <p class="text-xs text-slate-400 mt-1">2 hours ago</p>
+                                <div class="text-sm">
+                                    <div class="font-semibold text-slate-700 mb-1">联系人信息</div>
+                                    <div>联系人：${client ? client.contactName : '未知'}</div>
+                                    <div>电话：${client ? client.contactPhone : '未知'}</div>
+                                </div>
                             </div>
 
                             ${activities.length > 0 ? activities.map(act => `
