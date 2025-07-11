@@ -447,6 +447,12 @@ const UI = {
                 pageTitleEl.textContent = isManager ? '团队数据分析' : '我的数据分析';
                 this.renderAnalysis(appContentEl);
                 break;
+                
+            case 'order_board':
+                const order = AppState.work_orders.find(o => o.orderId === AppState.selectedOrderId);
+                pageTitleEl.textContent = order ? `工单详情：${order.orderName}` : '工单详情';
+                this.renderOrderBoard(appContentEl);
+                break;
         }
         lucide.createIcons();
         
@@ -766,17 +772,22 @@ const UI = {
                 <table class="w-full text-left">
                    <thead class="bg-slate-50">
                        <tr>
-                           <th class="p-4 text-sm font-semibold text-slate-600">工单名称</th>
-                           <th class="p-4 text-sm font-semibold text-slate-600">客户</th>
+                           <th class="p-4 text-sm font-semibold text-slate-600">客户名称</th>
                            <th class="p-4 text-sm font-semibold text-slate-600">合同金额</th>
-                           <th class="p-4 text-sm font-semibold text-slate-600">完成日期</th>
-                           <th class="p-4 text-sm font-semibold text-slate-600">尾款状态</th>
+                           <th class="p-4 text-sm font-semibold text-slate-600">接入日期</th>
+                           <th class="p-4 text-sm font-semibold text-slate-600">已付金额</th>
+                           <th class="p-4 text-sm font-semibold text-slate-600">提点</th>
+                           <th class="p-4 text-sm font-semibold text-slate-600">状态</th>
                        </tr>
                    </thead>
                    <tbody class="divide-y divide-slate-200">
                    ${myOrders.filter(o => o.status === 'completed').map(order => {
                        const client = AppState.clients[order.clientId];
                        const paymentStatus = order.finalPaymentStatus;
+                       // 计算已付金额和提点
+                       const paidAmount = paymentStatus === '已结算' ? order.contractAmount : Math.round(order.contractAmount * 0.7);
+                       const commission = Math.round(order.contractAmount * 0.05);
+                       
                        let statusBadge = '';
                         if (paymentStatus === '已结算') {
                             statusBadge = 'status-badge-green';
@@ -786,15 +797,16 @@ const UI = {
                             statusBadge = 'status-badge-gray';
                         }
                        return `
-                        <tr class="hover:bg-slate-50">
-                           <td class="p-4 font-medium text-slate-800">${order.orderName}</td>
-                           <td class="p-4 text-slate-600"><a href="#" class="text-indigo-600 hover:underline view-client-details" data-client-id="${client.clientId}">${client.name}</a></td>
+                        <tr class="hover:bg-slate-50 cursor-pointer view-order-board" data-order-id="${order.orderId}">
+                           <td class="p-4 font-medium text-slate-800">${client.name}</td>
                            <td class="p-4 text-slate-600">¥${order.contractAmount.toLocaleString()}</td>
-                           <td class="p-4 text-slate-600">${new Date(order.completedAt).toLocaleDateString()}</td>
+                           <td class="p-4 text-slate-600">${new Date(order.startDate).toLocaleDateString()}</td>
+                           <td class="p-4 text-slate-600">¥${paidAmount.toLocaleString()}</td>
+                           <td class="p-4 text-slate-600">¥${commission.toLocaleString()}</td>
                            <td class="p-4"><span class="status-badge ${statusBadge}">${paymentStatus}</span></td>
-                       </tr>
+                        </tr>
                        `
-                   }).join('') || `<tr><td colspan="5" class="p-4 text-center text-slate-500">暂无已完成的订单</td></tr>`}
+                   }).join('') || `<tr><td colspan="6" class="p-4 text-center text-slate-500">暂无已完成的订单</td></tr>`}
                    </tbody>
                 </table>
              </div>
@@ -2749,22 +2761,15 @@ const UI = {
                             <div class="text-lg font-medium text-slate-800">${client.name}</div>
                             <div class="text-sm text-slate-500">${ticket.orderName}</div>
                         </div>
-                        <div class="flex gap-4 items-center mb-4">
-                            <div class="text-sm text-slate-600">当前状态：</div>
-                            <span class="px-3 py-1 text-xs font-semibold rounded-full ${statusInfo.classes}">
-                                ${statusInfo.text}
-                            </span>
-                        </div>
                     </div>
-                    
+
                     <div class="space-y-2">
-                        <label for="follow-up-status" class="block text-sm font-medium text-slate-700">更新状态</label>
-                        <select id="follow-up-status" name="follow-up-status" class="form-select block w-full mt-1 rounded-md">
-                            ${statusOptions.map(option => `
-                                <option value="${option.value}" ${option.value === currentStatus ? 'selected' : ''}>
-                                    ${option.text}
-                                </option>
-                            `).join('')}
+                        <label for="follow-up-status" class="block text-sm font-medium text-slate-700">跟进状态</label>
+                        <select id="follow-up-status" name="follow-up-status" 
+                            class="form-select block w-full mt-1 rounded-md">
+                            ${statusOptions.map(option => 
+                                `<option value="${option.value}" ${currentStatus === option.value ? 'selected' : ''}>${option.text}</option>`
+                            ).join('')}
                         </select>
                     </div>
 
@@ -2829,6 +2834,185 @@ const UI = {
             }
         });
     },
+    
+    // 渲染销售订单看板
+    renderOrderBoard(container) {
+        const orderId = AppState.selectedOrderId;
+        if (!orderId) {
+            container.innerHTML = '<div class="p-6 text-center text-slate-500">未找到订单信息</div>';
+            return;
+        }
+        
+        const order = AppState.work_orders.find(o => o.orderId === orderId);
+        if (!order) {
+            container.innerHTML = '<div class="p-6 text-center text-slate-500">未找到订单信息</div>';
+            return;
+        }
+        
+        const client = AppState.clients[order.clientId];
+        const tasks = AppState.tasks.filter(t => t.orderId === orderId);
+        const activities = AppState.activities ? AppState.activities.filter(a => a.orderId === orderId) : [];
+        
+        // 计算提点
+        const commissionRate = 0.05; // 5%的提点率
+        const commission = order.contractAmount * commissionRate;
+        
+        // 已付金额
+        const paymentStatus = order.finalPaymentStatus;
+        const paidAmount = paymentStatus === '已结算' ? order.contractAmount : Math.round(order.contractAmount * 0.7);
+        
+        container.innerHTML = `
+            <div class="mb-6">
+                <button id="back-to-sales-dashboard" class="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span>返回销售看板</span>
+                </button>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-6">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">${order.orderName}</h2>
+                            <div class="text-slate-500 mt-1">客户：${client.name}</div>
+                        </div>
+                        <div class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-semibold">
+                            ${order.status === 'completed' ? '已完成' : order.status === 'in_progress' ? '进行中' : '待处理'}
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="flex flex-col">
+                            <span class="text-sm text-slate-500">合同金额</span>
+                            <span class="text-xl font-semibold text-slate-800">¥${order.contractAmount.toLocaleString()}</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-sm text-slate-500">已付金额</span>
+                            <span class="text-xl font-semibold text-slate-800">¥${paidAmount.toLocaleString()}</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-sm text-slate-500">提点金额</span>
+                            <span class="text-xl font-semibold text-green-600">¥${commission.toLocaleString()}</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-sm text-slate-500">接入日期</span>
+                            <span class="text-xl font-semibold text-slate-800">${new Date(order.startDate).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h3 class="font-semibold text-slate-700 mb-2">工单进度</h3>
+                        <div class="w-full bg-slate-200 rounded-full h-2.5 mb-1">
+                            <div class="bg-indigo-600 h-2.5 rounded-full" style="width: ${order.progress}%"></div>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-500">当前进度：${order.progress}%</span>
+                            <span class="text-slate-500">预计完成时间：${new Date(order.dueDate).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-semibold text-slate-700 mb-3">工单说明</h3>
+                        <p class="text-slate-600 bg-slate-50 p-4 rounded-lg">${order.description || '暂无工单说明'}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 任务列表 -->
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <h3 class="p-4 text-lg font-semibold text-slate-800 border-b">任务列表</h3>
+                    ${tasks.length > 0 ? `
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="p-4 text-sm font-semibold text-slate-600">任务内容</th>
+                                    <th class="p-4 text-sm font-semibold text-slate-600">负责人</th>
+                                    <th class="p-4 text-sm font-semibold text-slate-600">状态</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                ${tasks.map(task => {
+                                    const assignee = AppState.users[task.assigneeId];
+                                    const statusClass = task.status === 'completed' ? 'status-badge-green' : 'status-badge-yellow';
+                                    const statusText = task.status === 'completed' ? '已完成' : '进行中';
+                                    return `
+                                        <tr class="hover:bg-slate-50">
+                                            <td class="p-4 font-medium text-slate-800">${task.description}</td>
+                                            <td class="p-4">
+                                                ${assignee ? `
+                                                    <div class="flex items-center gap-2">
+                                                        ${Helpers.getAvatar(assignee)}
+                                                        <span class="text-slate-600">${assignee.name}</span>
+                                                    </div>
+                                                ` : '<span class="text-slate-400">未分配</span>'}
+                                            </td>
+                                            <td class="p-4">
+                                                <span class="status-badge ${statusClass}">${statusText}</span>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<div class="p-6 text-center text-slate-500">暂无任务</div>'}
+                </div>
+                
+                <!-- 活动记录 -->
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <div class="flex items-center justify-between p-4 border-b">
+                        <h3 class="text-lg font-semibold text-slate-800">活动记录</h3>
+                        <button id="add-follow-up-btn" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium flex items-center gap-1">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            添加跟进
+                        </button>
+                    </div>
+                    
+                    <div class="p-4">
+                        ${activities.length > 0 ? `
+                            <div class="space-y-4 max-h-[400px] overflow-y-auto">
+                                ${activities.map(activity => {
+                                    const user = AppState.users[activity.userId];
+                                    const time = new Date(activity.timestamp).toLocaleString();
+                                    return `
+                                        <div class="flex gap-3">
+                                            ${Helpers.getAvatar(user)}
+                                            <div class="flex-1">
+                                                <div class="flex justify-between mb-1">
+                                                    <div class="font-medium text-slate-800">${user.name}</div>
+                                                    <div class="text-xs text-slate-500">${time}</div>
+                                                </div>
+                                                <div class="text-sm text-slate-600">${activity.content}</div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : '<div class="text-center text-slate-500 py-4">暂无活动记录</div>'}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 添加事件监听
+        lucide.createIcons();
+        
+        // 返回销售看板按钮
+        const backBtn = document.getElementById('back-to-sales-dashboard');
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                App.navigateTo('sales_dashboard');
+            });
+        }
+        
+        // 添加跟进按钮
+        const addFollowUpBtn = document.getElementById('add-follow-up-btn');
+        if (addFollowUpBtn) {
+            addFollowUpBtn.addEventListener('click', () => {
+                this.renderFollowUpRecordModal(orderId);
+            });
+        }
+    },
 };
 
 // --- 事件处理和逻辑模块 ---
@@ -2865,6 +3049,17 @@ const App = {
                 // 清除会话并返回登录页面
                 sessionStorage.removeItem('loggedInUserRole');
                 window.location.href = 'login.html';
+            }
+            
+            // 处理订单看板导航
+            const orderBoardLink = e.target.closest('.view-order-board');
+            if (orderBoardLink) {
+                const orderId = orderBoardLink.dataset.orderId;
+                if (orderId) {
+                    this.navigateToOrderBoard(orderId);
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
             }
         });
     },
@@ -2928,6 +3123,16 @@ const App = {
 
     navigateTo(page) {
         AppState.currentPage = page;
+        UI.renderPage();
+    },
+    
+    // 导航到订单看板
+    navigateToOrderBoard(orderId) {
+        // 存储当前选中的订单ID
+        AppState.selectedOrderId = orderId;
+        // 导航到订单看板页面
+        AppState.currentPage = 'order_board';
+        // 渲染页面
         UI.renderPage();
     },
     
