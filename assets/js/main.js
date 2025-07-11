@@ -1,3 +1,4 @@
+alert('新的JS脚本已加载！');
 lucide.createIcons();
         
 // --- Typewriter Effect ---
@@ -73,9 +74,51 @@ const MOCK_DATA = {
         'user_hr_chen': { userId: 'user_hr_chen', name: '陈HR', role: 'hr', departmentId: 'dept_hr', initials: 'HR', email: 'chen.hr@example.com', gender: '女', dob: '1888-08-08', hireDate: '2019-01-01', supervisorId: null, onProbation: false, contractInfo: '标准劳动合同, 5年期', salaryRecords: '薪酬保密', performanceReviews: '人事工作处理得当, 员工关系良好', roleLevel: '普通员工', emergency_contact: { name: '陈先生', phone: '13800138007' } },
     },
     clients: {
-        'client_1': { clientId: 'client_1', name: '时尚潮流服饰', contactName: '陈经理', contactPhone: '13812345671', depositPaid: 2000 },
-        'client_2': { clientId: 'client_2', name: '智能家居生活馆', contactName: '李总', contactPhone: '13912345672', depositPaid: 5000 },
-        'client_3': { clientId: 'client_3', name: '美味零食铺', contactName: '张小姐', contactPhone: '13712345673', depositPaid: 300 },
+        'client_1': { 
+            clientId: 'client_1', 
+            name: '时尚潮流服饰', 
+            contactName: '陈经理', 
+            contactPhone: '13812345671', 
+            depositPaid: 2000,
+            customerSource: '线上',
+            customerSize: '中'
+        },
+        'client_2': { 
+            clientId: 'client_2', 
+            name: '智能家居生活馆', 
+            contactName: '李总', 
+            contactPhone: '13912345672', 
+            depositPaid: 5000,
+            customerSource: '线下',
+            customerSize: '大'
+        },
+        'client_3': { 
+            clientId: 'client_3', 
+            name: '美味零食铺', 
+            contactName: '张小姐', 
+            contactPhone: '13712345673', 
+            depositPaid: 300,
+            customerSource: '活动',
+            customerSize: '小'
+        },
+        'client_4': { 
+            clientId: 'client_4', 
+            name: '电子产品专营店', 
+            contactName: '王总', 
+            contactPhone: '13812345674', 
+            depositPaid: 8000,
+            customerSource: '线下',
+            customerSize: '大'
+        },
+        'client_5': { 
+            clientId: 'client_5', 
+            name: '健康食品商城', 
+            contactName: '赵经理', 
+            contactPhone: '13812345675', 
+            depositPaid: 1500,
+            customerSource: '线上',
+            customerSize: '中'
+        },
     },
     departments: {
         'dept_sales': { departmentId: 'dept_sales', name: '销售部' },
@@ -103,13 +146,14 @@ const MOCK_DATA = {
     ],
     product_categories: ['手机', '电风扇', '服装', '零食', '智能家居', '化妆品'],
     work_orders: [
-        { orderId: 'order_1', orderName: '夏季T恤新品主图', clientId: 'client_1', leadId: 'user_art_li', status: 'in_progress', type: 'non_shooting', needRendering: false, createdAt: getPastDate(1), createdBy: 'user_sales_wang', progress: 75, contractAmount: 5000, isTrial: false, startDate: getPastDate(1).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '服装', priority: 'Medium', dueDate: getPastDate(-5).toISOString().split('T')[0], description: '为夏季新款T恤制作一套完整的电商用主图，包括白底图、场景图和细节图。需要突出材质和设计特点。' },
-        { orderId: 'order_2', orderName: '智能音箱渲染图', clientId: 'client_2', leadId: 'user_render_sun', status: 'in_progress', type: 'non_shooting', needRendering: true, createdAt: getPastDate(2), createdBy: 'user_sales_wang', progress: 40, contractAmount: 12000, isTrial: false, startDate: getPastDate(2).toISOString().split('T')[0], hasPhysicalObject: false, productCategory: '智能家居', priority: 'High', dueDate: getPastDate(-10).toISOString().split('T')[0], description: '为新款智能音箱提供三张不同角度和光线环境下的高精度渲染图，用于产品发布会。' },
-        { orderId: 'order_3', orderName: '薯片包装拍摄', clientId: 'client_3', leadId: null, status: 'pending', type: 'shooting', needRendering: false, createdAt: getPastDate(3), createdBy: 'user_sales_wang', progress: 10, contractAmount: 800, isTrial: true, startDate: getPastDate(3).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '零食', priority: 'Low', dueDate: getPastDate(-2).toISOString().split('T')[0], description: '拍摄一组用于社交媒体宣传的薯片包装图，要求色彩鲜艳，有食欲。' },
-        { orderId: 'order_4', orderName: '春季夹克详情页', clientId: 'client_1', leadId: 'user_art_li', status: 'completed', type: 'non_shooting', needRendering: false, createdAt: getPastDate(10), completedAt: getPastDate(7).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 4500, isTrial: false, startDate: getPastDate(10).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '服装', finalPaymentStatus: '已结算', priority: 'Medium', dueDate: getPastDate(-20).toISOString().split('T')[0], description: '设计制作春季新款夹克的电商详情页，包含模特图、细节图和尺码表。' },
-        { orderId: 'order_5', orderName: '运动鞋海报设计', clientId: 'client_1', leadId: 'user_art_li', status: 'completed', type: 'non_shooting', needRendering: false, createdAt: getPastDate(5), completedAt: getPastDate(2).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 3000, isTrial: false, startDate: getPastDate(5).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '服装', finalPaymentStatus: '待结算', priority: 'High', dueDate: getPastDate(-10).toISOString().split('T')[0], description: '设计一款突出科技感的运动鞋宣传海报。' },
-        { orderId: 'order_6', orderName: '新款手机渲染', clientId: 'client_2', leadId: 'user_render_sun', status: 'completed', type: 'non_shooting', needRendering: true, createdAt: getPastDate(8), completedAt: getPastDate(1).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 25000, isTrial: false, startDate: getPastDate(8).toISOString().split('T')[0], hasPhysicalObject: false, productCategory: '手机', finalPaymentStatus: '已结算', priority: 'High', dueDate: getPastDate(-15).toISOString().split('T')[0], description: '对新款手机进行全方位高精度渲染。' },
-        { orderId: 'order_7', orderName: '电风扇拍摄', clientId: 'client_2', leadId: 'user_art_li', status: 'completed', type: 'shooting', needRendering: false, createdAt: getPastDate(12), completedAt: getPastDate(9).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 1500, isTrial: false, startDate: getPastDate(12).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '电风扇', finalPaymentStatus: '待结算', priority: 'Low', dueDate: getPastDate(-22).toISOString().split('T')[0], description: '拍摄一组简约风格的电风扇产品图。' }
+        { orderId: 'order_1', orderName: '夏季T恤新品主图', clientId: 'client_1', leadId: 'user_art_li', status: 'in_progress', type: 'non_shooting', needRendering: false, createdAt: getPastDate(1), createdBy: 'user_sales_wang', progress: 75, contractAmount: 5000, isTrial: false, startDate: getPastDate(1).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '服装', priority: 'Medium', dueDate: getPastDate(-5).toISOString().split('T')[0], description: '为夏季新款T恤制作一套完整的电商用主图，包括白底图、场景图和细节图。需要突出材质和设计特点。', customerSource: '线上', customerSize: '中', followUpStatus: 'following_up' },
+        { orderId: 'order_2', orderName: '智能音箱渲染图', clientId: 'client_2', leadId: 'user_render_sun', status: 'in_progress', type: 'non_shooting', needRendering: true, createdAt: getPastDate(2), createdBy: 'user_sales_wang', progress: 40, contractAmount: 12000, isTrial: false, startDate: getPastDate(2).toISOString().split('T')[0], hasPhysicalObject: false, productCategory: '智能家居', priority: 'High', dueDate: getPastDate(-10).toISOString().split('T')[0], description: '为新款智能音箱提供三张不同角度和光线环境下的高精度渲染图，用于产品发布会。', customerSource: '线下', customerSize: '大', followUpStatus: 'about_to_close' },
+        { orderId: 'order_3', orderName: '薯片包装拍摄', clientId: 'client_3', leadId: null, status: 'pending', type: 'shooting', needRendering: false, createdAt: getPastDate(3), createdBy: 'user_sales_wang', progress: 10, contractAmount: 800, isTrial: true, startDate: getPastDate(3).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '零食', priority: 'Low', dueDate: getPastDate(-2).toISOString().split('T')[0], description: '拍摄一组用于社交媒体宣传的薯片包装图，要求色彩鲜艳，有食欲。', customerSource: '活动', customerSize: '小', followUpStatus: 'just_started' },
+        { orderId: 'order_4', orderName: '春季夹克详情页', clientId: 'client_1', leadId: 'user_art_li', status: 'completed', type: 'non_shooting', needRendering: false, createdAt: getPastDate(10), completedAt: getPastDate(7).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 4500, isTrial: false, startDate: getPastDate(10).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '服装', finalPaymentStatus: '已结算', priority: 'Medium', dueDate: getPastDate(-20).toISOString().split('T')[0], description: '设计制作春季新款夹克的电商详情页，包含模特图、细节图和尺码表。', customerSource: '线上', customerSize: '中', followUpStatus: 'closed' },
+        { orderId: 'order_5', orderName: '运动鞋海报设计', clientId: 'client_1', leadId: 'user_art_li', status: 'completed', type: 'non_shooting', needRendering: false, createdAt: getPastDate(5), completedAt: getPastDate(2).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 3000, isTrial: false, startDate: getPastDate(5).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '服装', finalPaymentStatus: '待结算', priority: 'High', dueDate: getPastDate(-10).toISOString().split('T')[0], description: '设计一款突出科技感的运动鞋宣传海报。', customerSource: '活动', customerSize: '中', followUpStatus: 'closed' },
+        { orderId: 'order_6', orderName: '新款手机渲染', clientId: 'client_2', leadId: 'user_render_sun', status: 'completed', type: 'non_shooting', needRendering: true, createdAt: getPastDate(8), completedAt: getPastDate(1).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 25000, isTrial: false, startDate: getPastDate(8).toISOString().split('T')[0], hasPhysicalObject: false, productCategory: '手机', finalPaymentStatus: '已结算', priority: 'High', dueDate: getPastDate(-15).toISOString().split('T')[0], description: '对新款手机进行全方位高精度渲染。', customerSource: '线下', customerSize: '大', followUpStatus: 'closed' },
+        { orderId: 'order_7', orderName: '电风扇拍摄', clientId: 'client_2', leadId: 'user_art_li', status: 'completed', type: 'shooting', needRendering: false, createdAt: getPastDate(12), completedAt: getPastDate(9).toISOString().split('T')[0], createdBy: 'user_sales_wang', progress: 100, contractAmount: 1500, isTrial: false, startDate: getPastDate(12).toISOString().split('T')[0], hasPhysicalObject: true, productCategory: '电风扇', finalPaymentStatus: '待结算', priority: 'Low', dueDate: getPastDate(-22).toISOString().split('T')[0], description: '拍摄一组简约风格的电风扇产品图。', customerSource: '线上', customerSize: '大', followUpStatus: 'closed' },
+        { orderId: 'order_8', orderName: '高端化妆品包装设计', clientId: 'client_4', leadId: 'user_art_li', status: 'cancelled', type: 'non_shooting', needRendering: false, createdAt: getPastDate(20), createdBy: 'user_sales_wang', progress: 0, contractAmount: 18000, isTrial: false, startDate: getPastDate(20).toISOString().split('T')[0], hasPhysicalObject: false, productCategory: '化妆品', priority: 'High', dueDate: getPastDate(-30).toISOString().split('T')[0], description: '客户已明确表示选择其他供应商。', customerSource: '线下', customerSize: '大', followUpStatus: 'customer_lost' }
     ],
     tasks: [
         { taskId: 'task_1', orderId: 'order_1', assigneeId: 'user_art_zhang', assignerId: 'user_art_li', departmentId: 'dept_art', status: 'in_progress', description: '制作3张白底主图' },
@@ -147,6 +191,10 @@ const AppState = {
     categoryChartInstance: null,
     teamChartInstance: null,
     teamChartState: { view: 'departments', departmentId: null },
+    filters: {
+        status: [],
+        source: [],
+    },
 };
 
 // --- 辅助函数 ---
@@ -1414,31 +1462,39 @@ const UI = {
         lucide.createIcons();
     },
     renderClientFollowUps(container) {
-        const { clients, users, work_orders, activities } = AppState;
+        const { users, work_orders, clients, filters } = AppState;
+
+        const followUpStatusMap = {
+            just_started: { text: '刚开始跟进', classes: 'bg-slate-100 text-slate-700' },
+            following_up: { text: '跟进中', classes: 'bg-blue-100 text-blue-800' },
+            about_to_close: { text: '即将成交', classes: 'bg-amber-100 text-amber-800' },
+            closed: { text: '已成交', classes: 'bg-green-100 text-green-800' },
+            customer_lost: { text: '客户流失', classes: 'bg-red-100 text-red-800' }
+        };
+
+        const customerSources = [...new Set(work_orders.map(o => o.customerSource))];
+
+        // 过滤工单
+        const filtered_orders = work_orders.filter(order => {
+            const statusMatch = filters.status.length === 0 || filters.status.includes(order.followUpStatus);
+            const sourceMatch = filters.source.length === 0 || filters.source.includes(order.customerSource);
+            return statusMatch && sourceMatch;
+        });
 
         // We'll treat work orders as "tickets" for this view, similar to the UI mock.
-        const tickets = work_orders.map(order => ({
+        const tickets = filtered_orders.map(order => ({
             id: order.orderId,
             name: order.orderName,
             createdAt: order.createdAt,
             assignedTo: users[order.leadId] || { name: '未分配', initials: '?' },
-            priority: order.priority, // High, Medium, Low
-            status: order.progress, // Percentage
+            priority: order.priority,
+            status: order.progress,
             client: clients[order.clientId],
-            activities: activities.filter(a => a.orderId === order.orderId)
+            productCategory: order.productCategory,
+            customerSource: order.customerSource,
+            customerSize: order.customerSize,
+            followUpStatus: order.followUpStatus,
         }));
-
-        const priorityMap = {
-            'High': { text: 'Critical', color: 'rgb(239 68 68)', bg: 'rgb(254 226 226)' },
-            'Medium': { text: 'High', color: 'rgb(234 179 8)', bg: 'rgb(254 249 195)' },
-            'Low': { text: 'Medium', color: 'rgb(59 130 246)', bg: 'rgb(219 234 254)' },
-        };
-        
-        const getStatusStyles = (progress) => {
-            if (progress >= 90) return { color: 'rgb(22 163 74)', icon: 'check-circle' };
-            if (progress >= 50) return { color: 'rgb(59 130 246)', icon: 'trending-up' };
-            return { color: 'rgb(249 115 22)', icon: 'loader' };
-        };
 
         const stats = {
             tagAccuracy: 87.2,
@@ -1448,60 +1504,43 @@ const UI = {
         };
 
         container.innerHTML = `
-            <div class="flex flex-col h-full bg-slate-50">
-                <!-- Header -->
-                <div class="flex-shrink-0 bg-slate-50 pt-1">
-                    <div class="flex justify-between items-center mb-4">
-                         <div>
-                            <h2 class="text-2xl font-bold text-slate-800">CRM Auto tagging</h2>
-                            <p class="text-sm text-slate-500">Track and resolve issues for automated customer tagging system</p>
-                         </div>
-                         <div class="flex items-center gap-2">
-                            <button class="bg-white border border-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors hover:bg-slate-50">
-                                <i data-lucide="upload-cloud" class="w-4 h-4"></i>Import
-                            </button>
-                            <button class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
-                                <i data-lucide="plus" class="w-4 h-4"></i>New ticket
-                            </button>
-                         </div>
-                    </div>
-
-                    <!-- Stats Cards -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                        <div class="bg-white p-5 rounded-xl shadow-sm border">
-                            <p class="text-sm text-slate-500 mb-1">Tag accuracy</p>
-                            <div class="flex items-baseline gap-2">
-                                <p class="text-3xl font-bold text-slate-800">${stats.tagAccuracy}%</p>
-                                <p class="text-sm font-semibold text-green-500 flex items-center"><i data-lucide="arrow-up" class="w-4 h-4"></i>2.1%</p>
+            <div class="flex flex-col h-full bg-slate-50 p-0">
+                <div class="flex-shrink-0 bg-slate-50 pt-1 px-0">
+                    <div class="flex flex-col mb-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-4">
+                            <div class="bg-white p-5 rounded-xl shadow-sm border">
+                                <p class="text-sm text-slate-500 mb-1">客户数量（每月）</p>
+                                <div class="flex items-baseline gap-2">
+                                    <p class="text-3xl font-bold text-slate-800">127</p>
+                                    <p class="text-sm font-semibold text-red-500 flex items-center"><i data-lucide="arrow-up" class="w-4 h-4"></i>12.5%</p>
+                                </div>
                             </div>
-                        </div>
-                        <div class="bg-white p-5 rounded-xl shadow-sm border">
-                            <p class="text-sm text-slate-500 mb-1">Open tickets</p>
-                            <div class="flex items-baseline gap-2">
-                                <p class="text-3xl font-bold text-slate-800">${stats.openTickets}</p>
-                                <p class="text-sm font-semibold text-red-500 flex items-center"><i data-lucide="arrow-up" class="w-4 h-4"></i>2 vs last sprint</p>
+                            <div class="bg-white p-5 rounded-xl shadow-sm border">
+                                <p class="text-sm text-slate-500 mb-1">成交量（每月）</p>
+                                <div class="flex items-baseline gap-2">
+                                    <p class="text-3xl font-bold text-slate-800">42</p>
+                                    <p class="text-sm font-semibold text-red-500 flex items-center"><i data-lucide="arrow-up" class="w-4 h-4"></i>8.4%</p>
+                                </div>
                             </div>
-                        </div>
-                         <div class="bg-white p-5 rounded-xl shadow-sm border">
-                            <p class="text-sm text-slate-500 mb-1">Critical issues</p>
-                            <div class="flex items-baseline gap-2">
-                                <p class="text-3xl font-bold text-slate-800">${stats.criticalIssues}</p>
-                                <p class="text-sm font-semibold text-green-500 flex items-center"><i data-lucide="arrow-down" class="w-4 h-4"></i>3 vs last sprint</p>
+                            <div class="bg-white p-5 rounded-xl shadow-sm border">
+                                <p class="text-sm text-slate-500 mb-1">转化率（每月）</p>
+                                <div class="flex items-baseline gap-2">
+                                    <p class="text-3xl font-bold text-slate-800">33.1%</p>
+                                    <p class="text-sm font-semibold text-green-500 flex items-center"><i data-lucide="arrow-down" class="w-4 h-4"></i>2.3%</p>
+                                </div>
                             </div>
-                        </div>
-                         <div class="bg-white p-5 rounded-xl shadow-sm border">
-                            <p class="text-sm text-slate-500 mb-1">In Development</p>
-                            <div class="flex items-baseline gap-2">
-                                <p class="text-3xl font-bold text-slate-800">${stats.inDevelopment}</p>
-                                <p class="text-sm font-semibold text-green-500 flex items-center"><i data-lucide="arrow-down" class="w-4 h-4"></i>2 vs last sprint</p>
+                            <div class="bg-white p-5 rounded-xl shadow-sm border">
+                                <p class="text-sm text-slate-500 mb-1">平均成交周期（每月）</p>
+                                <div class="flex items-baseline gap-2">
+                                    <p class="text-3xl font-bold text-slate-800">21天</p>
+                                    <p class="text-sm font-semibold text-green-500 flex items-center"><i data-lucide="arrow-down" class="w-4 h-4"></i>3天</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Main Content -->
-                <div class="flex-grow flex gap-6 overflow-hidden">
-                    <!-- Main Table -->
+                <div class="flex-grow flex gap-6 overflow-hidden p-0">
                     <div class="flex-grow flex flex-col bg-white rounded-xl shadow-sm border overflow-hidden">
                         <div class="p-4 border-b border-slate-200">
                              <div class="flex justify-between items-center">
@@ -1512,8 +1551,39 @@ const UI = {
                                     <input type="text" placeholder="Search anything..." class="form-input pl-10 w-full bg-slate-50 border-slate-200">
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <button class="bg-white border border-slate-300 text-slate-700 font-medium py-2 px-3 rounded-lg flex items-center gap-2 transition-colors hover:bg-slate-50"><i data-lucide="list" class="w-4 h-4"></i></button>
-                                    <button class="bg-white border border-slate-300 text-slate-700 font-medium py-2 px-3 rounded-lg flex items-center gap-2 transition-colors hover:bg-slate-50"><i data-lucide="filter" class="w-4 h-4"></i> Filters</button>
+                                    <div class="relative">
+                                        <button id="filter-btn" class="bg-white border border-slate-300 text-slate-700 font-medium py-2 px-3 rounded-lg flex items-center gap-2 transition-colors hover:bg-slate-50">
+                                            <i data-lucide="filter" class="w-4 h-4"></i> Filters
+                                        </button>
+                                        <div id="filter-dropdown" class="hidden absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl z-20 border">
+                                            <div class="p-4">
+                                                <h4 class="text-sm font-semibold text-slate-800 mb-3">按状态过滤</h4>
+                                                <div class="grid grid-cols-2 gap-2">
+                                                    ${Object.entries(followUpStatusMap).map(([key, {text}]) => `
+                                                        <div>
+                                                            <label class="flex items-center space-x-2 text-sm">
+                                                                <input type="checkbox" data-filter-type="status" value="${key}" class="form-checkbox h-4 w-4 rounded text-indigo-600" ${filters.status.includes(key) ? 'checked' : ''}>
+                                                                <span>${text}</span>
+                                                            </label>
+                                                        </div>
+                                                    `).join('')}
+                                                </div>
+                                            </div>
+                                            <div class="p-4 border-t border-slate-200">
+                                                <h4 class="text-sm font-semibold text-slate-800 mb-3">按客户来源过滤</h4>
+                                                <div class="grid grid-cols-2 gap-2">
+                                                     ${customerSources.map(source => `
+                                                        <div>
+                                                            <label class="flex items-center space-x-2 text-sm">
+                                                                <input type="checkbox" data-filter-type="source" value="${source}" class="form-checkbox h-4 w-4 rounded text-indigo-600" ${filters.source.includes(source) ? 'checked' : ''}>
+                                                                <span>${source}</span>
+                                                            </label>
+                                                        </div>
+                                                     `).join('')}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1522,70 +1592,137 @@ const UI = {
                                 <thead class="bg-slate-50 sticky top-0">
                                     <tr>
                                         <th class="p-4 w-10"><input type="checkbox" class="form-checkbox rounded text-indigo-600"></th>
-                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
-                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Created at</th>
-                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Assigned to</th>
-                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Priority</th>
-                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户名称</th>
+                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">创建时间</th>
+                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户来源</th>
+                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">产品类型</th>
+                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户规模</th>
+                                        <th class="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
                                         <th class="p-4 w-16"></th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-slate-200">
-                                    ${tickets.map((ticket, index) => `
+                                    ${tickets.map((ticket) => {
+                                        const statusInfo = followUpStatusMap[ticket.followUpStatus] || followUpStatusMap['just_started'];
+                                        return `
                                         <tr data-ticket-id="${ticket.id}" class="hover:bg-slate-50 cursor-pointer ticket-row">
                                             <td class="p-4"><input type="checkbox" class="form-checkbox rounded text-indigo-600"></td>
                                             <td class="p-4 text-sm font-semibold text-slate-700">${ticket.name}</td>
-                                            <td class="p-4 text-sm text-slate-500">${new Date(ticket.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
-                                            <td class="p-4 text-sm text-slate-500">${Helpers.getAvatar(ticket.assignedTo)}</td>
-                                            <td class="p-4">
-                                                <span class="px-3 py-1 text-xs font-semibold rounded-full" style="color:${priorityMap[ticket.priority].color}; background-color:${priorityMap[ticket.priority].bg}">
-                                                    ${priorityMap[ticket.priority].text}
+                                            <td class="p-4 text-sm text-slate-500">${new Date(ticket.createdAt).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+                                            <td class="p-4 text-sm text-slate-500">
+                                                <span class="px-3 py-1 text-xs font-semibold rounded-full ${ticket.customerSource === '线上' ? 'bg-blue-100 text-blue-800' : ticket.customerSource === '线下' ? 'bg-purple-100 text-purple-800' : 'bg-amber-100 text-amber-800'}">
+                                                    ${ticket.customerSource || '未知'}
                                                 </span>
                                             </td>
                                             <td class="p-4">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="w-24 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                                        <div class="h-full rounded-full" style="width: ${ticket.status}%; background-color:${getStatusStyles(ticket.status).color}"></div>
-                                                    </div>
-                                                    <span class="text-sm font-medium text-slate-600 w-8 text-right">${ticket.status}%</span>
-                                                    <i data-lucide="${getStatusStyles(ticket.status).icon}" class="w-5 h-5" style="color:${getStatusStyles(ticket.status).color}"></i>
+                                                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
+                                                    ${ticket.productCategory || '未分类'}
+                                                </span>
+                                            </td>
+                                            <td class="p-4 text-sm text-slate-600">
+                                                <span class="px-3 py-1 text-xs font-semibold rounded-full ${ticket.customerSize === '大' ? 'bg-emerald-100 text-emerald-800' : ticket.customerSize === '中' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'}">
+                                                    ${ticket.customerSize || '未知'}
+                                                </span>
+                                            </td>
+                                            <td class="p-4">
+                                                <span class="px-3 py-1 text-xs font-semibold rounded-full ${statusInfo.classes}">
+                                                    ${statusInfo.text}
+                                                </span>
+                                            </td>
+                                            <td class="p-4 text-slate-500">
+                                                <div class="flex items-center gap-2">
+                                                    <button class="follow-up-btn p-1 rounded hover:bg-slate-100" data-ticket-id="${ticket.id}" title="添加跟进记录">
+                                                        <i data-lucide="message-circle" class="w-5 h-5 text-indigo-500"></i>
+                                                    </button>
+                                                    <button class="p-1 rounded hover:bg-slate-100">
+                                                        <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                                                    </button>
                                                 </div>
                                             </td>
-                                            <td class="p-4 text-slate-500"><i data-lucide="more-horizontal" class="w-5 h-5"></i></td>
                                         </tr>
-                                    `).join('')}
+                                    `}).join('')}
                                 </tbody>
                             </table>
                         </div>
-                        <div class="p-4 border-t border-slate-200 text-sm text-slate-600">
-                            Shows 10 of 281 items &nbsp; &middot; &nbsp; Page 1 of 23
+                        <div class="p-4 border-t border-slate-200 text-sm text-slate-600 flex justify-between items-center">
+                            <span>显示 ${tickets.length} / 共 ${work_orders.length} 条数据</span>
+                            <div class="flex items-center gap-2">
+                                <button class="w-8 h-8 flex items-center justify-center rounded border border-slate-300 bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                                </button>
+                                <button class="w-8 h-8 flex items-center justify-center rounded border border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700">1</button>
+                                <button class="w-8 h-8 flex items-center justify-center rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">2</button>
+                                <button class="w-8 h-8 flex items-center justify-center rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">3</button>
+                                <button class="w-8 h-8 flex items-center justify-center rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">...</button>
+                                <button class="w-8 h-8 flex items-center justify-center rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">23</button>
+                                <button class="w-8 h-8 flex items-center justify-center rounded border border-slate-300 bg-white text-slate-500 hover:bg-slate-50">
+                                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
-
-                    <!-- Details Panel -->
                     <div id="ticket-details-panel" class="w-full max-w-md flex-shrink-0">
-                        <!-- Details will be rendered here -->
                     </div>
                 </div>
             </div>
         `;
         lucide.createIcons();
 
-        container.querySelectorAll('.ticket-row').forEach(row => {
-            row.addEventListener('click', (e) => {
-                if (e.target.closest('input[type="checkbox"], a')) return;
+        // Event Delegation
+        container.addEventListener('click', (e) => {
+            // Toggle Filter Dropdown
+            const filterBtn = e.target.closest('#filter-btn');
+            if (filterBtn) {
+                document.getElementById('filter-dropdown').classList.toggle('hidden');
+                return;
+            }
 
-                container.querySelectorAll('.ticket-row').forEach(r => r.classList.remove('bg-indigo-50'));
-                row.classList.add('bg-indigo-50');
-                
-                const ticketId = row.dataset.ticketId;
-                this.renderTicketDetailsPanel(ticketId);
-            });
+            // Row Click
+            const ticketRow = e.target.closest('.ticket-row');
+            if (ticketRow && !e.target.closest('input, a, button')) {
+                 container.querySelectorAll('.ticket-row').forEach(r => r.classList.remove('bg-indigo-50'));
+                ticketRow.classList.add('bg-indigo-50');
+                this.renderTicketDetailsPanel(ticketRow.dataset.ticketId);
+                return;
+            }
+            
+            // Follow-up Button Click
+            const followUpBtn = e.target.closest('.follow-up-btn');
+            if (followUpBtn) {
+                this.renderFollowUpRecordModal(followUpBtn.dataset.ticketId);
+                return;
+            }
         });
+
+        container.addEventListener('change', (e) => {
+            // Filter Checkbox Change
+            const filterCheckbox = e.target.closest('input[type="checkbox"][data-filter-type]');
+            if (filterCheckbox) {
+                const { filterType, value } = filterCheckbox.dataset;
+                const isChecked = filterCheckbox.checked;
+                
+                if (isChecked) {
+                    AppState.filters[filterType].push(value);
+                } else {
+                    AppState.filters[filterType] = AppState.filters[filterType].filter(item => item !== value);
+                }
+                this.renderClientFollowUps(container);
+            }
+        });
+
+        document.body.addEventListener('click', (e) => {
+            if (!e.target.closest('#filter-btn, #filter-dropdown')) {
+                document.getElementById('filter-dropdown')?.classList.add('hidden');
+            }
+        }, true);
         
-        if(tickets.length > 0) {
-            container.querySelector('.ticket-row')?.classList.add('bg-indigo-50');
-            this.renderTicketDetailsPanel(tickets[0].id);
+        if (tickets.length > 0) {
+            const firstRow = container.querySelector('.ticket-row');
+            if(firstRow) {
+                // Automatically select and show details for the first ticket
+                firstRow.classList.add('bg-indigo-50');
+                this.renderTicketDetailsPanel(tickets[0].id);
+            }
         }
     },
 
@@ -2307,6 +2444,67 @@ const App = {
                 this.handleTaskStatusChange(e);
             }
         });
+
+        // Nav links
+        document.getElementById('sidebar-nav').addEventListener('click', (e) => this.handleNavClick(e));
+
+        // Modal close
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target.id === 'modal' || e.target.closest('.modal-close-btn')) {
+                this.hideModal();
+            }
+        });
+
+        // Delegated event listeners for dynamic content in #app
+        const appContainer = document.getElementById('app');
+        if (appContainer) {
+            appContainer.addEventListener('click', (e) => {
+                const followUpBtn = e.target.closest('.follow-up-btn');
+                const filterBtn = e.target.closest('#filter-btn');
+                const ticketRow = e.target.closest('.ticket-row');
+
+                if (followUpBtn) {
+                    e.stopPropagation();
+                    this.renderFollowUpRecordModal(followUpBtn.dataset.ticketId);
+                    return;
+                }
+                
+                if (filterBtn) {
+                    document.getElementById('filter-dropdown').classList.toggle('hidden');
+                    return;
+                }
+
+                if (ticketRow && !e.target.closest('input, a, button')) {
+                    appContainer.querySelectorAll('.ticket-row').forEach(r => r.classList.remove('bg-indigo-50'));
+                    ticketRow.classList.add('bg-indigo-50');
+                    this.renderTicketDetailsPanel(ticketRow.dataset.ticketId);
+                    return;
+                }
+            });
+
+            appContainer.addEventListener('change', (e) => {
+                const filterCheckbox = e.target.closest('input[type="checkbox"][data-filter-type]');
+                if (filterCheckbox) {
+                    const { filterType, value } = filterCheckbox.dataset;
+                    const isChecked = filterCheckbox.checked;
+                    
+                    if (isChecked) {
+                        AppState.filters[filterType].push(value);
+                    } else {
+                        AppState.filters[filterType] = AppState.filters[filterType].filter(item => item !== value);
+                    }
+                    this.renderClientFollowUps(appContainer);
+                }
+            });
+        }
+        
+        // Global listener to close filter dropdown
+        document.body.addEventListener('click', (e) => {
+            const filterDropdown = document.getElementById('filter-dropdown');
+            if (filterDropdown && !e.target.closest('#filter-btn, #filter-dropdown')) {
+                filterDropdown.classList.add('hidden');
+            }
+        }, true);
     },
 
     handleLogout() {
@@ -2837,6 +3035,193 @@ const App = {
             icon.setAttribute('data-lucide', 'panel-left-close');
         }
         lucide.createIcons();
+    },
+
+    updateTicketStatus(ticketId, newStatus, comment) {
+        const ticket = AppState.work_orders.find(o => o.orderId === ticketId);
+        if (!ticket) return;
+
+        const oldStatusKey = ticket.followUpStatus;
+        ticket.followUpStatus = newStatus;
+
+        const statusMap = {
+            just_started: '刚开始跟进',
+            following_up: '跟进中',
+            about_to_close: '即将成交',
+            closed: '已成交',
+        };
+
+        this.addComment(ticketId, comment, AppState.currentUser.userId, true);
+        this.addActivity(ticketId, AppState.currentUser.userId, 'STATUS_CHANGE', 
+            `将状态从 ${statusMap[oldStatusKey]} 更新为 ${statusMap[newStatus]}`, 
+            { oldStatus: statusMap[oldStatusKey], newStatus: statusMap[newStatus], comment: comment }
+        );
+
+        UI.renderPage(); 
+        
+        setTimeout(() => {
+            const row = document.querySelector(`.ticket-row[data-ticket-id="${ticketId}"]`);
+            if (row) {
+                 row.classList.add('bg-indigo-50');
+                 this.renderTicketDetailsPanel(ticketId);
+            }
+        }, 100);
+
+        if (newStatus === 'closed') {
+            setTimeout(() => UI.renderContractFormModal(), 400);
+        }
+    },
+    
+    addComment(ticketId, text, userId, isStatusChange = false) {
+        if (!AppState.comments[ticketId]) {
+            AppState.comments[ticketId] = [];
+        }
+        const comment = {
+            commentId: `comment_${Date.now()}`,
+            text: text,
+            userId: userId,
+            timestamp: new Date().toISOString()
+        };
+        AppState.comments[ticketId].unshift(comment);
+
+        if (!isStatusChange) {
+            const ticket = AppState.work_orders.find(t => t.orderId === ticketId);
+            this.addActivity(ticketId, userId, 'COMMENT', `在 <strong>${ticket.orderName}</strong> 中发表了评论`, { comment: text });
+        }
+    },
+
+    addActivity(orderId, userId, type, content, details = {}) {
+        const activity = {
+            activityId: `act_${Date.now()}`,
+            orderId: orderId,
+            userId: userId,
+            type: type,
+            content: content,
+            details: details,
+            timestamp: new Date().toISOString()
+        };
+        AppState.activities.unshift(activity);
+    },
+
+    renderFollowUpRecordModal(ticketId) {
+        const ticket = AppState.work_orders.find(o => o.orderId === ticketId);
+        if (!ticket) return;
+
+        const client = AppState.clients[ticket.clientId] || { name: '未知客户' };
+        const currentStatus = ticket.followUpStatus || 'just_started';
+        const statusOptions = [
+            { value: 'just_started', text: '刚开始跟进' },
+            { value: 'following_up', text: '跟进中' },
+            { value: 'about_to_close', text: '即将成交' },
+            { value: 'closed', text: '已成交' },
+            { value: 'customer_lost', text: '客户流失' }
+        ];
+        
+        const followUpStatusMap = {
+            just_started: { text: '刚开始跟进', classes: 'bg-slate-100 text-slate-700' },
+            following_up: { text: '跟进中', classes: 'bg-blue-100 text-blue-800' },
+            about_to_close: { text: '即将成交', classes: 'bg-amber-100 text-amber-800' },
+            closed: { text: '已成交', classes: 'bg-green-100 text-green-800' },
+            customer_lost: { text: '客户流失', classes: 'bg-red-100 text-red-800' }
+        };
+        const statusInfo = followUpStatusMap[currentStatus];
+
+        // 获取当前本地时间
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const currentDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        const content = `
+            <form id="follow-up-record-form">
+                <div class="space-y-5">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <div class="text-lg font-medium text-slate-800">${client.name}</div>
+                            <div class="text-sm text-slate-500">${ticket.orderName}</div>
+                        </div>
+                        <div class="flex gap-4 items-center mb-4">
+                            <div class="text-sm text-slate-600">当前状态：</div>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full ${statusInfo.classes}">
+                                ${statusInfo.text}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label for="follow-up-status" class="block text-sm font-medium text-slate-700">更新状态</label>
+                        <select id="follow-up-status" name="follow-up-status" class="form-select block w-full mt-1 rounded-md">
+                            ${statusOptions.map(option => `
+                                <option value="${option.value}" ${option.value === currentStatus ? 'selected' : ''}>
+                                    ${option.text}
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="follow-up-time" class="block text-sm font-medium text-slate-700">跟进时间</label>
+                        <input type="datetime-local" id="follow-up-time" name="follow-up-time" value="${currentDateTime}"
+                            class="form-input block w-full mt-1 rounded-md">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="follow-up-content" class="block text-sm font-medium text-slate-700">跟进内容</label>
+                        <textarea id="follow-up-content" name="follow-up-content" rows="4"
+                            class="form-textarea block w-full mt-1 rounded-md"
+                            placeholder="请输入跟进记录内容..."></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" id="cancel-follow-up" class="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-md hover:bg-slate-50">取消</button>
+                    <button type="submit" id="submit-follow-up" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">保存记录</button>
+                </div>
+            </form>
+        `;
+
+        this.showModal('添加跟进记录', content);
+
+        document.getElementById('cancel-follow-up').addEventListener('click', () => {
+            this.hideModal();
+        });
+
+        document.getElementById('follow-up-record-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const statusValue = document.getElementById('follow-up-status').value;
+            const timeValue = document.getElementById('follow-up-time').value;
+            const contentValue = document.getElementById('follow-up-content').value;
+
+            if (!contentValue.trim()) {
+                alert('请输入跟进内容');
+                return;
+            }
+
+            // 更新工单状态
+            const order = AppState.work_orders.find(o => o.orderId === ticketId);
+            if (order) {
+                order.followUpStatus = statusValue;
+                
+                // 创建活动记录
+                const statusText = statusOptions.find(option => option.value === statusValue).text;
+                const formattedTime = new Date(timeValue).toLocaleString('zh-CN');
+                const activityContent = `将状态更新为 <strong>${statusText}</strong>：${contentValue}`;
+                
+                this.addActivity(ticketId, AppState.currentUser.userId, 'FOLLOW_UP', activityContent, {
+                    status: statusValue,
+                    content: contentValue,
+                    timestamp: new Date(timeValue)
+                });
+
+                // 重新渲染
+                this.renderClientFollowUps(document.getElementById('app'));
+                this.hideModal();
+            }
+        });
     },
 };
 
