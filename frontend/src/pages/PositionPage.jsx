@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import AddPositionModal from '../components/AddPositonModal';
-import { getPositions } from '../services/positionService'; 
+import { getPositions, addPosition, deletePosition } from '../services/positionService'; 
+import { toast } from 'react-toastify';
 
 const PositionPage = () => {
   const [positions, setPositions] = useState([]);
-  const [departments, setDepartments] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await getPositions(); // 获取职位和部门数据
+
         if (res.success) {
-          setPositions(res.data.positions);
-          setDepartments(res.data.departments);
+          setPositions(res.data);
         } else {
           console.error('获取职位列表失败:', res.error);
         }
@@ -25,16 +25,30 @@ const PositionPage = () => {
     fetchData();
   }, []);
 
-  const handleAdd = async (positionName, departmentId) => {
+  const handleAdd = async (position) => {
     try {
-      const result = await addPosition(positionName, departmentId);
+      const result = await addPosition(position);
       if (result.success) {
         setPositions(result.data);
-        setIsModalOpen(false);    // 关闭模态框
+        setIsModalOpen(false); 
         toast.success('新增职位成功！');
+      }else{
+        toast.error(result.error);
       }
     } catch (error) {
       console.error('新增职位失败:', error);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const result = await deletePosition(id);
+      if (result.success) {
+        setPositions(result.data);
+        toast.success('删除职位成功！');
+      }
+    } catch (error) {
+      console.error('删除职位失败:', error);
     }
   };
 
@@ -78,6 +92,7 @@ const PositionPage = () => {
                   <td className="p-4 text-slate-600 text-right">
                     <button
                       className="delete-position-btn text-red-500 hover:text-red-700 font-medium"
+                      onClick={() => handleDelete(pos.id)}
                     >
                       删除
                     </button>
@@ -89,7 +104,7 @@ const PositionPage = () => {
         </table>
       </div>
 
-      <AddPositionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} departments={departments} onAdd={handleAdd} />
+      <AddPositionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAdd={handleAdd} />
     </div>
   );
 };

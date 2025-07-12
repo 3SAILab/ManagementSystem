@@ -21,13 +21,13 @@ export const addPosition = async (position) => {
   try {
     console.log('新增职位:', position);
     const response = await api.post(
-      '/add_position', 
-      { position }
+      '/add_position',
+       position 
     );
     return { success: true, data: response.data };
   } catch (error) {
     console.error('新增职位失败:', error);
-    return { success: false, error: error.response.data.detail };
+    return { success: false, error: error.response?.data?.detail || error.message };
   }
 };
 //删除职位

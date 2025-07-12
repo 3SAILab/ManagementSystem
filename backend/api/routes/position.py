@@ -5,16 +5,16 @@ from ...db.session import get_async_db
 from backend.api.routes.employee import get_current_employee
 from backend.models.employee import Employee
 from backend.services.position_service import PositionService
-from backend.schemas.position import PositionCreate, PositionOut
+from backend.schemas.position import PositionCreate,PositionInfo
 from backend.utils.response import api_response
 
 router = APIRouter()
 
 
 #增加职位
-@router.post("/add_position", response_model=List[PositionOut], status_code=201)
+@router.post("/add_position", response_model=List[PositionInfo], status_code=201)
 async def create_position(
-    position: PositionCreate = Body(..., embed=True),
+    position: PositionCreate = Body(...),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
@@ -31,7 +31,7 @@ async def create_position(
         raise HTTPException(status_code=400, detail="职位创建失败")
 
 #获取所有职位信息
-@router.get("/get_positions", response_model=PositionOut, status_code=200)
+@router.get("/get_positions", response_model=List[PositionInfo], status_code=200)
 async def get_positions(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
@@ -44,7 +44,7 @@ async def get_positions(
     return positions
 
 #删除职位
-@router.delete("/delete_position", response_model=api_response, status_code=200)
+@router.delete("/delete_position", response_model=List[PositionInfo], status_code=200)
 async def delete_position(
     id: int = Body(..., embed=True),
     db: AsyncSession = Depends(get_async_db),
@@ -56,4 +56,5 @@ async def delete_position(
     
     #删除职位
     await PositionService.delete_position(db, id)
-    return api_response(data={"message": "职位删除成功"})
+    positions = await PositionService.get_positions(db)
+    return positions

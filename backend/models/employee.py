@@ -32,8 +32,8 @@ class Employee(Base):
     phone = Column(String(20))
     birth_date = Column(Date)
     hire_date = Column(Date, nullable=False)
-    department_id = Column(Integer, ForeignKey("department.id"))
-    position_id = Column(Integer, ForeignKey("position.id"))
+    department_id = Column(Integer, ForeignKey("department.id"), nullable=False)
+    position_id = Column(Integer, ForeignKey("position.id"), nullable=False)
     manager_id = Column(Integer, ForeignKey("employee.id"))
 
     base_salary = Column(Numeric(12, 2), nullable=False)
