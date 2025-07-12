@@ -18,16 +18,16 @@ class EmployeeStatus(enum.Enum):
 
 #用户角色
 class EmployeeRole(enum.Enum):
-    employee = "employee"
-    manager = "manager"
-    admin = "admin"
+    employee = "普通员工"
+    manager = "组长"
+    admin = "主管"
 
 class Employee(Base):
     __tablename__ = "employee"
 
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
-    gender = Column(Enum(GenderEnum), nullable=False)
+    gender = Column(Enum(GenderEnum))
     email = Column(String(255), unique=True, index=True, nullable=False)
     phone = Column(String(20))
     birth_date = Column(Date)
@@ -47,7 +47,7 @@ class Employee(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    address = Column(String)
+    address = Column(JSON)
     role = Column(Enum(EmployeeRole), nullable=False)
     emergency_contact = Column(JSON)
     education = Column(String(50))

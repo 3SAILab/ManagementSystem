@@ -9,7 +9,6 @@ import RequireAuth from '../components/RequireAuth';
 import DepartmentPage from '../pages/DepartmentPage';
 import PositionPage from '../pages/PositionPage';
 import DailyReportPage from '../pages/DailyReportPage';
-import PersonnelFilePage from '../pages/PersonnelFilePage';
 
 const router = createBrowserRouter([
   {
@@ -73,15 +72,6 @@ const router = createBrowserRouter([
             ),
             handle: { title: '职位管理' },
           },
-          {
-            path: 'personnel_file',
-            element: (
-              <PrivateRoute currentPath='personnel_file'>
-                <PersonnelFilePage />
-              </PrivateRoute>
-            ),
-            handle: { title: '人事档案' },
-          }
         ],
       },
     ],

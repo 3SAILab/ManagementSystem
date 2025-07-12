@@ -1,7 +1,7 @@
 // src/components/RequireAuth.jsx
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { getEmployeeInfo } from '../services/authService';
+import { getEmployeePermission } from '../services/authService';
 
 
 export default function RequireAuth() {
@@ -9,7 +9,8 @@ export default function RequireAuth() {
   const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    console.log('RequireAuth正常运行');
+    const checkToken = async () => {
       const token = localStorage.getItem('access_token');
       if (!token) {
         console.log('没有token，跳转到登录页面');
@@ -18,7 +19,7 @@ export default function RequireAuth() {
         return;
       }
       try {
-        const result = await getEmployeeInfo();
+        const result = await getEmployeePermission();
         setAuthorized(result.success);
       } catch {
         console.log('token过期，跳转到登录页面');
@@ -27,7 +28,7 @@ export default function RequireAuth() {
         setLoading(false);
       }
     };
-    checkAuth();
+    checkToken();
   }, []);
 
   if (loading) return null;

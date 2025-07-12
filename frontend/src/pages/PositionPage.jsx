@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AddPositionModal from '../components/AddPositonModal';
 import { getPositions, addPosition, deletePosition } from '../services/positionService'; 
 import { toast } from 'react-toastify';
+import { Plus } from 'lucide-react';
 
 const PositionPage = () => {
   const [positions, setPositions] = useState([]);
@@ -60,7 +61,7 @@ const PositionPage = () => {
           onClick={() => setIsModalOpen(true)}
           className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
         >
-          新增职位
+          <Plus className="w-4 h-4"></Plus> 新增职位
         </button>
       </div>
 

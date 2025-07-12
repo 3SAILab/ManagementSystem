@@ -1,5 +1,5 @@
 import api from './api'
-import { useEmployeeStore } from '../store/employee';
+import { useEmployeePermissionStore } from '../store/employee';
 
 //登录
 export const login = async (email, password) => {
@@ -22,7 +22,7 @@ export const login = async (email, password) => {
       const data = response.data;
       // 存储 token
       localStorage.setItem('access_token', data.access_token);
-      useEmployeeStore.setState({
+      useEmployeePermissionStore.setState({
         employee: "",
       });
   
@@ -30,31 +30,82 @@ export const login = async (email, password) => {
       return { success: true };
       
     } catch (err) {
-      console.error('登录错误:', err.response.data.detail);
-      return { success: false, error: err.response.data.detail };
+      const detail = err.response?.data?.detail || err.message;
+      console.error('登录错误:', detail);
+      return { success: false, error: detail };
     }
 };
 
 //退出登录
 export const logout = () => {
   localStorage.removeItem('access_token');
-  useEmployeeStore.setState({
+  useEmployeePermissionStore.setState({
     employee: null,
   });
 };
   
-//获取员工信息
-export const getEmployeeInfo = async () => {
+//获取员工权限信息
+export const getEmployeePermission = async () => {
   try {
-    const token = localStorage.getItem('access_token');
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    const response = await api.get('/me');
-    useEmployeeStore.setState({
+    const response = await api.get('/permission');
+    useEmployeePermissionStore.setState({
       employee: response.data,
     });
     return { success: true};
   } catch (err) {
-    console.error('获取员工信息失败:', err.response.data.detail);
-    return { success: false, error: err.response.data.detail };
+    const detail = err.response?.data?.detail || err.message;
+    console.error('获取员工信息失败:', detail);
+    return { success: false, error: detail };
+  }
+};
+
+//获取员工列表
+export const getEmployeeList = async () => {
+  try {
+    const response = await api.get('/employee/list');
+    console.log('员工列表：',response.data)
+    return { success: true, data: response.data };
+  } catch (err) {
+    const detail = err.response?.data?.detail || err.message;
+    console.error('获取员工列表失败:', detail);
+    return { success: false, error: detail };
+  }
+};
+
+//根据id获取员工信息
+export const getEmployeeById = async (id) => {
+  try {
+    const response = await api.get(`/employee/${id}`);
+    console.log('员工信息：',response.data)
+    return { success: true, data: response.data };
+  } catch (err) {
+    const detail = err.response?.data?.detail || err.message;
+    console.error('获取员工信息失败:', detail);
+    return { success: false, error: detail };
+  }
+};
+
+//获取上级列表
+export const getManagers = async (department_id, role) => {
+  try {
+    const response = await api.get(`/manager/list?department_id=${department_id}&role=${role}`);
+    console.log('上级列表：',response.data)
+    return { success: true, data: response.data };
+  } catch (err) {
+    const detail = err.response?.data?.detail || err.message;
+    console.error('获取上级列表失败:', detail);
+      return { success: false, error: detail };
+  }
+};
+
+//新增员工
+export const addEmployee = async (employee) => {
+  try {
+    const response = await api.post('/register', employee);
+    return { success: true, data: response.data };
+  } catch (err) {
+    const detail = err.response?.data?.detail || err.message;
+    console.error('新增员工失败:', detail);
+    return { success: false, error: detail };
   }
 };

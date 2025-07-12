@@ -5,10 +5,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 import bcrypt
 from jose import JWTError, jwt
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload, joinedload
+from backend.models.department import Department
 from backend.models.employee import Employee
-from backend.schemas.employee import EmployeeCreate, EmployeeInfo
+from backend.models.position import Position
+from backend.schemas.employee import EmployeePermission, EmployeeInfo, EmployeeListInfo
 
 # JWT相关配置
 SECRET_KEY = "your-secret-key"  # 在生产环境中应该使用环境变量
@@ -44,7 +46,6 @@ class EmployeeService:
             .options(
                 selectinload(Employee.department),
                 selectinload(Employee.position),
-                selectinload(Employee.manager),
             )
             .where(Employee.email == email)
         )
@@ -55,7 +56,7 @@ class EmployeeService:
     
     #创建新员工
     @staticmethod
-    async def create_employee(db: AsyncSession, newEmployee: EmployeeCreate):
+    async def create_employee(db: AsyncSession, newEmployee: EmployeeInfo):
         # 检查邮箱是否已存在
         result = await db.execute(select(Employee).where(Employee.email == newEmployee.email))
         if result.scalars().first():
@@ -64,20 +65,9 @@ class EmployeeService:
                 detail="邮箱已被使用"
             )
         
-        # 哈希密码
         password_hash = EmployeeService.get_password_hash(newEmployee.password)
-        
         employee = Employee(
-            name=newEmployee.name,
-            gender=newEmployee.gender,
-            email=newEmployee.email,
-            hire_date=newEmployee.hire_date,
-            department_id=newEmployee.department_id,
-            position_id=newEmployee.position_id,
-            status=newEmployee.status,
-            role=newEmployee.role,
-            is_probation=newEmployee.is_probation,
-            base_salary=newEmployee.base_salary,
+            **newEmployee.model_dump(exclude={"password"}),
             password_hash=password_hash,
             created_at=datetime.now(timezone.utc),
         )
@@ -96,9 +86,9 @@ class EmployeeService:
                 detail="注册失败，请稍后重试"
             )
     
-    #获取当前用户信息
+    #获取当前员工权限信息
     @staticmethod
-    async def get_current_employee(db: AsyncSession, token: str) -> EmployeeInfo:
+    async def get_current_employee(db: AsyncSession, token: str) -> Employee:
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="无法验证凭据",
@@ -117,11 +107,93 @@ class EmployeeService:
             .options(
                 selectinload(Employee.department),
                 selectinload(Employee.position),
-                selectinload(Employee.manager),
             )
             .where(Employee.email == email)
         )
         employee = result.scalars().first()
         if not employee:
             raise credentials_exception
+        return employee
+    
+    #根据id获取员工信息
+    @staticmethod
+    async def get_employee_by_id(db: AsyncSession, id: int) -> EmployeeInfo:
+        result = await db.execute(select(Employee).where(Employee.id == id))
+        employee = result.scalars().first()
+        if not employee:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="员工不存在"
+            )
         return EmployeeInfo.from_model(employee)
+    
+    #获取员工列表
+    @staticmethod
+    async def get_employee_list(db: AsyncSession) -> list[EmployeeListInfo]:
+        # 查询 Employee 实体并预加载关联关系
+        stmt = select(Employee).options(
+            selectinload(Employee.department),
+            selectinload(Employee.position),
+        )
+        result = await db.execute(stmt)
+        emps = result.scalars().all()
+        # 构造返回列表
+        return [
+            EmployeeListInfo(
+                id=e.id,
+                name=e.name,
+                email=e.email,
+                department_id=e.department.id,
+                position_id=e.position.id,
+                department_name=e.department.name,
+                position_name=e.position.name
+            )
+            for e in emps
+            ] 
+    
+    #获取上级列表
+    LEVEL_HIERARCHY = {
+        "主管": 3,
+        "组长": 2,
+        "普通员工": 1
+    }
+
+    @staticmethod
+    async def get_managers(
+        db: AsyncSession, 
+        department_id: int, 
+        current_level: str
+    ) -> list[EmployeeListInfo]:
+        """
+        获取同部门中级别高于当前级别的员工
+        """
+        current_level_value = EmployeeService.LEVEL_HIERARCHY.get(current_level)
+        if not current_level_value:
+            raise HTTPException(status_code=400, detail="无效的级别")
+
+        higher_levels = [
+            level for level, value in EmployeeService.LEVEL_HIERARCHY.items()
+            if value > current_level_value
+        ]
+
+        result = await db.execute(
+            select(Employee)
+            .where(
+                Employee.department_id == department_id,
+                Employee.role.in_(higher_levels)
+            )
+        )
+        emps = result.scalars().all()
+        # 构造返回列表
+        return [
+            EmployeeListInfo(
+                id=e.id,
+                name=e.name,
+                email=e.email,
+                department_id=e.department.id,
+                position_id=e.position.id,
+                department_name=e.department.name,
+                position_name=e.position.name
+            )
+            for e in emps
+        ] 

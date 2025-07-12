@@ -17,7 +17,6 @@ export const menuItems = [
     },
     children: [
       { label: '员工管理', path: '/employee_management', icon: 'users' },
-      { label: '人事档案', path: '/personnel_file', icon: 'contact-2' },
       { label: '部门管理', path: '/department_management', icon: 'building-2' },
       { label: '职位管理', path: '/position_management', icon: 'briefcase' }
     ]

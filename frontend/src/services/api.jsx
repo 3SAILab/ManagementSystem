@@ -1,6 +1,6 @@
 // src/services/api.js
 import axios from 'axios';
-import { useEmployeeStore } from '../store/employee';
+import { useEmployeePermissionStore } from '../store/employee';
 
 // 创建 Axios 实例
 const api = axios.create({
@@ -51,7 +51,7 @@ api.interceptors.response.use(
         console.log('准备清除token');
         localStorage.removeItem('access_token');
         console.log('准备清除用户状态');
-        useEmployeeStore.getState().clearEmployee(); // 清除用户状态
+        useEmployeePermissionStore.getState().clearEmployee(); // 清除用户状态
         console.log('navigate 函数是否存在？', typeof navigate);
         if (navigate) {
           console.log('🚀 使用 navigate 跳转到 /login');

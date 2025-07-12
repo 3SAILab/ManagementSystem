@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom'; 
 import { menuItems } from '../config/menuConfig';
-import { useEmployeeStore } from '../store/employee';
+import { useEmployeePermissionStore } from '../store/employee';
 import * as Icons from 'lucide-react';
 
 function toPascalCase(str) {
@@ -9,7 +9,7 @@ function toPascalCase(str) {
 }
 
 const SidebarNav = () => {
-  const { employee } = useEmployeeStore();
+  const { employee } = useEmployeePermissionStore();
 
   // 权限判断函数：如果没有 access 属性，默认允许访问
   const hasAccess = (item) => {

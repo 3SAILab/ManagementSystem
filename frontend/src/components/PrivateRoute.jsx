@@ -1,10 +1,10 @@
 import { Navigate } from 'react-router-dom';
-import { useEmployeeStore } from '../store/employee';
+import { useEmployeePermissionStore } from '../store/employee';
 import { menuItems } from '../config/menuConfig';
 
 export default function PrivateRoute({ currentPath, children }) {
-    
-    const { employee } = useEmployeeStore();
+    console.log('PrivateRoute正常运行');
+    const { employee } = useEmployeePermissionStore();
     //获取路径对应的权限
     const getAccessByPath = (path) => {
         const item = menuItems.find(item => item.path === path);

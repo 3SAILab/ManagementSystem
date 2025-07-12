@@ -19,7 +19,8 @@ async def create_department(
     current_employee: Employee = Depends(get_current_employee)
 ):
     #判断当前用户身份
-    if current_employee.department != "人力资源部" or current_employee.position != "人事":
+    
+    if current_employee.department.name != "人力资源部" or current_employee.position.name != "人事":
         raise HTTPException(status_code=403, detail="无权限访问")
     # 业务逻辑
 
@@ -37,7 +38,7 @@ async def get_departments(
     current_employee: Employee = Depends(get_current_employee)
 ):
     #判断当前用户身份
-    if current_employee.department != "人力资源部" or current_employee.position != "人事":
+    if current_employee.department.name != "人力资源部" or current_employee.position.name != "人事":
         raise HTTPException(status_code=403, detail="无权限访问")
     #获取部门
     depts = await DepartmentService.search_all_departments(db)
@@ -51,7 +52,7 @@ async def delete_department(
     current_employee: Employee = Depends(get_current_employee)
 ):
     #判断当前用户身份
-    if current_employee.department != "人力资源部" or current_employee.position != "人事":
+    if current_employee.department.name != "人力资源部" or current_employee.position.name != "人事":
         raise HTTPException(status_code=403, detail="无权限访问")
     
     #删除部门

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useEmployeeStore } from '../store/employee';
+import { useEmployeePermissionStore } from '../store/employee';
 import SidebarNav from './SidebarNav';
 import Header from './Header';
 import { Outlet, useNavigate } from 'react-router-dom';
@@ -15,7 +15,7 @@ export default function Layout() {
     setApiNavigate(navigate);
   }, [navigate]);
 
-  const { employee } = useEmployeeStore();
+  const { employee } = useEmployeePermissionStore();
 
   return (
     <div id="app-view" className="h-screen flex">

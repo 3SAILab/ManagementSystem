@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getDepartments, addDepartment, deleteDepartment } from '../services/departmentService';
 import AddDepartmentModal from '../components/AddDepartmentModal';
 import { toast } from 'react-toastify';
+import { Plus } from 'lucide-react';
 
 export default function DepartmentPage() {
   const [departments, setDepartments] = useState([]);
@@ -66,7 +67,7 @@ export default function DepartmentPage() {
           onClick={() => setIsModalOpen(true)}
           className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
         >
-          <i data-lucide="plus" className="w-4 h-4"></i> 新增部门
+          <Plus className="w-4 h-4"></Plus> 新增部门
         </button>
       </div>
 

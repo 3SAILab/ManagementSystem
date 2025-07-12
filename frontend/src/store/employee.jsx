@@ -1,16 +1,12 @@
 import { create } from 'zustand';
 
-const useEmployeeStore = create((set) => ({
+const useEmployeePermissionStore = create((set) => ({
   // 用户信息初始状态
   employee: {
     name: '',
-    gender: '',
-    email: '',
-    birth_date: '',
-    department: '',
-    position: '',
-    manager: '',
-    hire_date: '',
+    department_id: '',
+    position_id: '',
+    role: '',
     is_probation: '',
   },
   
@@ -31,17 +27,13 @@ const useEmployeeStore = create((set) => ({
   clearEmployee: () => set({ 
     employee: {
         name: '',
-        gender: '',
-        email: '',
-        birth_date: '',
-        department: '',
-        position: '',
-        manager: '',
-        hire_date: '',
+        department_id: '',
+        position_id: '',
+        role: '',
         is_probation: '',
     }
   })
 }));
 
-export default useEmployeeStore;
-export { useEmployeeStore };
+export default useEmployeePermissionStore;
+export { useEmployeePermissionStore };

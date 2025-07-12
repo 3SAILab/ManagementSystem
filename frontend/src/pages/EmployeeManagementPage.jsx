@@ -1,16 +1,173 @@
-import React from 'react';
-import { useEmployeeStore } from '../store/employee';
+import React, { useState, useEffect } from 'react';
+import { Plus } from 'lucide-react';
+import EmployeeFormModal from '../components/EmployeeFormModal';
+import { getDepartments } from '../services/departmentService';
+import { getEmployeeList, addEmployee } from '../services/authService';
 
 export default function EmployeeManagementPage() {
-  const { employee } = useEmployeeStore();
+  const [searchName, setSearchName] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('');
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  // 模态框相关
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  // 模拟从 API 获取的数据（后续替换为真实接口）
+  const [allEmployees, setAllEmployees] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [employee_id, setEmployee_id] = useState(null);
+  useEffect(() => {
+    const fetchData = async () => {
+      const employees = await getEmployeeList();
+      const departments = await getDepartments();
+      if (employees.success && departments.success) {
+        setDepartments(departments.data);
+        setAllEmployees(employees.data);
+      } else {
+        console.error('获取数据失败:', employees.error || departments.error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // 初始加载用户列表
+  useEffect(() => {
+    setFilteredUsers(allEmployees);
+  }, [allEmployees]);
+
+  // 应用筛选条件
+  useEffect(() => {
+    let result = [...allEmployees];
+
+    if (searchName) {
+      const lowerSearch = searchName.toLowerCase();
+      result = result.filter(user => user.name.toLowerCase().includes(lowerSearch));
+    }
+
+    if (departmentFilter) {
+      //将字符串转换为数字
+      const departmentId = parseInt(departmentFilter);
+      result = result.filter(user => user.department_id === departmentId);
+    }
+
+    setFilteredUsers(result);
+  }, [searchName, departmentFilter, allEmployees]);
+
+  const handleSave = async (employee) => {
+    console.log('新增员工:', employee);
+    try{
+      const response = await addEmployee(employee);
+      if (response.success) {
+        setIsModalOpen(false);
+      } else {
+        console.error('新增员工失败:', response.error);
+      }
+    } catch (error) {
+      console.error('新增员工失败:', error);
+    }
+  };
+
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-4">员工管理</h2>
-      {employee.role === 'admin' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* TODO: 在此添加员工管理表格或其他 UI */}
+      {/* 标题 + 新建按钮 */}
+      <div className="flex flex-wrap justify-between items-center mb-6">
+        {/* 左侧标题 */}
+        <h2 className="text-xl font-semibold text-slate-800">员工列表</h2>
+
+        {/* 右侧筛选 + 按钮容器 */}
+        <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+          {/* 部门下拉筛选 */}
+          <div className="relative w-full sm:w-48">
+            <select
+              id="personnel-department-filter"
+              className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={departmentFilter}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
+            >
+              <option value="">所有部门</option>
+              {departments.map(dept => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 姓名搜索框 */}
+          <div className="relative w-full sm:w-64">
+            <i className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400">🔍</i>
+            <input
+              type="text"
+              placeholder="按姓名搜索员工..."
+              className="w-full pl-10 border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+            />
+          </div>
+
+          {/* 新建员工按钮 */}
+          <button
+            onClick={() => {
+              setEmployee_id(null);
+              setIsModalOpen(true);
+            }}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors focus:outline-none whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4" /> 新建员工
+          </button>
         </div>
-      )}
+      </div>
+
+      {/* 员工列表 */}
+      <div className="bg-white p-6 rounded-lg shadow-sm mt-4">
+        {filteredUsers.length === 0 ? (
+          <p className="text-center text-slate-500 py-8">未找到相关员工。</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">姓名</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">邮箱</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">部门</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">职位</th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {filteredUsers.map(user => {
+                  const deptName = departments.find(d => d.id === user.department_id)?.name || '未知部门';
+                  return (
+                    <tr key={user.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <span className="inline-block h-10 w-10 rounded-full overflow-hidden bg-slate-200">
+                            <svg className="h-full w-full text-slate-400" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                          </span>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-slate-900">{user.name}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{user.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{deptName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{user.position_name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button className="text-indigo-600 hover:text-indigo-900" onClick={() => {
+                          setIsModalOpen(true);
+                          setEmployee_id(user.id);
+                        }}>编辑</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      <EmployeeFormModal isOpen={isModalOpen} id={employee_id} onClose={() => setIsModalOpen(false)} onSave={handleSave} />
     </div>
   );
 }

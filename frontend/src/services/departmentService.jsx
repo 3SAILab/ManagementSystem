@@ -11,6 +11,7 @@ export const getDepartments = async () => {
         throw new Error('获取部门失败');
       }
       const data = response.data;
+      console.log('部门列表：',data)
       return { success: true, data };
       
     } catch (error) {

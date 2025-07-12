@@ -43,3 +43,15 @@ export const deletePosition = async (id) => {
     return { success: false, error: error.response.data.detail };
   }
 };
+
+//根据部门id获取职位信息
+export const getPositionsByDepartmentId = async (department_id) => {
+  try {
+    const response = await api.get(`/get_positions_by_department_id?department_id=${department_id}`);
+    console.log('职位信息：',response.data)
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('获取职位信息失败:', error);
+    return { success: false, error: error.response.data.detail };
+  }
+};

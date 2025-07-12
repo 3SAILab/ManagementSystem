@@ -87,4 +87,23 @@ class PositionService:
                 detail="获取职位信息失败"
             )
 
-        
+    #根据部门id获取职位信息
+    @staticmethod
+    async def get_positions_by_department_id(db: AsyncSession, department_id: int) -> List[PositionInfo]:
+        try:
+            result = await db.execute(select(Position).where(Position.department_id == department_id))
+            positions = result.scalars().all()
+            return [
+                PositionInfo(
+                    id=pos.id,
+                    name=pos.name,
+                    department_id=pos.department_id,
+                )
+                for pos in positions
+            ]
+        except Exception as e:
+            print(f"数据库查询失败: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail="获取职位信息失败"
+            )
