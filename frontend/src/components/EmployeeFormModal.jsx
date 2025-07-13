@@ -5,6 +5,7 @@ import { getPositionsByDepartmentId } from '../services/positionService';
 import { getManagers } from '../services/authService';
 import AddressSelector from './AddressSelector';
 import { toast } from 'react-toastify';
+import ModalCloseButton from './ModalCloseButton';
 
 export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }) {
   // 初始表单数据
@@ -117,13 +118,13 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
     if (posOpts.success) {
       setPositionOptions(Array.isArray(posOpts) ? posOpts : []);
     } else {
-      toast.error('获取职位列表失败');
+      toast.error('页面加载错误');
     }
     const mgrOpts = await getManagerOptions(department_id);
     if (mgrOpts.success) {
       setManagerOptions(Array.isArray(mgrOpts) ? mgrOpts : []);
     } else {
-      toast.error('获取上级列表失败');
+      toast.error('页面加载错误');
     }
   };
 
@@ -144,7 +145,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
     if (!employee.role) return [{ value: '', label: '暂无数据' }];
     const managers = await getManagers(department_id, employee.role);
     if (managers.success) {
-      toast.success('获取上级列表成功');
+      console.log('获取上级列表成功');
       return managers.data.map(m => ({ value: m.id, label: m.name, selected: m.role === employee.role && m.department_id === department_id }));
     } else {
       return [{ value: '', label: '暂无数据' }];
@@ -168,10 +169,13 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
   };
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto py-8 flex items-start justify-center">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-6xl mx-auto">
         <div className="border-b border-gray-200 px-6 py-4">
-          <h2 className="text-xl font-semibold">{isNew ? '新增员工' : `编辑员工 - ${employee.name}`}</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">{isNew ? '新增员工' : `编辑员工 - ${employee.name}`}</h2>
+            <ModalCloseButton onClose={onClose} />
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-8">
@@ -571,7 +575,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
           </fieldset>
 
           {/* 提交按钮 */}
-          <div className="mt-8 flex justify-end gap-3 border-t pt-6">
+          <div className="mt-8 flex justify-end gap-3 border-t border-slate-300 pt-6">
             <button
               type="button"
               onClick={onClose}

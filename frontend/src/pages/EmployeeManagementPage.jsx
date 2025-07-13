@@ -109,7 +109,7 @@ export default function EmployeeManagementPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="bg-white p-6 rounded-lg shadow-sm">
       {/* 标题 + 新建按钮 */}
       <div className="flex flex-wrap justify-between items-center mb-6">
         {/* 左侧标题 */}

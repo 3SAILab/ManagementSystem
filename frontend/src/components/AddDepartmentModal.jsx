@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ModalCloseButton from './ModalCloseButton';
 
 export default function AddDepartmentModal({ isOpen, onClose, onAdd }) {
   const [departmentName, setDepartmentName] = useState('');
@@ -18,10 +19,12 @@ export default function AddDepartmentModal({ isOpen, onClose, onAdd }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 animate-fade-in">
-        <h2 className="text-xl font-semibold text-slate-800 mb-4">新增部门</h2>
-
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold text-slate-800">新增部门</h2>
+        <ModalCloseButton onClose={onClose} />
+      </div>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
