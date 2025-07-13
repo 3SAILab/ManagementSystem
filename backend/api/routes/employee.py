@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from typing import Literal
 from backend.models.employee import Employee
 from backend.services.employee_service import EmployeeService
 from backend.utils.response import api_response
 from ...db.session import get_async_db
 from ...schemas.employee import EmployeePermission, Token, EmployeeInfo, EmployeeListInfo
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-
+from fastapi import Query
 router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -44,6 +44,9 @@ async def register(
     newEmployee: EmployeeInfo,
     db: AsyncSession = Depends(get_async_db)
 ):
+    #判断权限
+    #开发环境无需权限
+    
     employee = await EmployeeService.create_employee(db, newEmployee)
     #返回员工信息
     return api_response(data={"employeeName": employee.name})
@@ -83,11 +86,10 @@ async def get_employee_info(
 
 
 #获取上级列表
-
 @router.get("/manager/list", response_model=list[EmployeeListInfo])
-async def get_employees(
-    department_id: int, 
-    role: str, 
+async def get_managers(
+    department_id: int = Query(...),
+    role: Literal['employee', 'manager', 'admin'] = Query(...),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
@@ -97,3 +99,23 @@ async def get_employees(
     #获取上级列表
     employees = await EmployeeService.get_managers(db, department_id, role)
     return employees
+
+#修改员工基本信息
+
+#删除员工
+
+#编辑员工工作信息
+@router.put("/employee/work-info/{id}", response_model=EmployeeInfo)
+async def update_employee_work_info(
+    id: int,
+    employee: EmployeeInfo,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    #判断当前用户身份
+    if current_employee.department.name != "人力资源部" or current_employee.position.name != "人事":
+        raise HTTPException(status_code=403, detail="无权限访问")
+    #修改员工信息
+    return await EmployeeService.update_employee_work_info(db, id, employee)
+
+

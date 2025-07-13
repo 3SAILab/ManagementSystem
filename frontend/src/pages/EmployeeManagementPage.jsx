@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import EmployeeFormModal from '../components/EmployeeFormModal';
 import { getDepartments } from '../services/departmentService';
-import { getEmployeeList, addEmployee } from '../services/authService';
+import { getEmployeeList, addEmployee, updateEmployeeWorkInfo } from '../services/authService';
+import { toast } from 'react-toastify';
 
 export default function EmployeeManagementPage() {
   const [searchName, setSearchName] = useState('');
@@ -53,17 +54,58 @@ export default function EmployeeManagementPage() {
   }, [searchName, departmentFilter, allEmployees]);
 
   const handleSave = async (employee) => {
-    console.log('新增员工:', employee);
-    try{
-      const response = await addEmployee(employee);
+    // 将表单数据转换为后端标准格式
+    const payload = {
+      name: employee.name,
+      gender: employee.gender===''?null:employee.gender,
+      email: employee.email,
+      phone: employee.phone || undefined,
+      birth_date: employee.birth_date || undefined,
+      hire_date: employee.hire_date,
+      department_id: Number(employee.department_id),
+      position_id: Number(employee.position_id),
+      manager_id: employee.manager_id ? Number(employee.manager_id) : undefined,
+      base_salary: Number(employee.base_salary),
+      work_performance_score: Number(employee.work_performance_score),
+      attendance_performance_score: Number(employee.attendance_performance_score),
+      is_probation: employee.is_probation,
+      status: employee.status,
+      role: employee.role,
+      address: employee.address,
+      emergency_contact: employee.emergency_contact,
+      education: employee.education,
+      university: employee.university,
+      major: employee.major,
+      graduation_date: employee.graduation_date || undefined,
+      id_number: employee.id_number || undefined,
+      marital_status: employee.marital_status || undefined,
+      bank_account: employee.bank_account || undefined,
+    };
+
+
+    try {
+      let response;
+      if (employee_id) {
+        // 编辑已有员工
+        response = await updateEmployeeWorkInfo(employee_id, payload);
+      } else {
+        // 新增员工
+        response = await addEmployee(payload);
+      }
+  
       if (response.success) {
         setIsModalOpen(false);
+        toast.success('操作成功');
+        const updatedEmployees = await getEmployeeList();
+        setAllEmployees(updatedEmployees.data);
       } else {
-        console.error('新增员工失败:', response.error);
+        toast.error('操作失败');
+        console.error('操作失败:', response.error);
       }
     } catch (error) {
-      console.error('新增员工失败:', error);
-    }
+      toast.error('操作失败');
+      console.error('操作失败:', error);
+      }
   };
 
   return (

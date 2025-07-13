@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import logging
 from typing import Optional
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 import bcrypt
@@ -57,23 +58,22 @@ class EmployeeService:
     #创建新员工
     @staticmethod
     async def create_employee(db: AsyncSession, newEmployee: EmployeeInfo):
-        # 检查邮箱是否已存在
-        result = await db.execute(select(Employee).where(Employee.email == newEmployee.email))
-        if result.scalars().first():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="邮箱已被使用"
-            )
-        
-        password_hash = EmployeeService.get_password_hash(newEmployee.password)
-        employee = Employee(
-            **newEmployee.model_dump(exclude={"password"}),
-            password_hash=password_hash,
-            created_at=datetime.now(timezone.utc),
-        )
-        db.add(employee)
-        
         try:
+            # 检查邮箱是否已存在
+            result = await db.execute(select(Employee).where(Employee.email == newEmployee.email))
+            if result.scalars().first():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="邮箱已被使用"
+                )
+            
+            password_hash = EmployeeService.get_password_hash(newEmployee.password)
+            employee = Employee(
+                **newEmployee.model_dump(exclude={"password"}),
+                password_hash=password_hash,
+                created_at=datetime.now(timezone.utc),
+            )
+            db.add(employee)
             await db.commit()
             print("注册成功", employee.name)
             await db.refresh(employee)
@@ -153,9 +153,9 @@ class EmployeeService:
     
     #获取上级列表
     LEVEL_HIERARCHY = {
-        "主管": 3,
-        "组长": 2,
-        "普通员工": 1
+        "admin": 3,
+        "manager": 2,
+        "employee": 1
     }
 
     @staticmethod
@@ -178,6 +178,10 @@ class EmployeeService:
 
         result = await db.execute(
             select(Employee)
+            .options(
+                selectinload(Employee.department),
+                selectinload(Employee.position),
+            )
             .where(
                 Employee.department_id == department_id,
                 Employee.role.in_(higher_levels)
@@ -197,3 +201,17 @@ class EmployeeService:
             )
             for e in emps
         ] 
+    
+    #修改员工工作信息
+    @staticmethod
+    async def update_employee_work_info(db: AsyncSession, id: int, employee: EmployeeInfo):
+       try:
+           existing = await db.execute(select(Employee).where(Employee.id==id))
+           if not existing:
+               raise HTTPException(404, "员工不存在")
+           await db.execute(update(Employee).where(Employee.id==id).values(**employee.model_dump(exclude_unset=True)))
+           await db.commit()
+           return employee
+       except Exception as e:
+           await db.rollback()
+           raise HTTPException(500, f"系统错误: {str(e)}")

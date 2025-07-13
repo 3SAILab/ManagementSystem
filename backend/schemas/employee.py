@@ -14,7 +14,7 @@ class EmployeePermission(BaseModel):
     name: str
     department_id: int
     position_id: int
-    role: Literal['普通员工', '组长', '主管']
+    role: Literal['employee', 'manager', 'admin']
     is_probation: bool
     class Config:
         from_attributes = True
@@ -47,7 +47,7 @@ class RegisterResponse(BaseModel):
 #员工详细信息
 class EmployeeInfo(BaseModel):
     name: str
-    gender: Literal['male', 'female']
+    gender: Optional[Literal['male', 'female']] = None
     email: str
     phone: Optional[str] = None
     password: str = "123456qwerty"
@@ -61,7 +61,7 @@ class EmployeeInfo(BaseModel):
     attendance_performance_score: Optional[float] = None
     is_probation: bool
     status: Literal['active', 'inactive', 'on_leave']
-    role: Literal['普通员工', '组长', '主管']
+    role: Literal['employee', 'manager', 'admin']
     address: Optional[dict] = None
     emergency_contact: Optional[dict] = None
     education: Optional[str] = None
@@ -86,7 +86,7 @@ class EmployeeInfo(BaseModel):
     def from_model(cls, emp: Employee) -> 'EmployeeInfo':
         return cls(
             name=emp.name,
-            gender=emp.gender.value,
+            gender=emp.gender.value if emp.gender else None,
             email=emp.email,
             phone=emp.phone,
             birth_date=emp.birth_date,
@@ -98,7 +98,7 @@ class EmployeeInfo(BaseModel):
             work_performance_score=emp.work_performance_score,
             attendance_performance_score=emp.attendance_performance_score,
             is_probation=emp.is_probation,
-            status=emp.status.value,
+            status=emp.status.value if emp.status else None,
             role=emp.role.value,
             address=emp.address,
             emergency_contact=emp.emergency_contact,

@@ -18,9 +18,9 @@ class EmployeeStatus(enum.Enum):
 
 #用户角色
 class EmployeeRole(enum.Enum):
-    employee = "普通员工"
-    manager = "组长"
-    admin = "主管"
+    employee = "employee"
+    manager = "manager"
+    admin = "admin"
 
 class Employee(Base):
     __tablename__ = "employee"

@@ -4,6 +4,7 @@ import { getDepartments } from '../services/departmentService';
 import { getPositionsByDepartmentId } from '../services/positionService';
 import { getManagers } from '../services/authService';
 import AddressSelector from './AddressSelector';
+import { toast } from 'react-toastify';
 
 export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }) {
   // 初始表单数据
@@ -22,12 +23,19 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
         // 打开则加载或重置数据
         if (id) {
           const data = await getEmployeeById(id);
-          setEmployee(data.data);
-          // 编辑时预加载职位和上级列表
-          const posOpts = await getPositionOptions(data.department_id, data.position_id);
-          setPositionOptions(typeof posOpts === 'object' && Array.isArray(posOpts) ? posOpts : []);
-          const mgrOpts = await getManagerOptions(data.department_id);
-          setManagerOptions(Array.isArray(mgrOpts) ? mgrOpts : []);
+          if (data.success) {
+            console.log("当前员工数据", data);
+            setEmployee(data.data);
+            // 编辑时预加载部门、职位、上级
+            const posOpts = await getPositionOptions(data.data.department_id, data.data.position_id);
+            console.log("syncForm职位选项", posOpts);
+            setPositionOptions(Array.isArray(posOpts) ? posOpts : []);
+            const mgrOpts = await getManagerOptions(data.data.department_id);
+            console.log("syncForm上级选项", mgrOpts);
+            setManagerOptions(Array.isArray(mgrOpts) ? mgrOpts : []);
+          } else {
+            console.error("获取员工数据失败", data.error);
+          }
         } else {
           setEmployee(initialEmployeeState);
           setPositionOptions([]);
@@ -78,14 +86,14 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
   };
   // 级联选择器地址改变处理
   const handleAddressSelectorChange = (codes) => {
-    const [province, city, area] = codes || [];
+    const [province, city, district] = codes || [];
     setEmployee((prev) => ({
       ...prev,
       address: {
         ...((prev.address) || {}),
         province: province || '',
         city: city || '',
-        area: area || ''
+        district: district || ''
       }
     }));
   };
@@ -106,17 +114,28 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
     setEmployee((prev) => ({ ...prev, department_id, position_id: '', manager_id: '' }));
     // 异步获取职位和上级选项
     const posOpts = await getPositionOptions(department_id);
-    setPositionOptions(Array.isArray(posOpts) ? posOpts : []);
+    if (posOpts.success) {
+      setPositionOptions(Array.isArray(posOpts) ? posOpts : []);
+    } else {
+      toast.error('获取职位列表失败');
+    }
     const mgrOpts = await getManagerOptions(department_id);
-    setManagerOptions(Array.isArray(mgrOpts) ? mgrOpts : []);
+    if (mgrOpts.success) {
+      setManagerOptions(Array.isArray(mgrOpts) ? mgrOpts : []);
+    } else {
+      toast.error('获取上级列表失败');
+    }
   };
 
   const getPositionOptions = async (department_id, selectedPositionId) => {
     if (!department_id) return [{ value: '', label: '暂无数据' }];
     //根据部门id获取职位信息
     const positions = await getPositionsByDepartmentId(department_id);
-    //将职位信息转换为选项
-    return positions.data.map(p => ({ value: p.id, label: p.name, selected: p.id === selectedPositionId }));
+    if (positions.success) {
+      return positions.data.map(p => ({ value: p.id, label: p.name, selected: p.id === selectedPositionId }));
+    } else {
+      return [{ value: '', label: '暂无数据' }];
+    }
   };
 
   const getManagerOptions = async (department_id) => {
@@ -124,8 +143,24 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
     if (!department_id) return [{ value: '', label: '暂无数据' }];
     if (!employee.role) return [{ value: '', label: '暂无数据' }];
     const managers = await getManagers(department_id, employee.role);
-    return managers.data.map(m => ({ value: m.id, label: m.name, selected: m.role === employee.role && m.department_id === department_id }));
+    if (managers.success) {
+      toast.success('获取上级列表成功');
+      return managers.data.map(m => ({ value: m.id, label: m.name, selected: m.role === employee.role && m.department_id === department_id }));
+    } else {
+      return [{ value: '', label: '暂无数据' }];
+    }
   };
+
+  // 当部门或角色改变时，重新获取上级列表
+  useEffect(() => {
+    async function fetchMgrOpts() {
+      if (employee.department_id && employee.role) {
+        const opts = await getManagerOptions(employee.department_id);
+        setManagerOptions(Array.isArray(opts) ? opts : []);
+      }
+    }
+    fetchMgrOpts();
+  }, [employee.department_id, employee.role]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -169,8 +204,8 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">请选择性别</option>
-                  <option value="男">男</option>
-                  <option value="女">女</option>
+                  <option value="male">男</option>
+                  <option value="female">女</option>
                 </select>
               </div>
 
@@ -246,12 +281,11 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
               <div className="md:col-span-6">
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">家庭住址</label>
                 <AddressSelector
-                  value={
-                    (employee.address
-                      ? [employee.address.province, employee.address.city, employee.address.area]
-                      : []
-                    ).filter(Boolean)
-                  }
+                  value={[
+                    employee.address?.province || '',
+                    employee.address?.city || '',
+                    employee.address?.district || ''
+                  ]}
                   onChange={handleAddressSelectorChange}
                 />
                 <input
@@ -319,8 +353,9 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">请选择状态</option>
-                  <option value="在职">在职</option>
-                  <option value="离职">离职</option>
+                  <option value="active">在职</option>
+                  <option value="inactive">离职</option>
+                  <option value="on_leave">请假</option>
                 </select>
               </div>
 
@@ -359,7 +394,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 >
                   <option value="" disabled hidden>选择职位</option>
                   {positionOptions.map(pos => (
-                    <option key={pos.id} value={pos.id}>
+                    <option key={pos.value} value={pos.value}>
                       {pos.label}
                     </option>
                   ))}
@@ -379,9 +414,9 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                   required
                 >
                   <option value="" disabled hidden>请选择角色等级</option>
-                  <option value="普通员工">普通员工</option>
-                  <option value="组长">组长</option>
-                  <option value="主管">主管</option>
+                  <option value="employee">普通员工</option>
+                  <option value="manager">组长</option>
+                  <option value="admin">主管</option>
                 </select>
               </div>
 
@@ -396,7 +431,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 >
                   <option value="">无</option>
                   {managerOptions.map(mgr => (
-                    <option key={mgr.id} value={mgr.id}>
+                    <option key={mgr.value} value={mgr.value}>
                       {mgr.label}
                     </option>
                   ))}

@@ -51,6 +51,7 @@ export const getEmployeePermission = async () => {
     useEmployeePermissionStore.setState({
       employee: response.data,
     });
+    console.log("员工权限信息", response.data);
     return { success: true};
   } catch (err) {
     const detail = err.response?.data?.detail || err.message;
@@ -106,6 +107,18 @@ export const addEmployee = async (employee) => {
   } catch (err) {
     const detail = err.response?.data?.detail || err.message;
     console.error('新增员工失败:', detail);
+    return { success: false, error: detail };
+  }
+};
+
+//修改员工工作信息
+export const updateEmployeeWorkInfo = async (id, employee) => {
+  try {
+    const response = await api.put(`/employee/work-info/${id}`, employee);
+    return { success: true, data: response.data };
+  } catch (err) {
+    const detail = err.response?.data?.detail || err.message;
+    console.error('修改员工工作信息失败:', detail);
     return { success: false, error: detail };
   }
 };
