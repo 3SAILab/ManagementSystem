@@ -60,6 +60,24 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
 
   const isNew = id === null;
   const [employee, setEmployee] = useState({});
+  const [errors, setErrors] = useState({});
+  // 格式校验函数
+  const validateField = (name, value) => {
+    let error = '';
+    if (name === 'id_number' && value && !/^[1-9]\d{16}[\dXx]$/.test(value)) {
+      error = '身份证号格式不正确';
+    }
+    if (name === 'phone' && value && !/^1[3-9]\d{9}$/.test(value)) {
+      error = '手机号格式不正确';
+    }
+    if (name === 'emergency_contact_phone' && value && !/^1[3-9]\d{9}$/.test(value)) {
+      error = '手机号格式不正确';
+    }
+    if (name === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      error = '邮箱格式不正确';
+    }
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
   const [positions, setPositions] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
@@ -70,10 +88,15 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const newValue = type === 'checkbox' ? checked : value;
     setEmployee((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
     }));
+    // 校验指定字段格式
+    if (['id_number', 'phone', 'email'].includes(name)) {
+      validateField(name, newValue);
+    }
   };
 
   const handleAddressChange = (field) => (e) => {
@@ -100,13 +123,17 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
   };
 
   const handleEmergencyContactChange = (field) => (e) => {
+    const value = e.target.value;
     setEmployee((prev) => ({
       ...prev,
       emergency_contact: {
         ...prev.emergency_contact,
-        [field]: e.target.value
+        [field]: value
       }
     }));
+    if (field === 'phone') {
+      validateField('emergency_contact_phone', value);
+    }
   };
 
   const handleDepartmentChange = async (e) => {
@@ -246,6 +273,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+                {errors.id_number && <p className="text-sm text-red-500 mt-1">{errors.id_number}</p>}
               </div>
 
               {/* 联系电话 */}
@@ -258,6 +286,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+                {errors.phone && <p className="text-sm text-red-500 mt-1">{errors.phone}</p>}
               </div>
 
               {/* 邮箱地址 */}
@@ -273,6 +302,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   required
                 />
+                {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
               </div>
 
               {/* 地址 */}
@@ -316,6 +346,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                   onChange={handleEmergencyContactChange('phone')}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+                {errors.emergency_contact_phone && <p className="text-sm text-red-500 mt-1">{errors.emergency_contact_phone}</p>}
               </div>
             </div>
           </fieldset>

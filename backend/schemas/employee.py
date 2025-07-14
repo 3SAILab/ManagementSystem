@@ -1,8 +1,11 @@
 # Pydantic model for creating a user
 from datetime import date
+import re
 from typing import Literal, Optional
-from pydantic import BaseModel, EmailStr, model_validator
+from pydantic_extra_types.phone_numbers import PhoneNumber
+from pydantic import BaseModel, EmailStr, model_validator, field_validator
 from ..models.employee import Employee
+
 
 # token
 class Token(BaseModel):
@@ -48,8 +51,8 @@ class RegisterResponse(BaseModel):
 class EmployeeInfo(BaseModel):
     name: str
     gender: Optional[Literal['male', 'female']] = None
-    email: str
-    phone: Optional[str] = None
+    email: EmailStr
+    phone: Optional[PhoneNumber] = None
     password: str = "123456qwerty"
     birth_date: Optional[date] = None
     hire_date: date
@@ -69,7 +72,6 @@ class EmployeeInfo(BaseModel):
     major: Optional[str] = None
     graduation_date: Optional[date] = None
     id_number: Optional[str] = None
-    nationality: Optional[str] = None
     marital_status: Optional[str] = None
     bank_account: Optional[str] = None
 
@@ -81,6 +83,13 @@ class EmployeeInfo(BaseModel):
         if self.hire_date > date.today():
             raise ValueError("入职日期不能晚于今天")
         return self
+    @field_validator("id_number")
+    def validate_id_card(cls, v):
+        # 匹配 18 位身份证号，最后一位可能是数字或 X/x
+        pattern = r"^\d{17}[\dXx]$"
+        if not re.match(pattern, v):
+            raise ValueError("身份证号码格式不正确")
+        return v.title()  # 统一转为大写 X
     #从模型转换为信息
     @classmethod
     def from_model(cls, emp: Employee) -> 'EmployeeInfo':

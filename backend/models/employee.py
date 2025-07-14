@@ -54,8 +54,7 @@ class Employee(Base):
     university = Column(String(100))
     major = Column(String(100))
     graduation_date = Column(Date)
-    id_number = Column(String(18))
-    nationality = Column(String(50))
+    id_number = Column(String(18)) #身份证号
     marital_status = Column(String(20))
     bank_account = Column(String(50))
 
