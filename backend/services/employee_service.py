@@ -149,7 +149,7 @@ class EmployeeService:
                 position_name=e.position.name
             )
             for e in emps
-            ] 
+        ] 
     
     #获取上级列表
     LEVEL_HIERARCHY = {

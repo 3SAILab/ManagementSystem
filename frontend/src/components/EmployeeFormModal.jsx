@@ -113,19 +113,12 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
     const department_id = e.target.value;
     // 更新员工部门并重置职位和上级
     setEmployee((prev) => ({ ...prev, department_id, position_id: '', manager_id: '' }));
-    // 异步获取职位和上级选项
+    // 异步获取职位选项
     const posOpts = await getPositionOptions(department_id);
-    if (posOpts.success) {
-      setPositionOptions(Array.isArray(posOpts) ? posOpts : []);
-    } else {
-      toast.error('页面加载错误');
-    }
+    setPositionOptions(Array.isArray(posOpts) ? posOpts : []);
+    // 异步获取上级选项
     const mgrOpts = await getManagerOptions(department_id);
-    if (mgrOpts.success) {
-      setManagerOptions(Array.isArray(mgrOpts) ? mgrOpts : []);
-    } else {
-      toast.error('页面加载错误');
-    }
+    setManagerOptions(Array.isArray(mgrOpts) ? mgrOpts : []);
   };
 
   const getPositionOptions = async (department_id, selectedPositionId) => {
@@ -135,6 +128,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
     if (positions.success) {
       return positions.data.map(p => ({ value: p.id, label: p.name, selected: p.id === selectedPositionId }));
     } else {
+      toast.error('获取职位列表失败');
       return [{ value: '', label: '暂无数据' }];
     }
   };
@@ -145,9 +139,9 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
     if (!employee.role) return [{ value: '', label: '暂无数据' }];
     const managers = await getManagers(department_id, employee.role);
     if (managers.success) {
-      console.log('获取上级列表成功');
       return managers.data.map(m => ({ value: m.id, label: m.name, selected: m.role === employee.role && m.department_id === department_id }));
     } else {
+      toast.error('获取上级列表失败');
       return [{ value: '', label: '暂无数据' }];
     }
   };
