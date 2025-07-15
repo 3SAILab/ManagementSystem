@@ -15,8 +15,8 @@ class Token(BaseModel):
 # 员工权限信息
 class EmployeePermission(BaseModel):
     name: str
-    department_id: int
-    position_id: int
+    department_name: str
+    position_name: str
     role: Literal['employee', 'manager', 'admin']
     is_probation: bool
     class Config:
@@ -26,8 +26,8 @@ class EmployeePermission(BaseModel):
     def from_model(cls, emp: Employee) -> 'EmployeePermission':
         return cls(
             name=emp.name,
-            department_id=emp.department_id,
-            position_id=emp.position_id,
+            department_name=emp.department.name,
+            position_name=emp.position.name,
             role=emp.role.value,
             is_probation=emp.is_probation,
         )
@@ -35,17 +35,12 @@ class EmployeePermission(BaseModel):
     def to_model(self) -> Employee:
         return Employee(
             name=self.name,
-            department_id=self.department_id,
-            position_id=self.position_id,
+            department_name=self.department_name,
+            position_name=self.position_name,
             role=self.role,
             hire_date=self.hire_date,
             is_probation=self.is_probation,
         )
-
-# 注册返回
-class RegisterResponse(BaseModel):
-    employee: EmployeePermission
-    token: Token
 
 #员工详细信息
 class EmployeeInfo(BaseModel):
@@ -85,6 +80,9 @@ class EmployeeInfo(BaseModel):
         return self
     @field_validator("id_number")
     def validate_id_card(cls, v):
+        # 允许空值
+        if v is None:
+            return v
         # 匹配 18 位身份证号，最后一位可能是数字或 X/x
         pattern = r"^\d{17}[\dXx]$"
         if not re.match(pattern, v):
@@ -116,7 +114,6 @@ class EmployeeInfo(BaseModel):
             major=emp.major,
             graduation_date=emp.graduation_date,
             id_number=emp.id_number,
-            nationality=emp.nationality,
         )
 
     def to_model(self) -> Employee:

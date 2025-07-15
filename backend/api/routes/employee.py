@@ -42,7 +42,8 @@ async def login(
 @router.post("/register", response_model=api_response)
 async def register(
     newEmployee: EmployeeInfo,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
 ):
     #判断权限
     #开发环境无需权限
@@ -65,7 +66,7 @@ async def get_employee_list(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    if current_employee.department.name != "人力资源部" or current_employee.position.name != "人事":
+    if current_employee.department.name != "人力资源部":
         raise HTTPException(status_code=403, detail="无权限访问")
     employees = await EmployeeService.get_employee_list(db)
     return employees
@@ -78,7 +79,7 @@ async def get_employee_info(
     current_employee: Employee = Depends(get_current_employee)
 ):
     #判断当前用户身份
-    if current_employee.department.name != "人力资源部" or current_employee.position.name != "人事":
+    if current_employee.department.name != "人力资源部":
         raise HTTPException(status_code=403, detail="无权限访问")
     
     employee = await EmployeeService.get_employee_by_id(db, id)
@@ -94,7 +95,7 @@ async def get_managers(
     current_employee: Employee = Depends(get_current_employee)
 ):
     #判断当前用户身份
-    if current_employee.department.name != "人力资源部" or current_employee.position.name != "人事":
+    if current_employee.department.name != "人力资源部":
         raise HTTPException(status_code=403, detail="无权限访问")
     #获取上级列表
     employees = await EmployeeService.get_managers(db, department_id, role)
@@ -113,7 +114,7 @@ async def update_employee_work_info(
     current_employee: Employee = Depends(get_current_employee)
 ):
     #判断当前用户身份
-    if current_employee.department.name != "人力资源部" or current_employee.position.name != "人事":
+    if current_employee.department.name != "人力资源部":
         raise HTTPException(status_code=403, detail="无权限访问")
     #修改员工信息
     return await EmployeeService.update_employee_work_info(db, id, employee)

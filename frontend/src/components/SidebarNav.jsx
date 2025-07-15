@@ -12,16 +12,15 @@ const SidebarNav = () => {
   const { employee } = useEmployeePermissionStore();
 
   // 权限判断函数：如果没有 access 属性，默认允许访问
-  const hasAccess = (item) => {
-    if (!item.access) return true;
+  const hasAccess = (item, access = item.access) => {
+    if (!access) return true;
 
-    const { roles, departments, positions } = item.access;
-
-    const roleMatch = roles ? roles.includes(employee?.role) : true;
-    const departmentMatch = departments ? departments.includes(employee?.department) : true;
-    const positionMatch = positions ? positions.includes(employee?.position) : true;
-
-    return roleMatch && departmentMatch && positionMatch;
+    const { roles, departments, positions } = access;
+    console.log("当前用户权限", employee?.role, employee?.department_name, employee?.position_name)
+    // 用 department_id、position_id 或者把名称存入 Store
+    return (roles ? roles.includes(employee.role) : true)
+        && (departments ? departments.includes(employee.department_name) : true)
+        && (positions ? positions.includes(employee.position_name) : true)
   };
 
   // 收集所有有权限的子菜单项
@@ -29,7 +28,8 @@ const SidebarNav = () => {
     return menuItems.reduce((acc, parentItem) => {
       if (parentItem.children && Array.isArray(parentItem.children)) {
         parentItem.children.forEach(child => {
-          if (hasAccess(child)) {
+          const mergedAccess = child.access || parentItem.access;
+          if (hasAccess(child, mergedAccess)) {
             acc.push(child);
           }
         });

@@ -7,23 +7,33 @@ export default function PrivateRoute({ currentPath, children }) {
     const { employee } = useEmployeePermissionStore();
     //获取路径对应的权限
     const getAccessByPath = (path) => {
-        const item = menuItems.find(item => item.path === path);
-        return item ? item.access : undefined;
-      };
+        // 遍历父菜单和子菜单，寻找匹配的 path，并合并 access
+        for (const parent of menuItems) {
+            if (parent.children) {
+                const child = parent.children.find(child => child.path === path);
+                if (child) {
+                    return child.access || parent.access;
+                }
+            }
+            // 如果父菜单本身有 path
+            if (parent.path === path) {
+                return parent.access;
+            }
+        }
+        return undefined;
+    };
     //判断是否有权限
     const hasAccess = (path) => {
         const access = getAccessByPath(path);
         if (!access) return true;
-    
+        
         const { roles, departments, positions } = access;
-    
         const roleMatch = roles ? roles.includes(employee?.role) : true;
-        const departmentMatch = departments ? departments.includes(employee?.department) : true;
-        const positionMatch = positions ? positions.includes(employee?.position) : true;
+        const departmentMatch = departments ? departments.includes(employee?.department_name) : true;
+        const positionMatch = positions ? positions.includes(employee?.position_name) : true;
     
         return roleMatch && departmentMatch && positionMatch;
     };
-    console.log('PrivateRoute正常运行');
     if (!hasAccess(currentPath)) return <Navigate to="/login" replace />;
     //验证通过
     return children;

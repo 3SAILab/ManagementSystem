@@ -11,7 +11,7 @@ export default function EmployeeManagementPage() {
   const [filteredUsers, setFilteredUsers] = useState([]);
   // 模态框相关
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // 模拟从 API 获取的数据（后续替换为真实接口）
+  //从 API 获取数据
   const [allEmployees, setAllEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [employee_id, setEmployee_id] = useState(null);

@@ -9,6 +9,8 @@ import RequireAuth from '../components/RequireAuth';
 import DepartmentPage from '../pages/DepartmentPage';
 import PositionPage from '../pages/PositionPage';
 import DailyReportPage from '../pages/DailyReportPage';
+import SalesDashboard from '../pages/SalesDashboard';
+import ClientFollowUps from '../pages/ClientFollowUps';
 
 const router = createBrowserRouter([
   {
@@ -72,6 +74,24 @@ const router = createBrowserRouter([
             ),
             handle: { title: '职位管理' },
           },
+          {
+            path: 'sales_dashboard',
+            element: (
+              <PrivateRoute currentPath='sales_dashboard'>
+                <SalesDashboard />
+              </PrivateRoute>
+            ),
+            handle: { title: '我的看板' },
+          },
+          {
+            path: 'client_follow_ups',
+            element: (
+              <PrivateRoute currentPath='client_follow_ups'>
+                <ClientFollowUps />
+              </PrivateRoute>
+            ),
+            handle: { title: '跟进记录' },
+          }
         ],
       },
     ],

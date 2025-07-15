@@ -9,10 +9,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.api.api import api_router
 # 导入异步引擎和 Base
 from backend.db.session import Base, async_engine 
+# 导入服务
+from backend.services.employee_service import EmployeeService
+# 导入模型
 from backend.models.department import Department
 from backend.models.position import Position
 from backend.models.employee import Employee
-from backend.services.employee_service import EmployeeService
+from backend.models.client import Client
+from backend.models.client_activity_log import ClientActivityLog
+from backend.models.contract import Contract
+
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)

@@ -17,6 +17,11 @@ export default function Layout() {
 
   const { employee } = useEmployeePermissionStore();
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <div id="app-view" className="h-screen flex">
       {/* 侧边栏 */}
@@ -46,7 +51,7 @@ export default function Layout() {
               <button id="edit-profile-btn" className="text-slate-500 hover:text-indigo-600" title="个人中心">
                 <Settings2 className="w-4 h-4" />
               </button>
-              <button id="logout-btn" className="text-slate-500 hover:text-red-600" title="退出登录" onClick={logout}>
+              <button id="logout-btn" className="text-slate-500 hover:text-red-600" title="退出登录" onClick={handleLogout}>
                 <LogOut className="w-4 h-4" />
               </button>
             </div>

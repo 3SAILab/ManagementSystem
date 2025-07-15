@@ -19,7 +19,7 @@ async def create_position(
     current_employee: Employee = Depends(get_current_employee)
 ):
     #判断当前用户身份
-    if current_employee.department.name != "人力资源部" or current_employee.position.name != "人事":
+    if current_employee.department.name != "人力资源部":
         raise HTTPException(status_code=403, detail="无权限访问")
     # 业务逻辑
 
@@ -37,7 +37,7 @@ async def get_positions(
     current_employee: Employee = Depends(get_current_employee)
 ):
     #判断当前用户身份
-    if current_employee.department.name != "人力资源部" or current_employee.position.name != "人事":
+    if current_employee.department.name != "人力资源部":
         raise HTTPException(status_code=403, detail="无权限访问")
     #获取职位信息
     positions = await PositionService.get_positions(db)
@@ -51,7 +51,7 @@ async def delete_position(
     current_employee: Employee = Depends(get_current_employee)
 ):
     #判断当前用户身份
-    if current_employee.department.name != "人力资源部" or current_employee.position.name != "人事":
+    if current_employee.department.name != "人力资源部":
         raise HTTPException(status_code=403, detail="无权限访问")
     
     #删除职位
@@ -67,7 +67,7 @@ async def get_positions_by_department_id(
     current_employee: Employee = Depends(get_current_employee)
 ):
     #判断当前用户身份
-    if current_employee.department.name != "人力资源部" or current_employee.position.name != "人事":
+    if current_employee.department.name != "人力资源部":
         raise HTTPException(status_code=403, detail="无权限访问")
     #获取职位信息
     positions = await PositionService.get_positions_by_department_id(db, department_id)

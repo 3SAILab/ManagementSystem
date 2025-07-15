@@ -86,6 +86,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
   const [managerRoleOptions, setManagerRoleOptions] = useState([]);
   const [managers,setManagers] = useState([]);
 
+  // 输入框改变处理
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
@@ -98,7 +99,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
       validateField(name, newValue);
     }
   };
-
+  // 详细地址改变处理
   const handleAddressChange = (field) => (e) => {
     setEmployee((prev) => ({
       ...prev,
@@ -121,7 +122,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
       }
     }));
   };
-
+  // 紧急联系人信息改变处理
   const handleEmergencyContactChange = (field) => (e) => {
     const value = e.target.value;
     setEmployee((prev) => ({
@@ -135,7 +136,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
       validateField('emergency_contact_phone', value);
     }
   };
-
+  // 部门选择处理,重置职位和上级
   const handleDepartmentChange = async (e) => {
     const department_id = e.target.value;
     // 更新员工部门并重置职位和上级
@@ -147,7 +148,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
     const mgrOpts = await getManagerOptions(department_id);
     setManagerOptions(Array.isArray(mgrOpts) ? mgrOpts : []);
   };
-
+  // 获取职位选项
   const getPositionOptions = async (department_id, selectedPositionId) => {
     if (!department_id) return [{ value: '', label: '暂无数据' }];
     //根据部门id获取职位信息
@@ -159,7 +160,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
       return [{ value: '', label: '暂无数据' }];
     }
   };
-
+  // 获取上级选项
   const getManagerOptions = async (department_id) => {
     //上级的级别要高于当前员工
     if (!department_id) return [{ value: '', label: '暂无数据' }];

@@ -4,8 +4,8 @@ const useEmployeePermissionStore = create((set) => ({
   // 用户信息初始状态
   employee: {
     name: '',
-    department_id: '',
-    position_id: '',
+    department_name: '',
+    position_name: '',
     role: '',
     is_probation: '',
   },
@@ -27,8 +27,8 @@ const useEmployeePermissionStore = create((set) => ({
   clearEmployee: () => set({ 
     employee: {
         name: '',
-        department_id: '',
-        position_id: '',
+        department_name: '',
+        position_name: '',
         role: '',
         is_probation: '',
     }
