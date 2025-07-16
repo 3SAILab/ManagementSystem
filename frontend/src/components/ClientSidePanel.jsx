@@ -3,27 +3,44 @@ import * as Icons from 'lucide-react';
 import { getClientInfo } from '../services/clientService';
 import { getClientActivityLog } from '../services/clientActivityLogService';
 
-const ClientSidePanel = ({ clientId }) => {
-  const [clientInfo, setClientInfo] = useState(null);
+const ClientSidePanel = ({ clientId, refresh }) => {
+  const [clientInfo, setClientInfo] = useState({
+    name: '',
+    contact_name: '',
+    contact_phone: '',
+    address: {
+      province: '',
+      city: '',
+      district: '',
+      street: '',
+    },
+    source: '',
+    status: '',
+  });
   const [clientActivityLogs, setClientActivityLogs] = useState(null);
   useEffect(() => {
+    // 未选中客户时不请求
+    if (clientId === null) {
+      setClientInfo(null);
+      return;
+    }
     getClientInfo(clientId).then(res => {
       if (res.success) {
         setClientInfo(res.data);
-      }else{
+      } else {
         setClientInfo(null);
       }
+      getClientActivityLog(clientId).then(res => {
+        if (res.success) {
+          setClientActivityLogs(res.data ? res.data : []);
+        } else {
+          setClientActivityLogs(null);
+        }
+      });
     });
-    getClientActivityLog(clientId).then(res => {
-      if (res.success) {
-        setClientActivityLogs(res.data);
-      }else{
-        setClientActivityLogs(null);
-      }
-    });
-  }, [clientId]);
+  }, [clientId, refresh]);
 
-  return(!clientInfo?.clientId ? (
+  return(!clientInfo?.name ? (
     <aside className="w-full max-w-md flex-shrink-0 bg-white border border-slate-200 rounded-xl flex flex-col h-screen overflow-y-auto auto-hide-scrollbar">
       {/* Header */}
       <header className="p-4 border-b border-slate-200 flex justify-between items-center">
@@ -40,42 +57,64 @@ const ClientSidePanel = ({ clientId }) => {
       {/* Header */}
       <header className="p-4 border-b border-slate-200 flex justify-between items-center">
         <h3 className="text-lg font-bold">
-          #{clientInfo.clientId.replace('client_', '')} {clientInfo.name || clientInfo.clientName}
+          #{clientInfo.id} {clientInfo.name}
         </h3>
       </header>
   
       {/* 客户信息 */}
       <div className="p-4">
-        <div className="bg-white p-4 rounded-xl shadow-sm border">
+        <div className="bg-slate-50 p-4 rounded-xl shadow-sm border">
           <div className="font-semibold text-slate-700 mb-2">客户信息</div>
           <div className="text-sm space-y-1">
-            <div>客户名称：{clientInfo?.clientName || clientInfo?.name || '未知'}</div>
-            <div>联系人：{clientInfo?.contactName || '未知'}</div>
-            <div>电话：{clientInfo?.contactPhone || '未知'}</div>
+            <div>客户名称：{clientInfo?.name || '未知'}</div>
+            <div>联系人：{clientInfo?.contact_name || '未知'}</div>
+            <div>电话：{clientInfo?.contact_phone || '未知'}</div>
           </div>
         </div>
       </div>
   
       {/* 跟进记录 */}
       <div className="p-4 flex-grow">
-        <div className="bg-white p-4 rounded-xl shadow-sm border">
+        <div className="bg-white p-4">
           <div className="font-semibold text-slate-700 mb-2">跟进记录</div>
-          <div className="space-y-4">
-            {clientActivityLogs.map((activityLog) => (
-              <div key={activityLog.id + activityLog.timestamp} className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-semibold">
-                  {activityLog.initials}
-                </div>
-                <div className="text-sm">
-                  <p className="font-semibold text-slate-700">{activityLog.name}</p>
-                  <p className="text-slate-600 mt-1">{activityLog.content}</p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {new Date(activityLog.timestamp).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+          {Array.isArray(clientActivityLogs) && clientActivityLogs.length === 0 ? (
+            <div className="text-sm text-slate-500">暂无跟进记录</div>
+          ) : (
+            <div className="space-y-4">
+              {clientActivityLogs?.map((activityLog, idx) => {
+                // 头像首字母
+                const initials = activityLog.sales_name
+                  ? activityLog.sales_name
+                      .split('')
+                      .slice(0, 1)
+                      .map(char => char[0].toUpperCase())
+                      .join('')
+                  : 'NA';
+                // 时间格式化
+                const timeStr = activityLog.log_time
+                  ? new Date(activityLog.log_time).toLocaleString('zh-CN', { hour12: false })
+                  : '';
+                return (
+                  <div
+                    key={activityLog.id + activityLog.log_time + idx}
+                    className="flex gap-3 items-start bg-slate-50 rounded-lg p-3 shadow-sm"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-base font-bold">
+                      {initials}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-800">{activityLog.sales_name}</span>
+                      </div>
+                      <div className=" text-slate-600 mt-1 text-base">将状态更新为：<span className="bg-indigo-100 px-2 py-0.5 rounded-md">{activityLog.status}</span></div>
+                      <div className="text-slate-700 mt-1">{activityLog.log_content}</div>
+                      <div className="text-xs text-slate-400 mt-1">{timeStr}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </aside>

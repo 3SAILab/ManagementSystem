@@ -2,25 +2,29 @@ import React, { useState, useEffect } from 'react';
 import ClientSidePanel from '../components/ClientSidePanel'; // 侧边栏组件
 import * as Icons from 'lucide-react';
 import FilterDropdown from '../components/FilterDropdown';
-import { getClients, addClient } from '../services/clientService';
+import { getClients, addClient, updateClient } from '../services/clientService';
 import Pagination from '../components/Pagination';
 import { toast } from 'react-toastify';
-import AddClientModal from '../components/AddClientModal';
+import ClientInfoModal from '../components/ClientInfoModal';
+import AddClientActivityLogModal from '../components/AddClientActivityLogModal';
 
 const ClientFollowUps = () => {
-    // 选中客户ID
-    const [selectedClientId, setSelectedClientId] = useState(null);
-    // 新增客户模态框
+    // 客户跟进记录ID
+    const [clientLogId, setClientLogId] = useState(null);
+    // 客户ID
+    const [clientId, setClientId] = useState(null);
+    // 客户模态框
     const [isModalOpen, setIsModalOpen] = useState(false);
+    // 新增跟进记录模态框
+    const [isAddClientActivityLogModalOpen, setIsAddClientActivityLogModalOpen] = useState(false);
     // 跟进状态映射
     const followUpStatusMap = {
-        just_started: { text: '刚开始跟进', classes: 'bg-slate-100 text-slate-700' },
-        following_up: { text: '跟进中', classes: 'bg-blue-100 text-blue-800' },
-        about_to_close: { text: '即将成交', classes: 'bg-amber-100 text-amber-800' },
-        closed: { text: '已成交', classes: 'bg-green-100 text-green-800' },
-        customer_lost: { text: '客户流失', classes: 'bg-red-100 text-red-800' },
-        rebuy: { text: '复购', classes: 'bg-purple-100 text-purple-800' },
-        trial: { text: '试单', classes: 'bg-orange-100 text-orange-800' }
+        '刚开始跟进': { text: '刚开始跟进', classes: 'bg-slate-100 text-slate-700' },
+        '跟进中': { text: '跟进中', classes: 'bg-blue-100 text-blue-800' },
+        '已成交': { text: '已成交', classes: 'bg-green-100 text-green-800' },
+        '客户流失': { text: '客户流失', classes: 'bg-red-100 text-red-800' },
+        '试单中': { text: '试单中', classes: 'bg-orange-100 text-orange-800' },
+        '复购': { text: '复购', classes: 'bg-purple-100 text-purple-800' }
     };
     // 客户列表
     const [clients, setClients] = useState([]);
@@ -36,7 +40,6 @@ const ClientFollowUps = () => {
     });
     // 过滤条件
     useEffect(() => {
-        toast.info("过滤条件: " + JSON.stringify(filters.status) + " " + JSON.stringify(filters.source));
         getClients(filters).then(res => {
             if (res.success) {
                 setClients(res.data.clients);
@@ -47,19 +50,31 @@ const ClientFollowUps = () => {
             }
         });
     }, [filters]);
-    //新增客户
-    const handleAdd = (newClient) => {
-        addClient(newClient).then(res => {
-            if (res.success) {
-                toast.success('新增客户成功！');
-                setIsModalOpen(false);
-                setFilters({...filters, page: 1});
-            } else {
-                toast.error('新增客户失败！');
-            }
-        });
+    // 新增/编辑客户
+    const onSave = (ClientInfo) => {
+        if (clientId) {
+            updateClient(ClientInfo).then(res => {
+                if (res.success) {
+                    toast.success('更新客户成功！');
+                    setClientId(null);
+                    setIsModalOpen(false);
+                }else{
+                    toast.error('更新客户失败！');
+                }
+            });
+        } else {    
+            addClient(ClientInfo).then(res => {
+                if (res.success) {
+                    toast.success('新增客户成功！');
+                    setIsModalOpen(false);
+                }else{
+                    toast.error('新增客户失败！');
+                }
+            });
+        }
     };
-
+    // 刷新客户信息
+    const [refresh, setRefresh] = useState(false);
     return (
         <div className="flex flex-col h-full min-h-0 bg-slate-50 p-0">
             {/* 统计面板 */}
@@ -125,7 +140,7 @@ const ClientFollowUps = () => {
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <Icons.Search className="w-5 h-5 text-slate-400" />
                                 </div>
-                                <input type="text" placeholder="Search anything..." className="form-input !pl-10 w-full bg-slate-50 border-slate-200"
+                                <input type="text" placeholder="搜索客户名称" className="form-input !pl-10 w-full bg-slate-50 border-slate-200"
                                     value={filters.name}
                                     onChange={(e) => setFilters({ ...filters, name: e.target.value })}
                                 />
@@ -144,101 +159,108 @@ const ClientFollowUps = () => {
                     </div>
 
                     {/* 表格主体 */}
-                    <div className="flex-grow overflow-y-auto">
+                    <div className="flex-grow overflow-y-auto px-4">
                         {clients.length <= 0 ? (
                             <div className="flex-grow flex items-center justify-center p-6">
                                 <p className="text-center text-slate-500">暂无数据</p>
                             </div>
                         ) : (
-                        <table className="min-w-full">
-                            {/* 表头 */}
-                            <thead>
-                                <tr>
-                                    <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户名称</th>
-                                    <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">创建时间</th>
-                                    <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户来源</th>
-                                    <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">产品类型</th>
-                                    <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户规模</th>
-                                    <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
-                                    <th className="p-4 w-16"></th>
-                                </tr>
-                            </thead>
+                            <div className="w-full max-w-full overflow-x-auto"> {/* 添加滚动条支持 */}
+                                <table className="min-w-full w-full">
+                                    {/* 表头 */}
+                                    <thead>
+                                        <tr>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户名称</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">创建时间</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户来源</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">产品类型</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户规模</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                                        </tr>
+                                    </thead>
 
-                            {/* 表体 */}
-                            <tbody className="bg-white divide-y divide-slate-200">
-                                {clients.map((client) => (
-                                    <tr
-                                        key={client.clientId}
-                                        onClick={() => setSelectedClientId(client.clientId)}
-                                        className={`hover:bg-slate-50 cursor-pointer ${
-                                            selectedClientId === client.clientId ? 'bg-indigo-50' : ''
-                                        }`}
-                                    >
-                                        <td className="p-4"><input type="checkbox" className="form-checkbox rounded text-indigo-600" /></td>
-                                        <td className="p-4 text-sm font-semibold text-slate-700">{client.clientName}</td>
-                                        <td className="p-4 text-sm text-slate-500">
-                                            {new Date(client.created_at).toLocaleDateString('zh-CN', {
-                                                year: 'numeric',
-                                                month: '2-digit',
-                                                day: '2-digit',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                            })}
-                                        </td>
-                                        <td className="p-4 text-sm text-slate-500">
-                                            <span
-                                                className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                                                    client.customerSource === '线上'
-                                                        ? 'bg-blue-100 text-blue-800'
-                                                        : client.customerSource === '线下'
-                                                        ? 'bg-purple-100 text-purple-800'
-                                                        : 'bg-amber-100 text-amber-800'
+                                    {/* 表体 */}
+                                    <tbody className="bg-white divide-y divide-slate-200">
+                                        {clients.map((client) => (
+                                            <tr
+                                                key={client.id}
+                                                onClick={() => setClientLogId(client.id)}
+                                                className={`hover:bg-slate-50 cursor-pointer ${
+                                                    clientLogId === client.id ? 'bg-indigo-50' : ''
                                                 }`}
                                             >
-                                                {client.customerSource || '未知'}
-                                            </span>
-                                        </td>
-                                        <td className="p-4">
-                                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
-                                                {client.productCategory || '未分类'}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 text-sm text-slate-600">
-                                            <span
-                                                className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                                                    client.scale === '大'
-                                                        ? 'bg-blue-100 text-blue-800'
-                                                        : client.scale === '中'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : client.scale === '小'
-                                                        ? 'bg-slate-100 text-slate-700'
-                                                        : 'bg-red-100 text-red-800'
-                                                }`}
-                                            >
-                                                {client.scale || '未知'}
-                                            </span>
-                                        </td>
-                                        <td className="p-4">
-                                            <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                                                followUpStatusMap[client.status]?.classes || 'bg-slate-100 text-slate-700'
-                                            }`}>
-                                                {followUpStatusMap[client.status]?.text || '未知状态'}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 text-slate-500">
-                                            <div className="flex items-center gap-2">
-                                                <button className="follow-up-btn p-1 rounded hover:bg-slate-100" title="添加跟进记录">
-                                                    <i data-lucide="message-circle" className="w-5 h-5 text-indigo-500" />
-                                                </button>
-                                                <button className="p-1 rounded hover:bg-slate-100">
-                                                    <i data-lucide="more-horizontal" className="w-5 h-5" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                                <td className="p-4 text-sm font-semibold text-slate-700">{client.name}</td>
+                                                <td className="p-4 text-sm text-slate-500">
+                                                    {new Date(client.created_at).toLocaleDateString('zh-CN', {
+                                                        year: 'numeric',
+                                                        month: '2-digit',
+                                                        day: '2-digit',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                    })}
+                                                </td>
+                                                <td className="p-4 text-sm text-slate-500">
+                                                    <span
+                                                        className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                                                            client.source === '线上'
+                                                                ? 'bg-blue-100 text-blue-800'
+                                                                : client.source === '线下'
+                                                                ? 'bg-purple-100 text-purple-800'
+                                                                : 'bg-amber-100 text-amber-800'
+                                                        }`}
+                                                    >
+                                                        {client.source || '未知'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
+                                                        {client.product_type || '未分类'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-sm text-slate-600">
+                                                    <span
+                                                        className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                                                            client.scale === '大'
+                                                                ? 'bg-blue-100 text-blue-800'
+                                                                : client.scale === '中'
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : client.scale === '小'
+                                                                ? 'bg-slate-100 text-slate-700'
+                                                                : 'bg-red-100 text-red-800'
+                                                        }`}
+                                                    >
+                                                        {client.scale || '未知'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                                                        followUpStatusMap[client.status]?.classes || 'bg-slate-100 text-slate-700'
+                                                    }`}>
+                                                        {followUpStatusMap[client.status]?.text || '未知状态'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-slate-500">
+                                                    <div className="flex items-center gap-2">
+                                                        <button className="follow-up-btn p-1 rounded hover:bg-slate-100" title="添加跟进记录" onClick={() => {
+                                                            setIsAddClientActivityLogModalOpen(true);
+                                                            setClientLogId(client.id);
+                                                        }}>
+                                                            <Icons.MessageCircle className="w-5 h-5 text-indigo-500" />
+                                                        </button>
+                                                        <button className="p-1 rounded hover:bg-slate-100" title="编辑客户信息" onClick={() => {
+                                                            setIsModalOpen(true);
+                                                            setClientId(client.id);
+                                                        }}>
+                                                            <Icons.Edit className="w-5 h-5" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         )}
                     </div>
 
@@ -258,9 +280,20 @@ const ClientFollowUps = () => {
                 </div>
 
                 {/* 侧边栏 */}
-                <ClientSidePanel clientId={selectedClientId} setSelectedClientId={setSelectedClientId} />
+                <ClientSidePanel refresh={refresh} clientId={clientLogId} />
 
-                <AddClientModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAdd={handleAdd} />
+                <ClientInfoModal isOpen={isModalOpen} onClose={() => {
+                    setIsModalOpen(false);
+                    setClientId(null);
+                }} onSave={onSave} id={clientId}/>
+
+                <AddClientActivityLogModal isOpen={isAddClientActivityLogModalOpen} onClose={() => {
+                    setIsAddClientActivityLogModalOpen(false);
+                }} clientId={clientLogId} onAdd={() => {
+                    setIsAddClientActivityLogModalOpen(false);
+                    // 刷新客户信息
+                    setRefresh(!refresh);
+                }}/>
             </div>
         </div>
     );

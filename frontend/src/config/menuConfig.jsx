@@ -13,7 +13,7 @@ export const menuItems = [
     access: {
       roles: ['admin', 'manager', 'employee'],
       departments: ['人力资源部'],
-      positions: ['人事', 'hr']
+      positions: ['人事', 'hr', '人力资源经理']
     },
     children: [
       { label: '员工管理', path: '/employee_management', icon: 'users' },

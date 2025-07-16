@@ -16,8 +16,8 @@ export const addClientActivityLog = async (client_activity_log) => {
 export const getClientActivityLog = async (client_id) => {
     try {
         const response = await api.get(`/client_activity_log/get/${client_id}`);
-        console.log("客户跟进记录:", response.data);
-        return {success: true, data: response.data};
+        console.log("客户跟进记录:", response.data.data);
+        return {success: true, data: response.data.data};
     } catch (error) {
         console.error('获取客户跟进记录失败:', error);
         return { success: false, error: error.message };

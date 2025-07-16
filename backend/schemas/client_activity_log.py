@@ -1,10 +1,19 @@
 from pydantic import BaseModel
-
 from datetime import datetime
 
 class ClientActivityLogCreate(BaseModel):
     client_id: int
-    content: str
+    log_content: str
     status: str
-    created_at: datetime
+    log_time: datetime
+
+class ClientActivityLogInfo(BaseModel):
+    id: int
+    client_id: int
+    sales_id: int
+    status: str
+    log_content: str
+    log_time: datetime
+    sales_name: str
+
 

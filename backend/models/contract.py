@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, Enum, Integer, ForeignKey, Text, TIMESTAMP, Numeric
+from sqlalchemy import Column, DateTime, Enum, Integer, ForeignKey, Text, Numeric, func
 from sqlalchemy.orm import relationship
 from ..db.session import Base
 
@@ -24,8 +24,8 @@ class Contract(Base):
     image_count = Column(Integer, nullable=False) #图片数
     workflow_count = Column(Integer, nullable=False) #工作流数
     notes = Column(Text) #备注
-    created_at = Column(TIMESTAMP(timezone=False), nullable=False) #创建时间
-    updated_at = Column(TIMESTAMP(timezone=False)) #更新时间
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False) #创建时间
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) #更新时间
 
     # 外键关联到 Client 表
     client = relationship("Client", back_populates="contracts")

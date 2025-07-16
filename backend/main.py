@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import logging
 from fastapi import FastAPI
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 import uvicorn
 from contextlib import asynccontextmanager
@@ -30,17 +31,18 @@ async def init_db():
         logger.info("开始初始化数据库...")
 
         # 插入部门（存在就跳过）
-        dept_stmt = insert(Department).values(id=1, name="人力资源部")
+        dept_stmt = insert(Department).values(name="人力资源部")
         dept_skip_stmt = dept_stmt.on_conflict_do_nothing(
-            index_elements=[Department.id]  # 主键冲突检测
+            index_elements=[Department.name]  # 主键冲突检测
         )
         dept_result = await conn.execute(dept_skip_stmt)
         logger.info(f"部门插入完成，受影响行数: {dept_result.rowcount}")
 
         # 插入职位（存在就跳过）
-        pos_stmt = insert(Position).values(id=1, name="人力资源经理", department_id=1)
+        dept_id = await conn.execute(select(Department.id).where(Department.name == "人力资源部"))
+        pos_stmt = insert(Position).values(name="人力资源经理", department_id=dept_id.scalar())
         pos_skip_stmt = pos_stmt.on_conflict_do_nothing(
-            index_elements=[Position.id]
+            index_elements=[Position.name]
         )
         pos_result = await conn.execute(pos_skip_stmt)
         logger.info(f"职位插入完成，受影响行数: {pos_result.rowcount}")

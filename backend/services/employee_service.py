@@ -135,21 +135,24 @@ class EmployeeService:
             selectinload(Employee.department),
             selectinload(Employee.position),
         )
-        result = await db.execute(stmt)
-        emps = result.scalars().all()
-        # 构造返回列表
-        return [
-            EmployeeListInfo(
-                id=e.id,
-                name=e.name,
-                email=e.email,
-                department_id=e.department.id,
-                position_id=e.position.id,
-                department_name=e.department.name,
-                position_name=e.position.name
-            )
-            for e in emps
-        ] 
+        try:
+            result = await db.execute(stmt)
+            emps = result.scalars().all()
+            # 构造返回列表
+            return [
+                EmployeeListInfo(
+                    id=e.id,
+                    name=e.name,
+                    email=e.email,
+                    department_id=e.department.id,
+                    position_id=e.position.id,
+                    department_name=e.department.name,
+                    position_name=e.position.name
+                )
+                    for e in emps
+                ] 
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"查询员工列表失败: {str(e)}")
     
     #获取上级列表
     LEVEL_HIERARCHY = {

@@ -43,7 +43,6 @@ async def login(
 async def register(
     newEmployee: EmployeeInfo,
     db: AsyncSession = Depends(get_async_db),
-    current_employee: Employee = Depends(get_current_employee)
 ):
     #判断权限
     #开发环境无需权限

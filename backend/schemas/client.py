@@ -1,6 +1,6 @@
 from typing import List, Optional
 import enum
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from backend.models.client import Client
 
@@ -16,12 +16,6 @@ class ClientSource(enum.Enum):
     线上 = "线上"
     线下 = "线下"
     活动 = "活动"
-
-class ClientProductType(enum.Enum):
-    产品 = "产品"
-    服务 = "服务"
-    其他 = "其他"
-
 
 class ClientScale(enum.Enum):
     小 = "小"
@@ -42,17 +36,27 @@ class ClientCreate(BaseModel):
     contact_name: str
     contact_phone: str
     address: dict
+    activity_name: Optional[str] = None
     source: ClientSource
-    product_type: ClientProductType
+    product_type: str
     scale: ClientScale
     status: ClientStatus = "刚开始跟进"
 
 
+class ClientOut(BaseModel):
+    id: int = Field(...)
+    name: str
+    source: ClientSource
+    status: ClientStatus
+    product_type: str
+    scale: ClientScale
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
+
 class PaginatedClient(BaseModel):
-    clients: List[Client]
+    clients: List[ClientOut]
     total: int
     page: int
     page_size: int
     total_pages: int
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(from_attributes=True)
