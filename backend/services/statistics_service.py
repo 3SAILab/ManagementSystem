@@ -26,12 +26,12 @@ class StatisticsService:
             result = await db.execute(
                 select(func.count(Client.id)).where(Client.created_at.between(StatisticsService.start_date, StatisticsService.end_date))
             )
-            current_month_count = result.scalar_one()
+            current_month_count = result.scalar_one_or_none() or 0
             # 获取上个月的客户数量
             result = await db.execute(
                 select(func.count(Client.id)).where(Client.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date))
             )
-            last_month_count = result.scalar_one()
+            last_month_count = result.scalar_one_or_none() or 0
             # 计算客户数量变化
             if last_month_count > 0:
                 return current_month_count, (current_month_count - last_month_count) / last_month_count * 100
@@ -52,7 +52,7 @@ class StatisticsService:
                     or_(Contract.contract_type == "首单", Contract.contract_type == "复购")
                 )
             ))
-            current_month_count = result.scalar_one()
+            current_month_count = result.scalar_one_or_none() or 0
             # 获取上个月的成交量
             result = await db.execute(select(func.count(Contract.id)).where(
                 and_(
@@ -60,7 +60,7 @@ class StatisticsService:
                     or_(Contract.contract_type == "首单", Contract.contract_type == "复购")
                 )
             ))
-            last_month_count = result.scalar_one()
+            last_month_count = result.scalar_one_or_none() or 0
             # 计算成交量变化
             if last_month_count > 0:
                 return current_month_count, (current_month_count - last_month_count) / last_month_count * 100
@@ -82,12 +82,12 @@ class StatisticsService:
                     or_(Client.status == "已成交", Client.status == "复购")
                 )
             ))
-            current_month_count = result.scalar_one()
+            current_month_count = result.scalar_one_or_none() or 0
             # 获取当前月份创建的客户数量
             result = await db.execute(select(func.count(Client.id)).where(
                 Client.created_at.between(StatisticsService.start_date, StatisticsService.end_date)
             ))
-            current_month_client_count = result.scalar_one()
+            current_month_client_count = result.scalar_one_or_none() or 0
             # 获取上个月创建且成交的客户数量
             result = await db.execute(select(func.count(Client.id)).where(
                 and_(
@@ -95,12 +95,12 @@ class StatisticsService:
                     or_(Client.status == "已成交", Client.status == "复购")
                 )
             ))
-            last_month_count = result.scalar_one()
+            last_month_count = result.scalar_one_or_none() or 0
             # 获取上个月创建的客户数量
             result = await db.execute(select(func.count(Client.id)).where(
                 Client.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date)
             ))
-            last_month_client_count = result.scalar_one()
+            last_month_client_count = result.scalar_one_or_none() or 0
             # 计算客户转化率变化
             if last_month_count > 0:
                 return current_month_count / current_month_client_count, (current_month_count / current_month_client_count - last_month_count / last_month_client_count) / last_month_count / last_month_client_count * 100
@@ -163,4 +163,136 @@ class StatisticsService:
         except Exception as e:
             print("获取平均成交周期失败:", e)
             raise HTTPException(status_code=500, detail=f"获取平均成交周期失败: {str(e)}")
+
+
+    # 根据员工id获取本月销售额
+    @staticmethod
+    async def get_monthly_sales(db: AsyncSession, employee_id: int):
+        try:
+            # 获取当前月份的销售额
+            result = await db.execute(select(func.sum(Contract.total_amount)).where(
+                and_(
+                    Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    Contract.sales_id == employee_id
+                )
+            ))
+            current_month_sales = result.scalar_one_or_none() or 0
+            # 获取上个月的销售额
+            result = await db.execute(select(func.sum(Contract.total_amount)).where(
+                and_(
+                    Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                    Contract.sales_id == employee_id
+                )
+            ))
+            last_month_sales = result.scalar_one_or_none() or 0
+            # 计算销售额变化
+            if last_month_sales > 0:
+                return current_month_sales, (current_month_sales - last_month_sales) / last_month_sales * 100
+            else:
+                return current_month_sales, 0
+        except Exception as e:
+            print("获取每月销售额失败:", e)
+            raise HTTPException(status_code=500, detail=f"获取每月销售额失败: {str(e)}")
         
+    # 根据员工id获取本月提点
+    @staticmethod
+    async def get_monthly_commission(db: AsyncSession, employee_id: int):
+        try:
+            # 获取当前月份的提点
+            result = await db.execute(select(func.sum(Contract.total_amount * Contract.commission_rate / 100)).where(
+                and_(
+                    Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    Contract.sales_id == employee_id
+                )
+            ))
+            current_month_commission = result.scalar_one_or_none() or 0
+
+            # 格式化为两位小数
+            current_month_commission = round(float(current_month_commission), 2)
+
+            # 获取上个月的提点
+            result = await db.execute(select(func.sum(Contract.total_amount * Contract.commission_rate / 100)).where(
+                and_(
+                    Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                    Contract.sales_id == employee_id
+                )
+            ))
+            last_month_commission = result.scalar_one_or_none() or 0
+            # 格式化为两位小数
+            last_month_commission = round(float(last_month_commission), 2)
+
+            # 计算提点变化
+            if last_month_commission > 0:
+                return current_month_commission, (current_month_commission - last_month_commission) / last_month_commission * 100
+            else:
+                return current_month_commission, 0
+        except Exception as e:  
+            print("获取每月提点失败:", e)
+            raise HTTPException(status_code=500, detail=f"获取每月提点失败: {str(e)}")
+        
+    # 根据员工id获取本月订单数
+    @staticmethod
+    async def get_monthly_order_count(db: AsyncSession, employee_id: int):
+        try:
+            # 获取当前月份的订单数
+            result = await db.execute(select(func.count(Contract.id)).where(
+                and_(
+                    Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    Contract.sales_id == employee_id
+                )
+            ))
+            current_month_order_count = result.scalar_one_or_none() or 0
+            # 获取上个月的订单数
+            result = await db.execute(select(func.count(Contract.id)).where(
+                and_(
+                    Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                    Contract.sales_id == employee_id
+                )
+            ))
+            last_month_order_count = result.scalar_one_or_none() or 0
+            # 计算订单数变化
+            if last_month_order_count > 0:
+                return current_month_order_count, (current_month_order_count - last_month_order_count) / last_month_order_count * 100
+            else:
+                return current_month_order_count, 0
+        except Exception as e:
+            print("获取每月订单数失败:", e)
+            raise HTTPException(status_code=500, detail=f"获取每月订单数失败: {str(e)}")
+        
+    # 根据员工id获取本月待结算订单数
+    @staticmethod
+    async def get_monthly_pending_order_count(db: AsyncSession, employee_id: int):
+        try:
+            # 获取当前月份的待结算订单数
+            result = await db.execute(select(func.count(Contract.id)).where(
+                and_(
+                    Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    Contract.sales_id == employee_id,
+                    Contract.total_amount - Contract.paid_amount > 0
+                )
+            ))
+            current_month_pending_order_count = result.scalar_one_or_none() or 0
+            # 获取上个月的待结算订单数
+            result = await db.execute(select(func.count(Contract.id)).where(
+                and_(
+                    Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                    Contract.sales_id == employee_id,
+                    Contract.total_amount - Contract.paid_amount > 0
+                )
+            ))
+            last_month_pending_order_count = result.scalar_one_or_none() or 0
+            # 计算待结算订单数变化
+            if last_month_pending_order_count > 0:
+                return current_month_pending_order_count, (current_month_pending_order_count - last_month_pending_order_count) / last_month_pending_order_count * 100
+            else:
+                return current_month_pending_order_count, 0
+        except Exception as e:
+            print("获取每月待结算订单数失败:", e)
+            raise HTTPException(status_code=500, detail=f"获取每月待结算订单数失败: {str(e)}")
+        
+        
+        
+
+
+
+

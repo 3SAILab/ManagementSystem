@@ -9,7 +9,7 @@ from typing import Dict, Any
 
 router = APIRouter()
 
-# 获取统计数据
+# 获取客户跟踪统计数据
 @router.get("/statistics/client-activity-log-statistics")
 async def get_client_activity_log_statistics(
     db: AsyncSession = Depends(get_async_db),
@@ -34,4 +34,29 @@ async def get_client_activity_log_statistics(
     }
     
 
+    return api_response(success=True, data=data)
+
+# 获取员工本月销售统计数据
+@router.get("/statistics/monthly-sales")
+async def get_monthly_sales(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    # 获取统计数据
+    monthly_sales, monthly_sales_change = await StatisticsService.get_monthly_sales(db, current_employee.id)
+    monthly_commission, monthly_commission_change = await StatisticsService.get_monthly_commission(db, current_employee.id)
+    monthly_order_count, monthly_order_count_change = await StatisticsService.get_monthly_order_count(db, current_employee.id)
+    monthly_pending_order_count, monthly_pending_order_count_change = await StatisticsService.get_monthly_pending_order_count(db, current_employee.id)
+
+    data = {
+        "monthlySales": monthly_sales,
+        "monthlySalesChange": monthly_sales_change,
+        "monthlyCommission": monthly_commission,
+        "monthlyCommissionChange": monthly_commission_change,
+        "monthlyOrderCount": monthly_order_count,
+        "monthlyOrderCountChange": monthly_order_count_change,
+        "monthlyPendingOrderCount": monthly_pending_order_count,
+        "monthlyPendingOrderCountChange": monthly_pending_order_count_change
+    }
+    print(data)
     return api_response(success=True, data=data)

@@ -41,7 +41,7 @@ class Client(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False) #创建时间
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) #更新时间
     # 关联跟踪记录
-    activity_logs = relationship("ClientActivityLog", back_populates="client")
+    activity_logs = relationship("ClientActivityLog", back_populates="client", cascade="all, delete-orphan")
 
     # 关联合同
-    contracts = relationship("Contract", back_populates="client")
+    contracts = relationship("Contract", back_populates="client", cascade="all, delete-orphan")
