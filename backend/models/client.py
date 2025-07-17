@@ -30,9 +30,10 @@ class Client(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), unique=True, nullable=False) #客户名称
     contact_name = Column(String(50), nullable=False) #联系人
-    contact_phone = Column(String(20), nullable=False) #联系电话
+    contact_phone = Column(String(50), nullable=False) #联系电话
     address = Column(JSON, nullable=False) #地址
     source = Column(SQLEnum(ClientSource, name="client_source_enum", native_enum=False), nullable=False) #来源
+    online_source = Column(String(100)) #线上来源
     activity_name = Column(String(100)) #活动名称
     product_type = Column(String(100)) #产品类型
     scale = Column(SQLEnum(ClientScale, name="client_scale_enum", native_enum=False), nullable=False) #规模

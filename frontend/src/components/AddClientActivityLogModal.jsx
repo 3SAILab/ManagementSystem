@@ -97,7 +97,7 @@ const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
       notes: contract.notes
     };
     const response = await addContract(payload);
-    handleSaveLog();
+    await handleSaveLog();
     if (response.success) {
       toast.success("合同保存成功");
     } else {
@@ -118,7 +118,7 @@ const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
         setContractModal(true);
     } else {
         // 无订单表单，直接保存跟进记录
-        handleSaveLog();
+        await handleSaveLog();
         onAdd();
         onClose();
     }

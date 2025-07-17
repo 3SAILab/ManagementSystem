@@ -2,7 +2,6 @@
 from datetime import date
 import re
 from typing import Literal, Optional
-from pydantic_extra_types.phone_numbers import PhoneNumber
 from pydantic import BaseModel, EmailStr, model_validator, field_validator
 from ..models.employee import Employee
 
@@ -47,7 +46,7 @@ class EmployeeInfo(BaseModel):
     name: str
     gender: Optional[Literal['male', 'female']] = None
     email: EmailStr
-    phone: Optional[PhoneNumber] = None
+    phone: Optional[str] = None
     password: str = "123456qwerty"
     birth_date: Optional[date] = None
     hire_date: date
@@ -78,6 +77,13 @@ class EmployeeInfo(BaseModel):
         if self.hire_date > date.today():
             raise ValueError("入职日期不能晚于今天")
         return self
+    
+    @field_validator("phone")
+    def validate_phone(cls, v):
+        if not re.match(r"^1[3-9]\d{9}$", v):
+            raise ValueError("联系电话格式不正确")
+        return v
+    
     @field_validator("id_number")
     def validate_id_card(cls, v):
         # 允许空值

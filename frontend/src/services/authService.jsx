@@ -102,6 +102,12 @@ export const getManagers = async (department_id, role) => {
 //新增员工
 export const addEmployee = async (employee) => {
   try {
+    if (employee.phone) {
+      employee.phone = `+86${employee.phone}`;
+    }
+    if (employee.emergency_contact.phone) {
+      employee.emergency_contact.phone = `+86${employee.emergency_contact.phone}`;
+    }
     const response = await api.post('/register', employee);
     return { success: true, data: response.data };
   } catch (err) {

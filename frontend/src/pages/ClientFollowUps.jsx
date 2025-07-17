@@ -7,6 +7,7 @@ import Pagination from '../components/Pagination';
 import { toast } from 'react-toastify';
 import ClientInfoModal from '../components/ClientInfoModal';
 import AddClientActivityLogModal from '../components/AddClientActivityLogModal';
+import { getClientActivityLogStatistics } from '../services/statisticsService';
 
 const ClientFollowUps = () => {
     // 客户跟进记录ID
@@ -38,7 +39,39 @@ const ClientFollowUps = () => {
         page: 1,
         page_size: 10
     });
-    // 过滤条件
+    // 统计数据
+    const [statistics, setStatistics] = useState({
+        monthlyClientCount: 0,
+        monthlyClientCountChange: 0,
+        monthlyTransactionVolume: 0,
+        monthlyTransactionVolumeChange: 0,
+        monthlyTransactionConversionRate: 0,
+        monthlyTransactionConversionRateChange: 0,
+        averageTransactionCycle: 0,
+        averageTransactionCycleChange: 0,
+    });
+    // 刷新客户信息
+    const [refresh, setRefresh] = useState(false);
+    // 获取客户活动日志统计数据
+    useEffect(() => {
+        getClientActivityLogStatistics().then(res => {
+            if (res.success) {
+                setStatistics(res.data);
+            } else {
+                setStatistics({
+                    monthlyClientCount: 0,
+                    monthlyClientCountChange: 0,
+                    monthlyTransactionVolume: 0,
+                    monthlyTransactionVolumeChange: 0,
+                    monthlyTransactionConversionRate: 0,
+                    monthlyTransactionConversionRateChange: 0,
+                    averageTransactionCycle: 0,
+                    averageTransactionCycleChange: 0,
+                });
+            }
+        });
+    }, [refresh]);
+    // 获取客户列表
     useEffect(() => {
         getClients(filters).then(res => {
             if (res.success) {
@@ -49,15 +82,16 @@ const ClientFollowUps = () => {
                 setTotal(0);
             }
         });
-    }, [filters]);
+    }, [filters, refresh]);
     // 新增/编辑客户
     const onSave = (ClientInfo) => {
         if (clientId) {
-            updateClient(ClientInfo).then(res => {
+            updateClient(ClientInfo,clientId).then(res => {
                 if (res.success) {
                     toast.success('更新客户成功！');
                     setClientId(null);
                     setIsModalOpen(false);
+                    setRefresh(!refresh);
                 }else{
                     toast.error('更新客户失败！');
                 }
@@ -66,15 +100,17 @@ const ClientFollowUps = () => {
             addClient(ClientInfo).then(res => {
                 if (res.success) {
                     toast.success('新增客户成功！');
+                    setClients(prev => [res.data, ...prev]);
                     setIsModalOpen(false);
+                    // 重置页码
+                    setFilters(prev => ({ ...prev, page: 1 }));
                 }else{
                     toast.error('新增客户失败！');
                 }
             });
         }
     };
-    // 刷新客户信息
-    const [refresh, setRefresh] = useState(false);
+    
     return (
         <div className="flex flex-col h-full min-h-0 bg-slate-50 p-0">
             {/* 统计面板 */}
@@ -85,9 +121,18 @@ const ClientFollowUps = () => {
                 <div className="bg-white p-5 rounded-xl shadow-sm border">
                     <p className="text-sm text-slate-500 mb-1">客户数量（每月）</p>
                     <div className="flex items-baseline gap-2">
-                        <p className="text-3xl font-bold text-slate-800">127</p>
-                        <p className="text-sm font-semibold text-red-500 flex items-center">
-                            <Icons.ArrowUp className="w-4 h-4" /> 12.5%
+                        <p className="text-3xl font-bold text-slate-800">{statistics.monthlyClientCount}</p>
+                        <p className={`text-sm font-semibold flex items-center ${
+                            statistics.monthlyClientCountChange >= 0 
+                            ? 'text-green-500' 
+                            : 'text-red-500'
+                        }`}>
+                            {statistics.monthlyClientCountChange >= 0 ? (
+                                <Icons.ArrowUp className="w-4 h-4" />
+                            ) : (
+                                <Icons.ArrowDown className="w-4 h-4" />
+                            )}
+                            {Math.abs(statistics.monthlyClientCountChange).toFixed(1)}%
                         </p>
                     </div>
                 </div>
@@ -96,31 +141,61 @@ const ClientFollowUps = () => {
                 <div className="bg-white p-5 rounded-xl shadow-sm border">
                     <p className="text-sm text-slate-500 mb-1">成交量（每月）</p>
                     <div className="flex items-baseline gap-2">
-                        <p className="text-3xl font-bold text-slate-800">42</p>
-                        <p className="text-sm font-semibold text-red-500 flex items-center">
-                            <Icons.ArrowUp className="w-4 h-4" /> 8.4%
+                        <p className="text-3xl font-bold text-slate-800">{statistics.monthlyTransactionVolume}</p>
+                        <p className={`text-sm font-semibold flex items-center ${
+                            statistics.monthlyTransactionVolumeChange >= 0 
+                            ? 'text-green-500' 
+                            : 'text-red-500'
+                        }`}>
+                            {statistics.monthlyTransactionVolumeChange >= 0 ? (
+                                <Icons.ArrowUp className="w-4 h-4" />
+                            ) : (
+                                <Icons.ArrowDown className="w-4 h-4" />
+                            )}
+                            {Math.abs(statistics.monthlyTransactionVolumeChange).toFixed(1)}%
                         </p>
                     </div>
                 </div>
 
                 {/* 转化率 */}
                 <div className="bg-white p-5 rounded-xl shadow-sm border">
-                    <p className="text-sm text-slate-500 mb-1">转化率（每月）</p>
-                    <div className="flex items-baseline gap-2">
-                        <p className="text-3xl font-bold text-slate-800">33.1%</p>
-                        <p className="text-sm font-semibold text-green-500 flex items-center">
-                            <Icons.ArrowDown className="w-4 h-4" /> 2.3%
-                        </p>
-                    </div>
+                <p className="text-sm text-slate-500 mb-1">转化率（每月）</p>
+                <div className="flex items-baseline gap-2">
+                    <p className="text-3xl font-bold text-slate-800">
+                    {(statistics.monthlyTransactionConversionRate * 100).toFixed(1)}%
+                    </p>
+                    <p className={`text-sm font-semibold flex items-center ${
+                        statistics.monthlyTransactionConversionRateChange >= 0 
+                        ? 'text-green-500' 
+                        : 'text-red-500'
+                    }`}
+                    >
+                    {statistics.monthlyTransactionConversionRateChange >= 0 ? (
+                        <Icons.ArrowUp className="w-4 h-4" />
+                    ) : (
+                        <Icons.ArrowDown className="w-4 h-4" />
+                    )}
+                    {Math.abs(statistics.monthlyTransactionConversionRateChange).toFixed(1)}%
+                    </p>
+                </div>
                 </div>
 
                 {/* 平均成交周期 */}
                 <div className="bg-white p-5 rounded-xl shadow-sm border">
                     <p className="text-sm text-slate-500 mb-1">平均成交周期（每月）</p>
                     <div className="flex items-baseline gap-2">
-                        <p className="text-3xl font-bold text-slate-800">21天</p>
-                        <p className="text-sm font-semibold text-green-500 flex items-center">
-                            <Icons.ArrowDown className="w-4 h-4" /> 3天
+                        <p className="text-3xl font-bold text-slate-800">{statistics.averageTransactionCycle}</p>
+                        <p className={`text-sm font-semibold flex items-center ${
+                            statistics.averageTransactionCycleChange >= 0 
+                            ? 'text-green-500' 
+                            : 'text-red-500'
+                        }`}>
+                            {statistics.averageTransactionCycleChange >= 0 ? (
+                                <Icons.ArrowUp className="w-4 h-4" />
+                            ) : (
+                                <Icons.ArrowDown className="w-4 h-4" />
+                            )}
+                            {Math.abs(statistics.averageTransactionCycleChange).toFixed(1)}天
                         </p>
                     </div>
                 </div>
@@ -151,7 +226,10 @@ const ClientFollowUps = () => {
                                 <FilterDropdown followUpStatusMap={followUpStatusMap} filters={filters} onFilterChange={(newFilters) => setFilters({...filters, ...newFilters})} />
 
                                 {/* 添加客户按钮 */}
-                                <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors" onClick={() => setIsModalOpen(true)}>
+                                <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors" onClick={
+                                    () => {
+                                        setIsModalOpen(true);
+                                    }}>
                                     <Icons.Plus className="w-4 h-4" /> 添加客户
                                 </button>
                             </div>
@@ -291,7 +369,7 @@ const ClientFollowUps = () => {
                     setIsAddClientActivityLogModalOpen(false);
                 }} clientId={clientLogId} onAdd={() => {
                     setIsAddClientActivityLogModalOpen(false);
-                    // 刷新客户信息
+                    // 刷新客户跟进记录
                     setRefresh(!refresh);
                 }}/>
             </div>

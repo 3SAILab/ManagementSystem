@@ -94,12 +94,14 @@ class ClientService:
                 address=client.address,
                 activity_name=client.activity_name,
                 source=client.source.value,
+                online_source=client.online_source,
                 product_type=client.product_type,
                 scale=client.scale.value,
                 status=client.status.value,
             )
             return client_create
         except Exception as e:
+            print(e)
             raise HTTPException(status_code=500, detail=f"查询客户信息失败: {str(e)}")
 
     # 更改客户状态
@@ -120,3 +122,28 @@ class ClientService:
             await db.rollback()
             print(e)
             raise HTTPException(status_code=500, detail=f"更改客户状态失败: {str(e)}")
+        
+    #修改客户信息
+    @staticmethod
+    async def update_client(db: AsyncSession, id: int, client: ClientCreate):
+        try:
+           existing = await db.execute(select(Client).where(Client.id==id))
+           if not existing:
+               raise HTTPException(404, "客户不存在")
+           
+           # 将Pydantic模型转换为字典，确保枚举值被正确处理
+           client_data = client.model_dump(mode="json")
+           
+           # 更新客户信息
+           await db.execute(update(Client).where(Client.id==id).values(**client_data))
+           await db.commit()
+           
+           # 获取更新后的客户信息
+           result = await db.execute(select(Client).where(Client.id==id))
+           updated_client = result.scalars().first()
+           
+           return updated_client
+        except Exception as e:
+           await db.rollback()
+           print(e)
+           raise HTTPException(500, f"系统错误: {str(e)}")

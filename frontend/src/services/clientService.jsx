@@ -25,6 +25,7 @@ export const addClient = async (client) => {
             contact_phone: client.contact_phone,
             address: client.address,
             source: client.source,
+            online_source: client.online_source,
             activity_name: client.activity_name,
             product_type: client.product_type,
             scale: client.scale,
@@ -41,9 +42,14 @@ export const addClient = async (client) => {
 };
 
 //编辑客户
-export const updateClient = async (client) => {
+export const updateClient = async (client,clientId) => {
     try {
-        const response = await api.put('/client/update', client);
+        // 检查clientId是否有效
+        if (!clientId) {
+            console.error('客户ID不能为空');
+            return { success: false, error: '客户ID不能为空' };
+        }
+        const response = await api.put(`/client/update/${clientId}`, client);
         console.log("编辑客户:", response.data);
         return {success: true, data: response.data};
     } catch (error) {

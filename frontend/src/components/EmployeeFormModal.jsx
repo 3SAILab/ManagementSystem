@@ -78,13 +78,10 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
     }
     setErrors(prev => ({ ...prev, [name]: error }));
   };
-  const [positions, setPositions] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
   const [positionOptions, setPositionOptions] = useState([]);
   const [managerOptions, setManagerOptions] = useState([]);
-  const [managerRoleOptions, setManagerRoleOptions] = useState([]);
-  const [managers,setManagers] = useState([]);
 
   // 输入框改变处理
   const handleInputChange = (e) => {

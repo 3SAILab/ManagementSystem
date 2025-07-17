@@ -11,6 +11,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
     contact_name: "",
     contact_phone: "",
     source: "",
+    online_source: "",
     activity_name: "",
     product_type: "",
     scale: "",
@@ -24,7 +25,6 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false); // 加载状态
-
   // 当 id 改变时，获取客户数据
   useEffect(() => {
     if (id) {
@@ -53,6 +53,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
         contact_name: "",
         contact_phone: "",
         source: "",
+        online_source: "",
         activity_name: "",
         product_type: "",
         scale: "",
@@ -65,9 +66,21 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
       });
     }
   }, [id]); // 依赖 id 变化触发
+  // 格式校验函数
+  const validateField = (name, value) => {
+    let error = '';
+    if (name === 'contact_phone' && value && !/^1[3-9]\d{9}$/.test(value)) {
+      error = '联系电话格式不正确';
+    }
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
   // 处理输入变化
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    // 校验手机号格式
+    if (['contact_phone'].includes(name)) {
+      validateField(name, value);
+    }
     if (name === 'street') {
       setFormData(prev => ({
         ...prev,
@@ -98,7 +111,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
       setErrors(prev => ({ ...prev, address: "请选择完整的省份和城市" }));
       return;
     }
-
+    // 添加 E.164 格式前缀
     onSave(formData);
     onClose();
   };
@@ -110,6 +123,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
       contact_name: "",
       contact_phone: "",
       source: "",
+      online_source: "",
       activity_name: "",
       product_type: "",
       scale: "",
@@ -177,6 +191,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
                   className="form-input block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
                   required
                 />
+                {errors.contact_phone && <p className="text-sm text-red-500 mt-1">{errors.contact_phone}</p>}
               </div>
               <div>
                 <label htmlFor="client-source" className="block text-sm font-medium text-slate-700">
@@ -195,6 +210,27 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
                   <option value="线上">线上</option>
                   <option value="活动">活动</option>
                 </select>
+                {/* 当选择“线上”时显示子分类 */}
+                {formData.source === "线上" && (
+                  <div className="mt-2">
+                    <label className="block text-sm font-medium text-slate-700">
+                      线上来源类型 <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="online_source"
+                      value={formData.online_source}
+                      onChange={handleInputChange}
+                      className="form-select block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
+                    >
+                      <option value="">请选择子分类</option>
+                      <option value="系统推广流">系统推广流</option>
+                      <option value="自然流">自然流</option>
+                    </select>
+                    {errors.online_source && (
+                      <p className="mt-1 text-sm text-red-600">{errors.online_source}</p>
+                    )}
+                  </div>
+                )}
                 {/* 当选择“活动”时显示输入框 */}
                 {formData.source === "活动" && (
                   <div className="mt-2">
@@ -224,6 +260,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
                   value={formData.product_type}
                   onChange={handleInputChange}
                   className="form-input block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
+                  required
                 />
               </div>
               <div>

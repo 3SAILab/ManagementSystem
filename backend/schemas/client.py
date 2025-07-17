@@ -1,8 +1,9 @@
 from typing import List, Optional
 import enum
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from datetime import datetime
 from backend.models.client import Client
+import re
 
 class ClientStatus(enum.Enum):
     刚开始跟进 = "刚开始跟进"
@@ -36,12 +37,18 @@ class ClientCreate(BaseModel):
     contact_name: str
     contact_phone: str
     address: dict
+    online_source: Optional[str] = None
     activity_name: Optional[str] = None
     source: ClientSource
     product_type: str
     scale: ClientScale
     status: ClientStatus = "刚开始跟进"
 
+    @field_validator("contact_phone")
+    def validate_phone(cls, v):
+        if not re.match(r"^1[3-9]\d{9}$", v):
+            raise ValueError("联系电话格式不正确")
+        return v
 
 class ClientOut(BaseModel):
     id: int = Field(...)
