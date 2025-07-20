@@ -16,7 +16,6 @@ class ContractInfo(BaseModel):
     video_count: int
     image_count: int
     workflow_count: int
-    notes: str
 
 
 # 添加合同
@@ -30,7 +29,6 @@ class ContractCreate(BaseModel):
     video_count: int
     image_count: int
     workflow_count: int
-    notes: str
 
 
 # 合同列表

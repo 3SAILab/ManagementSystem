@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Depends, Body, Query
 from backend.models.employee import Employee
-from backend.models.contract import Contract
-from backend.services.contract_service import ContractService
+from backend.models.sub_task import SubTask
 from backend.schemas.contract import ContractCreate, ContractFilter, ContractList, PaginatedContract
 from backend.db.session import get_async_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api.routes.employee import get_current_employee
-from backend.utils.response import api_response
 from typing import List
+from backend.services.sub_task_service import SubTaskService
+from backend.services.ticket_service import TicketService
+from backend.services.contract_service import ContractService
+from datetime import datetime, timedelta
 
 router = APIRouter()
 
@@ -65,3 +67,84 @@ async def get_contracts(
         total_pages=total_pages
     )
     return paginated.model_dump()
+
+# 合同详情页初始化数据
+# 返回数据：黄色预警总个数、红色预警总个数、美工任务列表、渲染任务列表、已完成需求情况、未完成需求情况
+@router.get("/contracts/{id}")
+async def get_contract_detail(
+    id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    art_tasks = await SubTaskService.get_art_tasks(db, id)
+    render_tasks = await SubTaskService.get_render_tasks(db, id)
+    # 黄色预警（美工任务状态为进行中且距离开始时间两天未完成，渲染任务状态为进行中且距离开始时间一天未完成）
+    # 红色预警（美工任务状态为进行中且距离开始时间三天未完成，渲染任务状态为进行中且距离开始时间两天未完成）
+    # 任务名称、组长、负责人、创建时间、状态、预警情况
+    
+    yellow_count = 0
+    red_count = 0
+
+    art_tasks_out = []
+    for task in art_tasks:
+        warning = "正常"
+        if task.status == "进行中" and task.started_at:
+            if task.started_at < datetime.now() - timedelta(days=3):
+                warning = "红色预警"
+                red_count += 1
+            elif task.started_at < datetime.now() - timedelta(days=2):
+                warning = "黄色预警"
+                yellow_count += 1
+        
+        art_tasks_out.append({
+            "name": task.ticket.name,
+            "leader": task.assignee.name if task.assignee else None,
+            "charge": task.charge.name if task.charge else None,
+            "created_at": task.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "status": task.status,
+            "warning": warning
+        })
+
+    render_tasks_out = []
+    for task in render_tasks:
+        warning = "正常"
+        if task.status == "进行中" and task.started_at:
+            # 渲染任务的预警时间不同
+            if task.started_at < datetime.now() - timedelta(days=2):
+                warning = "红色预警"
+                red_count += 1
+            elif task.started_at < datetime.now() - timedelta(days=1):
+                warning = "黄色预警"
+                yellow_count += 1
+
+        render_tasks_out.append({
+            "name": task.ticket.name,
+            "leader": task.assignee.name if task.assignee else None,
+            "charge": task.charge.name if task.charge else None,
+            "created_at": task.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "status": task.status,
+            "warning": warning
+        })
+
+    # 合同已完成需求情况
+    completed_details = await TicketService.get_completed_ticket_counts_by_contract(db, id)
+    # 合同需求情况
+    res = await ContractService.get_contract_completion(db, id)
+    return {
+        "art_tasks": art_tasks_out,
+        "render_tasks": render_tasks_out,
+        "completed_details": {
+            "detailPage": completed_details['detail_pages'],
+            "video": completed_details['video_count'],
+            "image": completed_details['image_count'],
+            "workflow": completed_details['workflow_count']
+        },
+        "pending_details": {
+            "detailPage": res.detail_pages - completed_details['detail_pages'],
+            "video": res.video_count - completed_details['video_count'],
+            "image": res.image_count - completed_details['image_count'],
+            "workflow": res.workflow_count - completed_details['workflow_count']
+        },
+        "yellow_count": yellow_count,
+        "red_count": red_count
+    }

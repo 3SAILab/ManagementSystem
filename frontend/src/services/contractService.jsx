@@ -26,3 +26,14 @@ export const getContracts = async ({ name, status, contract_type, page, page_siz
         return { success: false, error: error.message };
     }
 };
+
+// 获取合同详情（美工任务，渲染任务，任务完成情况）
+export const getContractDetail = async (id) => {
+    try {
+        const response = await api.get(`/contracts/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error("获取合同详情失败:", error);
+        throw error;
+    }
+};

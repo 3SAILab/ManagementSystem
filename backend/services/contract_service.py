@@ -7,7 +7,8 @@ from typing import List, Tuple
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import selectinload
 from backend.models.client import Client
-
+from backend.services import ticket_service
+from backend.services.ticket_service import TicketService
 
 from backend.utils.response import api_response
 
@@ -28,7 +29,6 @@ class ContractService:
                 video_count=contract.video_count,
                 image_count=contract.image_count,
                 workflow_count=contract.workflow_count,
-                notes=contract.notes,
                 created_at=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc)
             )
@@ -87,3 +87,21 @@ class ContractService:
         except Exception as e:
             await db.rollback()
             raise e
+
+
+    # 获取合同信息
+    @staticmethod
+    async def get_contract_completion(db: AsyncSession, contract_id: int):
+        try:
+            contract = await db.get(Contract, contract_id)
+            if not contract:
+                raise HTTPException(status_code=404, detail="合同不存在")
+            # 获取合同信息
+            stmt = select(Contract).where(Contract.id == contract_id)
+            result = await db.execute(stmt)
+            contract = result.scalar_one()
+            return contract
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(status_code=500, detail=str(e))
+

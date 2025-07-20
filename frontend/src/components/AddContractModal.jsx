@@ -11,7 +11,6 @@ const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
     videos: 0,
     images: 0,
     workflows: 0,
-    notes: "",
   });
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -168,20 +167,6 @@ const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="order-notes" className="block text-sm font-medium text-slate-700">
-              备注
-            </label>
-            <textarea
-              id="order-notes"
-              name="notes"
-              rows="3"
-              value={formData.notes}
-              onChange={handleInputChange}
-              placeholder="请输入订单备注信息..."
-              className="form-textarea block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
-            ></textarea>
-          </div>
           {/* 提交按钮 */}
           <div className="mt-6 flex justify-end gap-3">
             <button

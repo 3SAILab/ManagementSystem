@@ -11,6 +11,7 @@ import PositionPage from '../pages/PositionPage';
 import DailyReportPage from '../pages/DailyReportPage';
 import SalesDashboard from '../pages/SalesDashboard';
 import ClientFollowUps from '../pages/ClientFollowUps';
+import ContractDetailPage from '../pages/ContractDetailPage'
 
 const router = createBrowserRouter([
   {
@@ -91,6 +92,15 @@ const router = createBrowserRouter([
               </PrivateRoute>
             ),
             handle: { title: '跟进记录' },
+          },
+          {
+            path: 'contract_detail/:id',
+            element: (
+              <PrivateRoute currentPath='contract_detail'>
+                <ContractDetailPage />
+              </PrivateRoute>
+            ),
+            handle: { title: '合同详情' },
           }
         ],
       },

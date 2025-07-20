@@ -23,7 +23,6 @@ class Contract(Base):
     video_count = Column(Integer, nullable=False) #视频数
     image_count = Column(Integer, nullable=False) #图片数
     workflow_count = Column(Integer, nullable=False) #工作流数
-    notes = Column(Text) #备注
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False) #创建时间
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) #更新时间
 
@@ -32,3 +31,6 @@ class Contract(Base):
 
     # 外键关联到 Employee 表
     sales = relationship("Employee", back_populates="contracts")
+    
+    # 关联到 Ticket 表
+    tickets = relationship("Ticket", back_populates="contract")

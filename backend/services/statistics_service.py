@@ -111,7 +111,7 @@ class StatisticsService:
             raise HTTPException(status_code=500, detail=f"获取每月客户转化率失败: {str(e)}")
         
 
-    # 获取平均成交周期
+    # 获取平均成交周期和增长率
     @staticmethod
     async def get_average_transaction_cycle(db: AsyncSession):
         try:
@@ -165,7 +165,7 @@ class StatisticsService:
             raise HTTPException(status_code=500, detail=f"获取平均成交周期失败: {str(e)}")
 
 
-    # 根据员工id获取本月销售额
+    # 根据员工id获取本月销售额和增长率
     @staticmethod
     async def get_monthly_sales(db: AsyncSession, employee_id: int):
         try:
@@ -194,7 +194,7 @@ class StatisticsService:
             print("获取每月销售额失败:", e)
             raise HTTPException(status_code=500, detail=f"获取每月销售额失败: {str(e)}")
         
-    # 根据员工id获取本月提点
+    # 根据员工id获取本月提点和增长率
     @staticmethod
     async def get_monthly_commission(db: AsyncSession, employee_id: int):
         try:
@@ -230,7 +230,7 @@ class StatisticsService:
             print("获取每月提点失败:", e)
             raise HTTPException(status_code=500, detail=f"获取每月提点失败: {str(e)}")
         
-    # 根据员工id获取本月订单数
+    # 根据员工id获取本月订单数和增长率
     @staticmethod
     async def get_monthly_order_count(db: AsyncSession, employee_id: int):
         try:
@@ -259,7 +259,7 @@ class StatisticsService:
             print("获取每月订单数失败:", e)
             raise HTTPException(status_code=500, detail=f"获取每月订单数失败: {str(e)}")
         
-    # 根据员工id获取本月待结算订单数
+    # 根据员工id获取本月待结算订单数和增长率
     @staticmethod
     async def get_monthly_pending_order_count(db: AsyncSession, employee_id: int):
         try:
@@ -290,7 +290,35 @@ class StatisticsService:
             print("获取每月待结算订单数失败:", e)
             raise HTTPException(status_code=500, detail=f"获取每月待结算订单数失败: {str(e)}")
         
-        
+    # 获取员工今年各月度销售统计数据
+    @staticmethod
+    async def get_monthly_sales_statistics(db: AsyncSession, employee_id: int):
+        try:
+            monthly_sales_statistics = []
+            # 获取员工今年各月度销售统计数据
+            for month in range(1, 13):
+                start_date = datetime(StatisticsService.current_date.year, month, 1)
+                end_date = start_date + timedelta(days=31)
+                result = await db.execute(select(func.sum(Contract.total_amount * Contract.commission_rate / 100)).where(
+                    and_(
+                        Contract.created_at.between(start_date, end_date),
+                        Contract.sales_id == employee_id
+                    )
+                ))
+                monthly_sales = result.scalar_one_or_none() or 0
+                # 格式化为两位小数
+                monthly_sales = round(float(monthly_sales), 2)
+                monthly_sales_statistics.append(monthly_sales)
+            return monthly_sales_statistics
+        except Exception as e:
+            print("获取员工今年各月度销售统计数据失败:", e)
+            raise HTTPException(status_code=500, detail=f"获取员工今年各月度销售统计数据失败: {str(e)}")
+
+
+
+
+
+
         
 
 

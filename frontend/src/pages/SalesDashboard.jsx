@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
+import * as echarts from 'echarts';
 import { getContracts } from '../services/contractService';
-import { getMonthlySales } from '../services/statisticsService';
+import { getMonthlySales, getMonthlySalesStatistics } from '../services/statisticsService';
 import Pagination from '../components/Pagination';
+import { useNavigate } from 'react-router-dom';
 
 const getTrendIndicator = (change) => {
   const isPositive = change > 0;
@@ -38,8 +40,7 @@ const typeBadgeClass = (type) => {
 };
 
 const SalesDashboard = () => {
-  // 被选中的合同Id
-  const [contractId, setContractId] = useState(null);
+  const navigate = useNavigate();
   // 统计数据
   const [statistics, setStatistics] = useState({
     monthlySales: 0,
@@ -59,6 +60,98 @@ const SalesDashboard = () => {
     page: 1,
     page_size: 10
 });
+
+  const chartInstance = useRef(null);
+
+  useEffect(() => {
+    const initChart = async () => {
+      const res = await getMonthlySalesStatistics();
+      console.log("res.data", res.data);
+      const option = {
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            label: {
+              backgroundColor: '#6a7985',
+            },
+          },
+        },
+        legend: {
+          data: ['收入'],
+          top: 10,
+          left: 'center',
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true,
+        },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
+        },
+        yAxis: {
+          type: 'value',
+          axisLabel: {
+            formatter: '{value} 元',
+          },
+        },
+        series: [
+          {
+            name: '收入',
+            type: 'line',
+            smooth: true,
+            symbol: 'circle', // 数据点为圆形
+            symbolSize: 6, // 数据点大小
+            itemStyle: {
+              color: '#6366F1', // indigo-500
+            },
+            lineStyle: {
+              width: 2,
+            },
+            data: res.data,
+          },
+          /** 
+          {
+            name: '目标',
+            type: 'line',
+            smooth: true,
+            symbol: 'circle', // 数据点为圆形
+            symbolSize: 6, // 数据点大小
+            itemStyle: {
+              color: '#3792fc', // 深蓝色
+            },
+            lineStyle: {
+              width: 2,
+            },
+            data: [9000, 10000, 8000, 9500, 7000, 20000, 18000, 15000, 17000, 20000, 23000, 26000],
+          },
+          */
+        ],
+      };
+
+      chartInstance.current = echarts.init(document.getElementById('revenue-chart'));
+      chartInstance.current.setOption(option);
+
+      // 自适应屏幕变化
+      window.addEventListener('resize', () => {
+        chartInstance.current.resize();
+      });
+
+      return () => {
+        if (chartInstance.current) {
+          chartInstance.current.dispose();
+          chartInstance.current = null;
+        }
+      };
+    };
+
+    initChart();
+  }, []);
+
   // 合同列表
   const [contracts, setContracts] = useState([]);
   // 总条数
@@ -128,8 +221,44 @@ const SalesDashboard = () => {
 
       {/* 收入图表 + 来源详情 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 收入图表 */}
         <div className="bg-white p-5 rounded-xl shadow-sm border">
-          收入图表
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-800">收入</h3>
+            <div className="flex bg-slate-100 rounded-lg p-1 text-sm">
+              <button className="px-3 py-1 rounded-md bg-white shadow-sm">月度</button>
+            </div>
+          </div>
+
+          <div className="flex items-center mb-5">
+            <h2 className="text-2xl font-bold">¥301,800</h2>
+            <span className="text-green-500 flex items-center text-sm ml-2">
+              <span className="w-4 h-4 mr-1">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 8l-6 6h12z" />
+                </svg>
+              </span>
+              5.2%
+            </span>
+            <span className="text-slate-500 text-sm ml-2">同比上期</span>
+          </div>
+
+          <div className="h-64 mb-4">
+            <div id="revenue-chart" style={{ width: '100%', height: '100%' }}></div>
+          </div>
+
+          <div className="flex gap-8 text-sm">
+            <div className="flex items-center">
+              <span className="w-3 h-3 rounded-full bg-indigo-500 mr-2"></span>
+              <span>收入</span>
+              <span className="ml-2 font-medium">¥50,300</span>
+            </div>
+            <div className="flex items-center">
+              <span className="w-3 h-3 rounded-full bg-blue-400 mr-2"></span>
+              <span>目标</span>
+              <span className="ml-2 font-medium">¥65,390</span>
+            </div>
+          </div>
         </div>
 
         <div className="bg-white p-5 rounded-xl shadow-sm border">
@@ -141,7 +270,7 @@ const SalesDashboard = () => {
       <div className="flex-grow flex flex-col bg-white rounded-xl shadow-sm border overflow-visible min-h-0">
         {/* 表格头部 */}
         <div className="bg-white">
-          <h3 className="p-4 border-b border-slate-200 text-lg font-semibold">订单尾款跟踪</h3>
+          <h3 className="p-4 border-b border-slate-200 text-lg font-semibold">合同尾款跟踪</h3>
           {contracts.length === 0 ? (
             <div className="p-4 text-center text-slate-500">
               暂无数据
@@ -162,10 +291,11 @@ const SalesDashboard = () => {
             <tbody className="divide-y divide-slate-200">
               {contracts.map((contract) => {
                 const status = contract.total_amount - contract.paid_amount > 0 ? '待结算' : '已结算';
-                const commission = Math.round(contract.total_amount * contract.commission_rate / 100);
+                // 提点保留两位小数
+                const commission = Math.round(contract.total_amount * contract.commission_rate / 100 * 100) / 100;
                 return (
                   <tr key={contract.id} 
-                  onClick={() => setContractId(contract.id)}
+                  onClick={() => navigate(`/contract_detail/${contract.id}`)}
                   className={`hover:bg-slate-50 cursor-pointer`}
                   >
                     <td className="p-4 font-medium text-slate-800">{contract.client_name || '未知客户'}</td>

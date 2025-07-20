@@ -19,6 +19,9 @@ from backend.models.employee import Employee
 from backend.models.client import Client
 from backend.models.client_activity_log import ClientActivityLog
 from backend.models.contract import Contract
+from backend.models.ticket import Ticket
+from backend.models.sub_task import SubTask
+from backend.models.progress_log import ProgressLog
 
 
 # 配置日志
