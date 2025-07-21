@@ -7,7 +7,7 @@ import Pagination from '../components/Pagination';
 import { toast } from 'react-toastify';
 import ClientInfoModal from '../components/ClientInfoModal';
 import AddClientActivityLogModal from '../components/AddClientActivityLogModal';
-import { getClientActivityLogStatistics } from '../services/statisticsService';
+import { getClientActivityLogStatisticsBySalesId } from '../services/statisticsService';
 
 const ClientFollowUps = () => {
     // 客户跟进记录ID
@@ -54,7 +54,7 @@ const ClientFollowUps = () => {
     const [refresh, setRefresh] = useState(false);
     // 获取客户活动日志统计数据
     useEffect(() => {
-        getClientActivityLogStatistics().then(res => {
+        getClientActivityLogStatisticsBySalesId().then(res => {
             if (res.success) {
                 setStatistics(res.data);
             } else {

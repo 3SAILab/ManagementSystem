@@ -72,13 +72,13 @@ const ContractDetailPage = () => {
         {/* 返回按钮 */}
         <Link
           to="/sales_dashboard"
-          className="flex items-center text-gray-500 hover:text-gray-700 group"
+          className="flex items-center text-gray-500 hover:text-gray-700 group text-lg"
         >
           {/* 使用 lucide-react 的 ChevronLeft 图标 */}
           <ChevronLeft
             className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform duration-200"
           />
-          <span className="text-sm font-medium">返回销售看板</span>
+          <span className="text-lg font-medium">返回销售看板</span>
         </Link>
         {/* 创建工单 */}
         {/* 添加客户按钮 */}

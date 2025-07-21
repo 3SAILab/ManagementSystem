@@ -71,3 +71,31 @@ async def get_monthly_sales_statistics(
     # 获取统计数据
     monthly_sales_statistics = await StatisticsService.get_monthly_sales_statistics(db, current_employee.id)
     return api_response(success=True, data=monthly_sales_statistics)
+
+
+# 根据销售id获取客户跟踪统计数据
+@router.get("/statistics/client-activity-log-statistics-by-sales-id")
+async def get_client_activity_log_statistics_by_sales_id(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    # 获取统计数据
+    monthly_client_count, monthly_client_count_change = await StatisticsService.get_monthly_client_count(db, current_employee.id)
+    monthly_transaction_volume, monthly_transaction_volume_change = await StatisticsService.get_monthly_transaction_volume(db, current_employee.id)
+    monthly_conversion_rate, monthly_conversion_rate_change = await StatisticsService.get_monthly_client_conversion_rate(db, current_employee.id)
+    average_cycle, average_cycle_change = await StatisticsService.get_average_transaction_cycle(db, current_employee.id)
+
+    # 构造 JSON 数据结构
+    data = {
+        "monthlyClientCount": monthly_client_count,
+        "monthlyClientCountChange": monthly_client_count_change,
+        "monthlyTransactionVolume": monthly_transaction_volume,
+        "monthlyTransactionVolumeChange": monthly_transaction_volume_change,
+        "monthlyTransactionConversionRate": monthly_conversion_rate,
+        "monthlyTransactionConversionRateChange": monthly_conversion_rate_change,
+        "averageTransactionCycle": average_cycle,
+        "averageTransactionCycleChange": average_cycle_change
+    }
+    
+
+    return api_response(success=True, data=data)
