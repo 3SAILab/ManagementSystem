@@ -81,3 +81,18 @@ export const updateClientStatus = async (clientId, status) => {
         return { success: false, error: error.message };
     }
 };
+
+// 获取客户列表包括销售名称
+export const getClientsWithSalesName = async ({ name, status, source, page, page_size }) => {
+    try {
+        const response = await api.get('/client/get_clients_with_sales_name', {
+            params: { name, status, source, page, page_size },
+            paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
+        });
+        console.log("团队记录:", response.data);
+        return {success: true, data: response.data};
+    } catch (error) {
+        console.error('获取客户列表失败:', error);
+        return { success: false, error: error.message };
+    }
+};

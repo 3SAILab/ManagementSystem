@@ -60,8 +60,18 @@ const FilterDropdown = ({ followUpStatusMap, filters, onFilterChange }) => {
       {isOpen && (
         <div
           id="filter-dropdown"
-          className="absolute z-50 mt-2 bg-white rounded-lg shadow-xl border border-slate-200 p-4 transition-all duration-300 transform origin-top-right w-max"
-          style={isOpen ? { opacity: 1, visibility: 'visible' } : { opacity: 0, visibility: 'hidden' }}
+          className="absolute z-50 bg-white rounded-lg shadow-xl border border-slate-200 p-4 transition-all duration-300 w-max"
+          style={{ 
+            opacity: 1, 
+            visibility: 'visible',
+            right: 0,
+            top: '100%',
+            marginTop: '5px',
+            minWidth: '250px',
+            maxWidth: '300px',
+            maxHeight: '80vh',
+            overflowY: 'auto'
+          }}
         >
           {/* 状态筛选 */}
           <div>

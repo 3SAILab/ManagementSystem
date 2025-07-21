@@ -33,4 +33,14 @@ export const menuItems = [
       { label: '跟进记录', path: '/client_follow_ups', icon: 'contact' },
     ]
   },
+  {
+    label: '销售主管',
+    access: {
+      roles: ['admin', 'manager'],
+      departments: ['销售部'],
+    },
+    children: [
+      { label: '团队记录', path: '/team_record', icon: 'contact' },
+    ]
+  }
 ];

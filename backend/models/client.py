@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import JSON, TIMESTAMP, Column, DateTime, Integer, String
+from sqlalchemy import JSON, TIMESTAMP, Column, DateTime, Integer, String, ForeignKey
 from sqlalchemy.types import Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -28,6 +28,7 @@ class Client(Base):
     __tablename__ = "client"
 
     id = Column(Integer, primary_key=True)
+    sales_id = Column(Integer, ForeignKey('employee.id'), nullable=False) #销售ID
     name = Column(String(100), unique=True, nullable=False) #客户名称
     contact_name = Column(String(50), nullable=False) #联系人
     contact_phone = Column(String(50), nullable=False) #联系电话
@@ -42,6 +43,7 @@ class Client(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) #更新时间
     # 关联跟踪记录
     activity_logs = relationship("ClientActivityLog", back_populates="client", cascade="all, delete-orphan")
-
+    # 外键关联到 Employee 表
+    sales = relationship("Employee", back_populates="clients")
     # 关联合同
     contracts = relationship("Contract", back_populates="client", cascade="all, delete-orphan")

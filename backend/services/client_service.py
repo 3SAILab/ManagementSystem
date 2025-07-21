@@ -6,13 +6,13 @@ from backend.models.client import Client
 from backend.schemas.client import ClientFilter, ClientCreate, ClientStatus
 from fastapi import HTTPException
 from datetime import datetime, timezone
-
+from backend.models.employee import Employee
 
 class ClientService:
 
     # 获取客户列表
     @staticmethod
-    async def get_clients(db: AsyncSession, filter_params: ClientFilter) -> Tuple[List[Client], int]:
+    async def get_clients(db: AsyncSession, filter_params: ClientFilter, sales_id: int) -> Tuple[List[Client], int]:
         stmt = select(Client)
 
         filters = []
@@ -32,6 +32,9 @@ class ClientService:
 
         if filters:
             stmt = stmt.where(and_(*filters))
+
+        if sales_id:
+            stmt = stmt.where(Client.sales_id == sales_id)
             
         # 按创建时间升序排序（最新的记录在前面）
         stmt = stmt.order_by(Client.created_at.desc())
@@ -55,7 +58,7 @@ class ClientService:
 
     #添加客户
     @staticmethod
-    async def add_client(db: AsyncSession, client: ClientCreate):
+    async def add_client(db: AsyncSession, client: ClientCreate, sales_id: int):
         try:
             #检查客户是否存在
             result = await db.execute(select(Client).where(Client.name == client.name))
@@ -68,6 +71,7 @@ class ClientService:
             new_client = Client(
                 **cdata,
                 created_at=datetime.now(timezone.utc),
+                sales_id=sales_id
             )
             db.add(new_client)
             await db.commit()
@@ -147,3 +151,47 @@ class ClientService:
            await db.rollback()
            print(e)
            raise HTTPException(500, f"系统错误: {str(e)}")
+        
+
+    # 获取客户列表包括销售名称
+    @staticmethod
+    async def get_clients_with_sales_name(db: AsyncSession, filter_params: ClientFilter) -> Tuple[List[Client], int]:
+        stmt = select(Client)
+
+        filters = []
+
+        if filter_params.name:
+            filters.append(Client.name.ilike(f"%{filter_params.name}%"))
+
+        if filter_params.status:
+            # 将 Pydantic Enum 转为原始字符串值再过滤
+            status_values = [s.value if hasattr(s, 'value') else s for s in filter_params.status]
+            filters.append(Client.status.in_(status_values))
+
+        if filter_params.source:
+            # 将 Pydantic Enum 转为原始字符串值再过滤
+            source_values = [s.value if hasattr(s, 'value') else s for s in filter_params.source]
+            filters.append(Client.source.in_(source_values))
+
+        if filters:
+            stmt = stmt.where(and_(*filters))
+        stmt = stmt.join(Employee, Client.sales_id == Employee.id)
+        # 按创建时间升序排序（最新的记录在前面）
+        stmt = stmt.order_by(Client.created_at.desc())
+            
+        try:
+            # 获取总数
+            count_stmt = select(func.count()).select_from(stmt.subquery())
+            total_result = await db.execute(count_stmt)
+            total = total_result.scalar_one()
+
+            # 添加分页
+            stmt = stmt.offset((filter_params.page - 1) * filter_params.page_size).limit(filter_params.page_size)
+
+            # 执行查询
+            result = await db.execute(stmt)
+            clients = list(result.scalars().all())
+            return clients, total
+        except Exception as e:
+            await db.rollback()
+            raise e

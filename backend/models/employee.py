@@ -66,3 +66,5 @@ class Employee(Base):
     contracts = relationship("Contract", back_populates="sales")
     # 定义与 客户跟进记录 的一对多关系（一个员工处理的活动记录）
     activity_logs = relationship("ClientActivityLog", back_populates="sales")
+    # 定义与 Client 的一对多关系（一个员工可以有多个客户）
+    clients = relationship("Client", back_populates="sales")

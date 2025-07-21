@@ -10,6 +10,7 @@ from backend.services.sub_task_service import SubTaskService
 from backend.services.ticket_service import TicketService
 from backend.services.contract_service import ContractService
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 router = APIRouter()
 
@@ -95,16 +96,15 @@ async def get_contract_detail(
             elif task.started_at < datetime.now() - timedelta(days=2):
                 warning = "黄色预警"
                 yellow_count += 1
-        
+        beijing_time = task.created_at.astimezone(ZoneInfo("Asia/Shanghai"))
         art_tasks_out.append({
             "name": task.ticket.name,
             "leader": task.assignee.name if task.assignee else None,
             "charge": task.charge.name if task.charge else None,
-            "created_at": task.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "created_at": beijing_time.strftime("%Y-%m-%d %H:%M:%S"),
             "status": task.status,
             "warning": warning
         })
-
     render_tasks_out = []
     for task in render_tasks:
         warning = "正常"
@@ -116,16 +116,15 @@ async def get_contract_detail(
             elif task.started_at < datetime.now() - timedelta(days=1):
                 warning = "黄色预警"
                 yellow_count += 1
-
+        beijing_time = task.created_at.astimezone(ZoneInfo("Asia/Shanghai"))
         render_tasks_out.append({
             "name": task.ticket.name,
             "leader": task.assignee.name if task.assignee else None,
             "charge": task.charge.name if task.charge else None,
-            "created_at": task.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "created_at": beijing_time.strftime("%Y-%m-%d %H:%M:%S"),
             "status": task.status,
             "warning": warning
         })
-
     # 合同已完成需求情况
     completed_details = await TicketService.get_completed_ticket_counts_by_contract(db, id)
     # 合同需求情况

@@ -23,4 +23,5 @@ dependencies = [
     "bcrypt==4.3.0",
     "phonenumbers>=9.0.9",
     "pydantic-extra-types>=2.10.5",
+    "tzdata>=2025.2",
 ]

@@ -4,7 +4,7 @@ import '../index.css';
 function DashboardPage() {
   return (
     <div className="p-8">
-      <p>这是你的后台仪表盘页面。</p>
+      <p>这是你的工单看板页面。</p>
     </div>
   );
 }
