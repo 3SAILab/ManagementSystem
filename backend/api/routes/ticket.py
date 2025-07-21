@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 from backend.schemas.ticket import TicketCreate
 from backend.schemas.sub_task import SubTaskCreate
-
+from backend.services.progress_log_service import ProgressLogService
 router = APIRouter()
 
 
@@ -27,20 +27,28 @@ async def create_ticket(
         
         # 如果需要美工，则需要创建美工任务
         if ticket.needArt:
-            await SubTaskService.create_task(db, SubTaskCreate(
+            res = await SubTaskService.create_task(db, SubTaskCreate(
                 ticket_id=new_ticket.id,
                 task_type="美工",
                 status="未分配",
+                progress=0,
+                edit_count=0,
             ))
-            
+        # 创建进度记录
+        notes = f"{current_employee.name}创建了工单"
+        await ProgressLogService.create_progress_log(db, res.id, notes)
         # 如果需要渲染，则需要创建渲染任务
         if ticket.needRender:
             await SubTaskService.create_task(db, SubTaskCreate(
                 ticket_id=new_ticket.id,
                 task_type="渲染",
                 status="未分配",
+                progress=0,
+                edit_count=0,
             ))
-            
+        # 创建进度记录
+        notes = f"{current_employee.name}创建了渲染任务"
+        await ProgressLogService.create_progress_log(db, res.id, notes)
         
         return {"message": "工单创建成功", "ticket": new_ticket}
         

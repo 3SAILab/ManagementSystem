@@ -128,3 +128,16 @@ export const updateEmployeeWorkInfo = async (id, employee) => {
     return { success: false, error: detail };
   }
 };
+
+//获取组内成员以及工作负载
+export const getGroupMembers = async () => {
+  try {
+    const response = await api.get(`/group/members`);
+    console.log('组内成员：',response.data)
+    return { success: true, data: response.data };
+  } catch (err) {
+    const detail = err.response?.data?.detail || err.message;
+    console.error('获取组内成员失败:', detail);
+    return { success: false, error: detail };
+  }
+};

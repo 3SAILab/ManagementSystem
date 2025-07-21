@@ -13,6 +13,7 @@ import SalesDashboard from '../pages/SalesDashboard';
 import ClientFollowUps from '../pages/ClientFollowUps';
 import TeamRecordPage from '../pages/TeamRecordPage';
 import ContractDetailPage from '../pages/ContractDetailPage'
+import WorkAssignmentPage from '../pages/WorkAssignmentPage'
 
 const router = createBrowserRouter([
   {
@@ -111,6 +112,15 @@ const router = createBrowserRouter([
               </PrivateRoute>
             ),
             handle: { title: '团队记录' },
+          },
+          {
+            path: 'work_assignment',
+            element: (
+              <PrivateRoute currentPath='work_assignment'>
+                <WorkAssignmentPage />
+              </PrivateRoute>
+            ),
+            handle: { title: '工单分配' },
           }
         ],
       },

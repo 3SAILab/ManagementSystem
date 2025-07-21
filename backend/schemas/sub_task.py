@@ -24,4 +24,14 @@ class SubTaskCreate(BaseModel):
     status: str
 
 
+class SubTaskUpdate(BaseModel):
+    charge_id: Optional[int] = None
+    assignee_id: Optional[int] = None
+    charge_id: Optional[str] = None
+    progress: Optional[int] = None
+    assignee_at: Optional[datetime] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    status: Optional[str] = None
+
 

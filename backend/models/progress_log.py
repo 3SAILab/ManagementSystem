@@ -8,7 +8,7 @@ class ProgressLog(Base):
 
     id = Column(Integer, primary_key=True)
     sub_task_id = Column(Integer, ForeignKey('sub_task.id'), nullable=False) #对应子任务
-    notes = Column(Text, nullable=True)    #员工任务完成进度说明
+    notes = Column(Text, nullable=True)    #进度说明
     log_time = Column(DateTime(timezone=True), server_default=func.now()) #记录时间
 
     # 外键关联子任务表

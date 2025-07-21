@@ -100,9 +100,6 @@ async def get_managers(
     employees = await EmployeeService.get_managers(db, department_id, role)
     return employees
 
-#修改员工基本信息
-
-#删除员工
 
 #编辑员工工作信息
 @router.put("/employee/work-info/{id}", response_model=EmployeeInfo)
@@ -118,4 +115,16 @@ async def update_employee_work_info(
     #修改员工信息
     return await EmployeeService.update_employee_work_info(db, id, employee)
 
-
+#获取组内成员以及工作负载
+@router.get("/group/members")
+async def get_group_members(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    #判断当前用户身份
+    if current_employee.department.name == "美工部" or current_employee.department.name == "渲染部":
+        #获取组内成员以及工作负载(成员未完成的任务个数)
+        employees = await EmployeeService.get_group_members(db, current_employee.department.id)
+        return employees
+    else:
+        raise HTTPException(status_code=403, detail="无权限访问")

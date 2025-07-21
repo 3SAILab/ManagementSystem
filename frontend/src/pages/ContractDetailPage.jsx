@@ -31,6 +31,7 @@ const ContractDetailPage = () => {
                 artTasks: res.art_tasks,
                 renderTasks: res.render_tasks,
             });
+            console.log('合同详情：',res)
         }).catch(err => {
             toast.error("加载合同详情失败");
             console.error("Error fetching contract details:", err);
@@ -162,7 +163,7 @@ const ContractDetailPage = () => {
                     <th className="p-4 text-sm font-semibold text-slate-600">组长</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">负责人</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">任务进度</th>
-                    
+                    <th className="p-4 text-sm font-semibold text-slate-600">修改次数</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">预警</th>
                   </tr>
                 </thead>
@@ -174,9 +175,10 @@ const ContractDetailPage = () => {
                       >
                         <td className="p-4 font-medium text-slate-800">{artTask.created_at}</td>
                         <td className="p-4 text-slate-600">{artTask.name}</td>
-                        <td className="p-4 text-slate-600">{artTask.assignee || '暂无'}</td>
+                        <td className="p-4 text-slate-600">{artTask.leader || '暂无'}</td>
                         <td className="p-4 text-slate-600">{artTask.charge || '暂无'}</td>
                         <td className="p-4 text-slate-600">{artTask.status}</td>
+                        <td className="p-4 text-slate-600">{artTask.edit_count}</td>
                         <td className="p-4 text-slate-600">{artTask.warning}</td>
                       </tr>
                     );
@@ -205,6 +207,7 @@ const ContractDetailPage = () => {
                     <th className="p-4 text-sm font-semibold text-slate-600">组长</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">负责人</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">任务进度</th>
+                    <th className="p-4 text-sm font-semibold text-slate-600">修改次数</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">预警</th>
                   </tr>
                 </thead>
@@ -216,9 +219,10 @@ const ContractDetailPage = () => {
                       >
                         <td className="p-4 font-medium text-slate-800">{renderTask.created_at}</td>
                         <td className="p-4 text-slate-600">{renderTask.name}</td>
-                        <td className="p-4 text-slate-600">{renderTask.assignee || '暂无'}</td>
+                        <td className="p-4 text-slate-600">{renderTask.leader || '暂无'}</td>
                         <td className="p-4 text-slate-600">{renderTask.charge || '暂无'}</td>
                         <td className="p-4 text-slate-600">{renderTask.status}</td>
+                        <td className="p-4 text-slate-600">{renderTask.edit_count}</td>
                         <td className="p-4 text-slate-600">{renderTask.warning}</td>
                       </tr>
                     );

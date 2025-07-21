@@ -103,6 +103,8 @@ async def get_contract_detail(
             "charge": task.charge.name if task.charge else None,
             "created_at": beijing_time.strftime("%Y-%m-%d %H:%M:%S"),
             "status": task.status,
+            "progress": task.progress,
+            "edit_count": task.edit_count,
             "warning": warning
         })
     render_tasks_out = []
@@ -123,6 +125,8 @@ async def get_contract_detail(
             "charge": task.charge.name if task.charge else None,
             "created_at": beijing_time.strftime("%Y-%m-%d %H:%M:%S"),
             "status": task.status,
+            "progress": task.progress,
+            "edit_count": task.edit_count,
             "warning": warning
         })
     # 合同已完成需求情况

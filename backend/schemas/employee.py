@@ -80,6 +80,9 @@ class EmployeeInfo(BaseModel):
     
     @field_validator("phone")
     def validate_phone(cls, v):
+        # 允许空值
+        if v is None:
+            return v
         if not re.match(r"^1[3-9]\d{9}$", v):
             raise ValueError("联系电话格式不正确")
         return v

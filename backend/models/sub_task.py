@@ -13,8 +13,10 @@ class SubTask(Base):
     ticket_id = Column(Integer, ForeignKey('ticket.id'), nullable=False)
     task_type = Column(String(100), nullable=False)  # 美工、渲染
     status = Column(String(100), nullable=False)  # 未分配、未开始、已分配、已完工
-    assignee_id = Column(Integer, ForeignKey('employee.id'), nullable=True)
-    charge_id = Column(Integer, ForeignKey('employee.id'), nullable=True)
+    progress = Column(Integer, nullable=False) # 进度(0-100)
+    edit_count = Column(Integer, nullable=False) # 修改次数
+    assignee_id = Column(Integer, ForeignKey('employee.id'), nullable=True) # 分配人    
+    charge_id = Column(Integer, ForeignKey('employee.id'), nullable=True) # 负责人
     assigned_at = Column(DateTime(timezone=True), nullable=True) #分配时间
     started_at = Column(DateTime(timezone=True), nullable=True) #开始时间
     completed_at = Column(DateTime(timezone=True), nullable=True) #完成时间

@@ -42,5 +42,15 @@ export const menuItems = [
     children: [
       { label: '团队记录', path: '/team_record', icon: 'contact' },
     ]
+  },
+  {
+    label: '工单分配',
+    access: {
+      roles: ['admin', 'manager'],
+      departments: ['美工部', '渲染部'],
+    },
+    children: [
+      { label: '工单分配', path: '/work_assignment', icon: 'check-square' },
+    ]
   }
 ];
