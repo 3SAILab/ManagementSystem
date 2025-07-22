@@ -68,7 +68,7 @@ const WorkAssignmentPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {tasks.length > 0 ? (
+                  {tasks && tasks.length > 0 ? (
                     tasks.map((task) => {
 
                       return (
@@ -119,7 +119,7 @@ const WorkAssignmentPage = () => {
               团队成员工作负载
             </h3>
             <div className="p-4">
-              {groupMembers.length > 0 ? (
+              {groupMembers && groupMembers.length > 0 ? (
                 groupMembers.map((member) => {
                   return (
                     <div key={member.id} className="mb-4">

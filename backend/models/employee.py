@@ -26,7 +26,7 @@ class Employee(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False) #姓名
     gender = Column(Enum(GenderEnum)) #性别
-    email = Column(String(255), unique=True, index=True, nullable=False) #邮箱
+    email = Column(String(255), unique=True, nullable=False) #邮箱
     phone = Column(String(50)) #手机号
     birth_date = Column(Date) #出生日期
     hire_date = Column(Date, nullable=False) #入职日期

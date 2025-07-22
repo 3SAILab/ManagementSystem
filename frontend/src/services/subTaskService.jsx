@@ -3,7 +3,7 @@ import api from './api';
 // 获取未分配的子任务(根据当前角色的身份获取美术任务或者渲染任务)
 export const getSubTasks = async () => {
     try {
-      const response = await api.get(`/sub_art_tasks/unassigned`);
+      const response = await api.get(`/sub_tasks/unassigned`);
       console.log('子任务：',response.data)
       return { success: true, data: response.data };
     } catch (err) {

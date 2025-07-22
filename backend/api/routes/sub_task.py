@@ -26,14 +26,14 @@ async def get_sub_render_tasks(
     return await SubTaskService.get_render_tasks(db, current_employee.id)
 
 # 获取未分配任务
-@router.get("/sub_art_tasks/unassigned")
-async def get_sub_art_tasks_unassigned(
+@router.get("/sub_tasks/unassigned")
+async def get_sub_tasks_unassigned(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    if current_employee.department.name == "美工部":
+    if current_employee.position.name == "美工主管":
         return await SubTaskService.get_art_tasks_unassigned(db)
-    elif current_employee.department.name == "渲染部":
+    elif current_employee.position.name == "渲染主管":
         return await SubTaskService.get_render_tasks_unassigned(db)
 
 # 分配任务

@@ -34,7 +34,7 @@ async def init_db():
         logger.info("开始初始化数据库...")
 
         # 插入部门（存在就跳过）
-        dept_stmt = insert(Department).values(name="人力资源部")
+        dept_stmt = insert(Department).values(name="人事行政部")
         dept_skip_stmt = dept_stmt.on_conflict_do_nothing(
             index_elements=[Department.name]  # 主键冲突检测
         )
@@ -42,8 +42,8 @@ async def init_db():
         logger.info(f"部门插入完成，受影响行数: {dept_result.rowcount}")
 
         # 插入职位（存在就跳过）
-        dept_id = await conn.execute(select(Department.id).where(Department.name == "人力资源部"))
-        pos_stmt = insert(Position).values(name="人力资源经理", department_id=dept_id.scalar())
+        dept_id = await conn.scalar(select(Department.id).where(Department.name == "人事行政部"))
+        pos_stmt = insert(Position).values(name="HRBP", department_id=dept_id)
         pos_skip_stmt = pos_stmt.on_conflict_do_nothing(
             index_elements=[Position.name]
         )
@@ -51,6 +51,7 @@ async def init_db():
         logger.info(f"职位插入完成，受影响行数: {pos_result.rowcount}")
 
         # 插入员工（email 唯一冲突时跳过）
+        pos_id = await conn.scalar(select(Position.id).where(Position.name == "HRBP"))
         password_hash = EmployeeService.get_password_hash("123456qwerty")
 
         emp_stmt = insert(Employee).values(
@@ -58,8 +59,8 @@ async def init_db():
             email="admin@example.com",
             password_hash=password_hash,
             role="admin",
-            department_id=1,
-            position_id=1,
+            department_id=dept_id,
+            position_id=pos_id,
             hire_date=datetime.now(timezone.utc),
             status="active",
             base_salary=10000,

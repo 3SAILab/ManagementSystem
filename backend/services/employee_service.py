@@ -2,6 +2,8 @@ from datetime import datetime, timedelta, timezone
 import logging
 from typing import Optional
 from sqlalchemy import update
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 import bcrypt
@@ -57,30 +59,38 @@ class EmployeeService:
     
     #创建新员工
     @staticmethod
-    async def create_employee(db: AsyncSession, newEmployee: EmployeeInfo):
+    async def create_employee(db: AsyncSession, new_employee: EmployeeInfo) -> Employee:
+        # 1. 准备插入值
+        values = {
+            **new_employee.model_dump(exclude={"password"}),
+            "password_hash": EmployeeService.get_password_hash(new_employee.password),
+            "created_at": datetime.now(timezone.utc),
+        }
+
+        # 2. 构造 UPSERT 语句，冲突时跳过并返回实体
+        stmt = (
+            insert(Employee)
+            .values(**values)
+            .on_conflict_do_nothing(index_elements=[Employee.email])
+            .returning(Employee)
+        )
+
         try:
-            # 检查邮箱是否已存在
-            result = await db.execute(select(Employee).where(Employee.email == newEmployee.email))
-            if result.scalars().first():
+            async with db.begin():
+                result = await db.execute(stmt)
+                employee = result.scalar_one_or_none()
+
+            if not employee:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="邮箱已被使用"
                 )
-            
-            password_hash = EmployeeService.get_password_hash(newEmployee.password)
-            employee = Employee(
-                **newEmployee.model_dump(exclude={"password"}),
-                password_hash=password_hash,
-                created_at=datetime.now(timezone.utc),
-            )
-            db.add(employee)
-            await db.commit()
-            print("注册成功", employee.name)
-            await db.refresh(employee)
+
             return employee
-        except Exception as e:
-            await db.rollback()
-            print(f"数据库提交失败，原始错误: {e}")  # 打印详细错误
+
+        except SQLAlchemyError as e:
+            # 记录详细错误（包含 traceback）
+            logging.exception("员工注册失败 [email=%s]", new_employee.email)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="注册失败，请稍后重试"
@@ -220,14 +230,15 @@ class EmployeeService:
            print(f"修改员工工作信息失败: {str(e)}")
            raise HTTPException(500, f"系统错误: {str(e)}")
        
-
-
     #获取组内成员以及工作负载
     @staticmethod
-    async def get_group_members(db: AsyncSession, department_id: int):
+    async def get_group_members(db: AsyncSession, employee_id: int):
         try:
-            #获取组内成员以及工作负载(成员未完成的任务个数)
-            result = await db.execute(select(Employee).where(Employee.department_id == department_id).options(
+            #获取组内成员以及工作负载(成员未完成的任务个数)(id或上级id的相同)
+            result = await db.execute(select(Employee).where(
+                Employee.id == employee_id 
+                or Employee.manager_id == employee_id
+                ).options(
                 selectinload(Employee.department),
                 selectinload(Employee.position),
             ))
@@ -236,7 +247,7 @@ class EmployeeService:
             
             #获取组内成员未完成的任务个数
             for employee in employees:
-                tasks = await db.execute(select(SubTask).where(SubTask.assignee_id == employee.id))
+                tasks = await db.execute(select(SubTask).where(SubTask.charge_id == employee.id))
                 task_count = len(tasks.scalars().all())
                 
                 groupMembers = {

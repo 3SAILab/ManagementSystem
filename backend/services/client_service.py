@@ -7,10 +7,11 @@ from backend.schemas.client import ClientFilter, ClientCreate, ClientStatus
 from fastapi import HTTPException
 from datetime import datetime, timezone
 from backend.models.employee import Employee
+from sqlalchemy.orm import selectinload
 
 class ClientService:
 
-    # 获取客户列表
+    # 根据销售id获取客户列表
     @staticmethod
     async def get_clients(db: AsyncSession, filter_params: ClientFilter, sales_id: int) -> Tuple[List[Client], int]:
         stmt = select(Client)
@@ -175,7 +176,7 @@ class ClientService:
 
         if filters:
             stmt = stmt.where(and_(*filters))
-        stmt = stmt.join(Employee, Client.sales_id == Employee.id)
+        stmt = stmt.options(selectinload(Client.sales))
         # 按创建时间升序排序（最新的记录在前面）
         stmt = stmt.order_by(Client.created_at.desc())
             

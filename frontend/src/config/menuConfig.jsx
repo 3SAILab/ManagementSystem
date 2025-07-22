@@ -12,8 +12,8 @@ export const menuItems = [
     label: '人事管理',
     access: {
       roles: ['admin', 'manager', 'employee'],
-      departments: ['人力资源部'],
-      positions: ['人事', 'hr', '人力资源经理']
+      departments: ['人事行政部'],
+      positions: ['HRBP']
     },
     children: [
       { label: '员工管理', path: '/employee_management', icon: 'users' },
@@ -25,8 +25,8 @@ export const menuItems = [
     label: '销售',
     access: {
       roles: ['admin', 'manager', 'employee'],
-      departments: ['销售部'],
-      positions: ['销售专员']
+      departments: ['营销管理部'],
+      positions: ['销售主管', '销售']
     },
     children: [
       { label: '我的看板', path: '/sales_dashboard', icon: 'bar-chart-3' },
@@ -36,8 +36,9 @@ export const menuItems = [
   {
     label: '销售主管',
     access: {
-      roles: ['admin', 'manager'],
-      departments: ['销售部'],
+      roles: ['manager'],
+      positions: ['销售主管'],
+      departments: ['营销管理部'],
     },
     children: [
       { label: '团队记录', path: '/team_record', icon: 'contact' },
@@ -46,8 +47,9 @@ export const menuItems = [
   {
     label: '工单分配',
     access: {
-      roles: ['admin', 'manager'],
-      departments: ['美工部', '渲染部'],
+      roles: ['manager'],
+      departments: ['生产部'],
+      positions: ['美工主管', '渲染主管'],
     },
     children: [
       { label: '工单分配', path: '/work_assignment', icon: 'check-square' },
