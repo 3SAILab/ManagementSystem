@@ -24,6 +24,9 @@ class Ticket(Base):
 
     # 关联子任务
     sub_tasks = relationship("SubTask", back_populates="ticket")
-
+    
+    # 关联进度日志
+    progress_logs = relationship("ProgressLog", back_populates="ticket")
+    
     # 关联合同
     contract = relationship("Contract", back_populates="tickets")

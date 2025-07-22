@@ -8,8 +8,8 @@ import { toast } from 'react-toastify';
 
 function LoginPage() {
   console.log('成功进入LoginPage');
-  const [email, setEmail] = useState('demo@example.com');
-  const [password, setPassword] = useState('********');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,7 +80,7 @@ function LoginPage() {
                     id="email"
                     name="email"
                     className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="you@example.com"
+                    placeholder="请输入邮箱"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -106,7 +106,7 @@ function LoginPage() {
                     id="password"
                     name="password"
                     className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="********"
+                    placeholder="请输入密码"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required

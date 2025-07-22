@@ -79,7 +79,12 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
           <button
             type="button"
             className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow transition"
-            onClick={() => onSave(task)}
+            onClick={
+              () => {
+                onSave(task)
+                onClose()
+              }
+            }
           >
             保存分配
           </button>

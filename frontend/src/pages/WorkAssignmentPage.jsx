@@ -3,12 +3,13 @@ import { getSubTasks } from '../services/subTaskService';
 import { getGroupMembers } from '../services/authService';
 import AssignWorkModal from '../components/AssignWorkModal';
 import { assignSubTask } from '../services/subTaskService';
+import { toast } from 'react-toastify';
 const WorkAssignmentPage = () => {
   const [tasks, setTasks] = useState([]);
   const [groupMembers, setGroupMembers] = useState([]);
   const [isAssignWorkModalOpen, setIsAssignWorkModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
-
+  const [selectedTicketId, setSelectedTicketId] = useState(null);
   // 获取待分配工单和团队成员
   useEffect(() => {
     getSubTasks().then((res) => {
@@ -24,8 +25,9 @@ const WorkAssignmentPage = () => {
   }, []);
   // 分配任务
   const handleAssignSave = (task) => {
-    assignSubTask(task.id, task.charge_id).then((res) => {
+    assignSubTask(task.id, task.charge_id, selectedTicketId).then((res) => {
       if (res.success) {
+        toast.success('分配成功');
         // 刷新任务列表
         getSubTasks().then((res) => {
           if (res.success) {
@@ -38,8 +40,6 @@ const WorkAssignmentPage = () => {
             setGroupMembers(res.data);
           }
         });
-        // 关闭模态框
-        setIsAssignWorkModalOpen(false);
       }
     });
   };
@@ -91,6 +91,7 @@ const WorkAssignmentPage = () => {
                               onClick={() => {
                                 setIsAssignWorkModalOpen(true);
                                 setSelectedTaskId(task.id);
+                                setSelectedTicketId(task.ticket.id);
                               }}
                             >
                               分配任务

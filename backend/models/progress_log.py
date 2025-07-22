@@ -7,9 +7,12 @@ class ProgressLog(Base):
     __tablename__ = 'progress_log'
 
     id = Column(Integer, primary_key=True)
-    sub_task_id = Column(Integer, ForeignKey('sub_task.id'), nullable=False) #对应子任务
+    employee_id = Column(Integer, ForeignKey('employee.id'), nullable=False) #对应员工
+    ticket_id = Column(Integer, ForeignKey('ticket.id'), nullable=False)
     notes = Column(Text, nullable=True)    #进度说明
     log_time = Column(DateTime(timezone=True), server_default=func.now()) #记录时间
 
-    # 外键关联子任务表
-    sub_task = relationship("SubTask", foreign_keys=[sub_task_id])
+    # 关联工单表
+    ticket = relationship("Ticket", back_populates="progress_logs")
+    # 外键关联员工表
+    employee = relationship("Employee", foreign_keys=[employee_id])

@@ -12,7 +12,7 @@ class SubTask(Base):
     id = Column(Integer, primary_key=True)
     ticket_id = Column(Integer, ForeignKey('ticket.id'), nullable=False)
     task_type = Column(String(100), nullable=False)  # 美工、渲染
-    status = Column(String(100), nullable=False)  # 未分配、未开始、已分配、已完工
+    status = Column(String(100), nullable=False)  # 未分配、未开始、修改中、已完工
     progress = Column(Integer, nullable=False) # 进度(0-100)
     edit_count = Column(Integer, nullable=False) # 修改次数
     assignee_id = Column(Integer, ForeignKey('employee.id'), nullable=True) # 分配人    
@@ -29,16 +29,5 @@ class SubTask(Base):
 
     # 关联工单表
     ticket = relationship("Ticket", back_populates="sub_tasks")
-    @validates('status')
-    def update_timestamps(self, key, value):
-        now = datetime.now(timezone.utc)  # 使用 UTC 时间
 
-        if value == '已分配' and self.assigned_at is None:
-            self.assigned_at = now
-        elif value == '已开始' and self.started_at is None:
-            self.started_at = now
-        elif value == '已完工' and self.completed_at is None:
-            self.completed_at = now
-
-        return value
 

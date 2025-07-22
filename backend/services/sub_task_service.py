@@ -7,11 +7,12 @@ from fastapi import HTTPException
 from backend.models.contract import Contract
 from backend.models.client import Client
 from backend.schemas.sub_task import SubTaskCreate   
+from datetime import datetime, timezone
 
 class SubTaskService:
-    # 获取所有美工任务
+    # 根据合同id获取所有美工任务
     @staticmethod
-    async def get_art_tasks(db: AsyncSession, contract_id: int):
+    async def get_art_tasks_by_contract_id(db: AsyncSession, contract_id: int):
         try:
             # 合同是否存在
             ticket_ids_result = await db.execute(
@@ -38,9 +39,9 @@ class SubTaskService:
             print("get_art_tasks error: ", e)
             raise HTTPException(status_code=500, detail=str(e))
         
-    # 获取所有渲染任务
+    # 根据合同id获取所有渲染任务
     @staticmethod
-    async def get_render_tasks(db: AsyncSession, contract_id: int):
+    async def get_render_tasks_by_contract_id(db: AsyncSession, contract_id: int):
         try:
             # 合同是否存在
             ticket_ids_result = await db.execute(
@@ -107,6 +108,7 @@ class SubTaskService:
                 {
                     "id": task.id,
                     "ticket": {
+                        "id": task.ticket.id,
                         "name": task.ticket.name,
                         "client": {
                             "name": task.ticket.contract.client.name
@@ -142,6 +144,7 @@ class SubTaskService:
                 {
                     "id": task.id,
                     "ticket": {
+                        "id": task.ticket.id,
                         "name": task.ticket.name,
                         "client": {
                             "name": task.ticket.contract.client.name
@@ -166,11 +169,13 @@ class SubTaskService:
             sub_task.charge_id = charge_id
             sub_task.assignee_id = assignee_id 
             sub_task.status = '未开始' 
+            sub_task.assigned_at = datetime.now(timezone.utc)
             await db.commit()
             await db.refresh(sub_task)
             return sub_task
         except Exception as e:
             await db.rollback()
+            print("assign_sub_task error: ", e)
             raise HTTPException(status_code=500, detail=str(e))
 
     # 获取任务详情
@@ -181,4 +186,94 @@ class SubTaskService:
             sub_task = sub_task.scalars().first()
             return sub_task
         except Exception as e:
+            print("get_sub_task error: ", e)
+            raise HTTPException(status_code=500, detail=str(e))
+        
+    # 开始任务
+    @staticmethod
+    async def start_sub_task(db: AsyncSession, id: int):
+        try:
+            sub_task = await db.execute(select(SubTask).where(SubTask.id == id))
+            sub_task = sub_task.scalars().first()
+            sub_task.status = '进行中'
+            sub_task.started_at = datetime.now(timezone.utc)
+            await db.commit()
+            await db.refresh(sub_task)
+            return sub_task
+        except Exception as e:
+            await db.rollback()
+            print("start_sub_task error: ", e)
+            raise HTTPException(status_code=500, detail=str(e))
+        
+    # 完成任务
+    @staticmethod
+    async def complete_sub_task(db: AsyncSession, id: int):
+        try:
+            sub_task = await db.execute(select(SubTask).where(SubTask.id == id))
+            sub_task = sub_task.scalars().first()
+            sub_task.status = '已完成'
+            sub_task.completed_at = datetime.now(timezone.utc)
+            await db.commit()
+            await db.refresh(sub_task)
+            return sub_task
+        except Exception as e:
+            await db.rollback()
+            print("complete_sub_task error: ", e)
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # 根据负责人id获取所有任务
+    @staticmethod
+    async def get_sub_tasks_by_charge_id(db: AsyncSession, charge_id: int):
+        try:
+            sub_tasks = await db.execute(
+                select(SubTask)
+                .where(SubTask.charge_id == charge_id)
+                .options(
+                    selectinload(SubTask.ticket)
+                        .selectinload(Ticket.contract)
+                        .selectinload(Contract.client),
+                    selectinload(SubTask.assignee),
+                    selectinload(SubTask.charge)
+                )
+            )
+            sub_tasks = sub_tasks.scalars().all()
+            return sub_tasks
+        except Exception as e:
+            print("get_sub_tasks_by_charge_id error: ", e)
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # 根据任务id获取任务详情
+    @staticmethod
+    async def get_sub_task_detail(db: AsyncSession, id: int):
+        try:
+            sub_task = await db.execute(
+                select(SubTask)
+                .where(SubTask.id == id)
+                .options(
+                    selectinload(SubTask.ticket)
+                        .selectinload(Ticket.contract)
+                        .selectinload(Contract.client),
+                    selectinload(SubTask.assignee),
+                    selectinload(SubTask.charge)
+                )
+            )
+            sub_task = sub_task.scalars().first()
+            return sub_task
+        except Exception as e:
+            print("get_sub_task_detail error: ", e)
+            raise HTTPException(status_code=500, detail=str(e))
+        
+    # 更新任务状态
+    @staticmethod
+    async def update_status(db: AsyncSession, id: int, status: str, progress: int):
+        try:
+            sub_task = await db.execute(select(SubTask).where(SubTask.id == id))
+            sub_task = sub_task.scalars().first()
+            sub_task.status = status
+            sub_task.progress = progress
+            await db.commit()
+            await db.refresh(sub_task)
+        except Exception as e:
+            await db.rollback()
+            print("update_status error: ", e)
             raise HTTPException(status_code=500, detail=str(e))

@@ -234,10 +234,13 @@ class EmployeeService:
     @staticmethod
     async def get_group_members(db: AsyncSession, employee_id: int):
         try:
+            from sqlalchemy import or_
             #获取组内成员以及工作负载(成员未完成的任务个数)(id或上级id的相同)
             result = await db.execute(select(Employee).where(
-                Employee.id == employee_id 
-                or Employee.manager_id == employee_id
+                or_(
+                    Employee.id == employee_id,
+                    Employee.manager_id == employee_id
+                )
                 ).options(
                 selectinload(Employee.department),
                 selectinload(Employee.position),

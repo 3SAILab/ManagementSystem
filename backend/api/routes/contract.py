@@ -77,8 +77,8 @@ async def get_contract_detail(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    art_tasks = await SubTaskService.get_art_tasks(db, id)
-    render_tasks = await SubTaskService.get_render_tasks(db, id)
+    art_tasks = await SubTaskService.get_art_tasks_by_contract_id(db, id)
+    render_tasks = await SubTaskService.get_render_tasks_by_contract_id(db, id)
     # 黄色预警（美工任务状态为进行中且距离开始时间两天未完成，渲染任务状态为进行中且距离开始时间一天未完成）
     # 红色预警（美工任务状态为进行中且距离开始时间三天未完成，渲染任务状态为进行中且距离开始时间两天未完成）
     # 任务名称、组长、负责人、创建时间、状态、预警情况
