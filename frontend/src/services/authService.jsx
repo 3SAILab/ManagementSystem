@@ -11,22 +11,21 @@ export const login = async (email, password) => {
       const response = await api.post(
         '/token',
         params,
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+        { 
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          withCredentials: true // 确保发送和接收Cookie
+        }
       );
   
-      if (!response.data) {
+      if (response.data.success === false) {
         throw new Error('登录失败，请检查账号或密码');
       }
-    
-      console.log('登录成功!');
-      const data = response.data;
-      // 存储 token
-      localStorage.setItem('access_token', data.access_token);
+      
+      // 不再需要手动存储token，由后端设置HttpOnly Cookie
       useEmployeePermissionStore.setState({
         employee: "",
       });
   
-      alert('登录成功！');
       return { success: true };
       
     } catch (err) {
@@ -37,11 +36,18 @@ export const login = async (email, password) => {
 };
 
 //退出登录
-export const logout = () => {
-  localStorage.removeItem('access_token');
-  useEmployeePermissionStore.setState({
-    employee: null,
-  });
+export const logout = async () => {
+  try {
+    // 调用后端登出API，清除HttpOnly Cookie
+    await api.post('/logout');
+    useEmployeePermissionStore.setState({
+      employee: null,
+    });
+    return { success: true };
+  } catch (err) {
+    console.error('登出错误:', err);
+    return { success: false, error: err.message };
+  }
 };
   
 //获取员工权限信息

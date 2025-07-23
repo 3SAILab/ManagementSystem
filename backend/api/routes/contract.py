@@ -87,13 +87,14 @@ async def get_contract_detail(
     red_count = 0
 
     art_tasks_out = []
+    now = datetime.now(tz=ZoneInfo("Asia/Shanghai"))
     for task in art_tasks:
         warning = "正常"
         if task.status == "进行中" and task.started_at:
-            if task.started_at < datetime.now() - timedelta(days=3):
+            if task.started_at < now - timedelta(days=3):
                 warning = "红色预警"
                 red_count += 1
-            elif task.started_at < datetime.now() - timedelta(days=2):
+            elif task.started_at < now - timedelta(days=2):
                 warning = "黄色预警"
                 yellow_count += 1
         beijing_time = task.created_at.astimezone(ZoneInfo("Asia/Shanghai"))
@@ -112,10 +113,10 @@ async def get_contract_detail(
         warning = "正常"
         if task.status == "进行中" and task.started_at:
             # 渲染任务的预警时间不同
-            if task.started_at < datetime.now() - timedelta(days=2):
+            if task.started_at < now - timedelta(days=2):
                 warning = "红色预警"
                 red_count += 1
-            elif task.started_at < datetime.now() - timedelta(days=1):
+            elif task.started_at < now - timedelta(days=1):
                 warning = "黄色预警"
                 yellow_count += 1
         beijing_time = task.created_at.astimezone(ZoneInfo("Asia/Shanghai"))

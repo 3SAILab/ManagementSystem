@@ -8,6 +8,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // 添加此配置以支持跨域Cookie
 });
 
 let navigate; // 用于延迟绑定 navigate 方法
@@ -18,15 +19,8 @@ export const setApiNavigate = (navigateFn) => {
 
 // 请求拦截器
 api.interceptors.request.use(config => {
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    config.headers['Authorization'] = `Bearer ${token}`;
-  }
-
+  // 使用HttpOnly Cookie，不再需要手动添加令牌
   console.log(`API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
-  if (token) {
-    console.log('Using token:', token);
-  }
   return config;
 }, error => {
   return Promise.reject(error);

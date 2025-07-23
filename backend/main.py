@@ -25,8 +25,15 @@ from backend.models.progress_log import ProgressLog
 
 
 # 配置日志
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("init_db")
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('app.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 
 async def init_db():

@@ -127,7 +127,8 @@ async def get_personal_tasks(
 @router.get("/sub_task_detail/{id}")
 async def get_sub_task_detail(
     id: int,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
 ):
     # 获取任务详情
     res = await SubTaskService.get_sub_task_detail(db, id)
@@ -175,11 +176,14 @@ async def get_sub_task_detail(
     sales = await EmployeeService.get_employee_by_id(db, res.ticket.contract.sales_id)
     # 根据工单id获取美工和渲染
     charges = await TicketService.get_charge_ticket_by_id(db, res.ticket.id)
+    # 提取“美工”和“渲染”负责人（如果有多条，只取第一条）
+    art_person = next((c.charge.name for c in charges if c.task_type == '美工'), None)
+    render_person = next((c.charge.name for c in charges if c.task_type == '渲染'), None)
     # 获取任务相关人员信息
     related_employees = {
         "sales": sales.name,
-        "art": charges[0].charge.name if charges[0] else None,
-        "render": charges[1].charge.name if charges[1] else None,
+        "art": art_person,
+        "render": render_person,
     }
     return {
         "order": out,

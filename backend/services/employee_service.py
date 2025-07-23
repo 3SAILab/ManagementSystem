@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import logging
 from typing import Optional
-from sqlalchemy import update
+from sqlalchemy import update, func, or_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -234,35 +234,32 @@ class EmployeeService:
     @staticmethod
     async def get_group_members(db: AsyncSession, employee_id: int):
         try:
-            from sqlalchemy import or_
-            #获取组内成员以及工作负载(成员未完成的任务个数)(id或上级id的相同)
-            result = await db.execute(select(Employee).where(
-                or_(
-                    Employee.id == employee_id,
-                    Employee.manager_id == employee_id
+            # 修正后的版本：统计所有任务（与第一个方法等价）
+            stmt = (
+                select(
+                    Employee.id,
+                    Employee.name,
+                    func.count(SubTask.id).label("task_count")
                 )
-                ).options(
-                selectinload(Employee.department),
-                selectinload(Employee.position),
-            ))
-            employees = result.scalars().all()
-            employee_list = []
+                .outerjoin(SubTask, SubTask.charge_id == Employee.id)  # 使用outerjoin确保没有任务的员工也被包含
+                .where(
+                    or_(
+                        Employee.id == employee_id,
+                        Employee.manager_id == employee_id
+                    )
+                )
+                .group_by(Employee.id, Employee.name)
+            )
+            result = await db.execute(stmt)
+            rows = result.all()
             
-            #获取组内成员未完成的任务个数
-            for employee in employees:
-                tasks = await db.execute(select(SubTask).where(SubTask.charge_id == employee.id))
-                task_count = len(tasks.scalars().all())
-                
-                groupMembers = {
-                    "id": employee.id,
-                    "name": employee.name,
-                    "task_count": task_count
-                }
-                employee_list.append(groupMembers)
-            return employee_list
-        except Exception as e:
-            print(f"获取组内成员以及工作负载失败: {str(e)}")
-            raise HTTPException(500, f"系统错误: {str(e)}")
+            return [
+                {"id": id, "name": name, "task_count": task_count}
+                for id, name, task_count in rows
+            ]
+        except SQLAlchemyError as e:
+            print("get_group_members", e)
+            raise HTTPException(500, "系统错误")
 
 
         

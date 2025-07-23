@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Literal
+from typing import Literal, Optional
 from backend.models.employee import Employee
 from backend.services.employee_service import EmployeeService
 from backend.utils.response import api_response
@@ -8,19 +8,47 @@ from ...db.session import get_async_db
 from ...schemas.employee import EmployeePermission, Token, EmployeeInfo, EmployeeListInfo
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi import Query
+import logging
+
+# 配置日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
 async def get_current_employee(
     db: AsyncSession = Depends(get_async_db),
-    token: str = Depends(oauth2_scheme)
+    token: Optional[str] = Depends(oauth2_scheme),
+    access_token: Optional[str] = Cookie(None)
 ) -> Employee:
+    """
+    获取当前登录的员工信息
+    优先从Authorization头获取令牌，如果没有则从Cookie获取
+    """
+    
+    # 如果没有从Authorization头获取到令牌，尝试从Cookie获取
+    if not token and access_token:
+        # 从Cookie中提取Bearer令牌
+        if access_token.startswith("Bearer "):
+            token = access_token[7:]
+        else:
+            token = access_token
+            
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="未提供认证凭据",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
     return await EmployeeService.get_current_employee(db, token)
 
 #员工登录
 @router.post("/token", response_model=Token)
 async def login(
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_async_db)
 ):
@@ -33,10 +61,20 @@ async def login(
         )
     #创建Token
     token = EmployeeService.create_token(data={"sub": employee.email})
-    # 返回包含部门和职位名称的员工信息及 Token
-    return {
-        "access_token": token
-    }
+    
+    # 设置HttpOnly Cookie
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {token}",
+        httponly=True,
+        secure=False,  # 生产环境应设为True，使用HTTPS
+        samesite="lax",
+        max_age=60*60*24,  # 24小时，与token过期时间一致
+        path="/"
+    )
+    
+    # 返回包含访问令牌的响应
+    return {"access_token": token, "token_type": "bearer"}
 
 #员工注册
 @router.post("/register", response_model=api_response)
@@ -128,3 +166,19 @@ async def get_group_members(
         return employees
     else:
         raise HTTPException(status_code=403, detail="无权限访问")
+
+#登出
+@router.post("/logout")
+async def logout(response: Response):
+    """
+    登出并清除HttpOnly Cookie
+    """
+    logger.info("用户登出，清除Cookie")
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+        httponly=True,
+        secure=False,  # 生产环境应设为True
+        samesite="lax"
+    )
+    return {"message": "登出成功"}

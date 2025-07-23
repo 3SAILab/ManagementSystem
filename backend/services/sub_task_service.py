@@ -8,6 +8,11 @@ from backend.models.contract import Contract
 from backend.models.client import Client
 from backend.schemas.sub_task import SubTaskCreate   
 from datetime import datetime, timezone
+from sqlalchemy import update
+from sqlalchemy.exc import SQLAlchemyError
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SubTaskService:
     # 根据合同id获取所有美工任务
@@ -188,39 +193,7 @@ class SubTaskService:
         except Exception as e:
             print("get_sub_task error: ", e)
             raise HTTPException(status_code=500, detail=str(e))
-        
-    # 开始任务
-    @staticmethod
-    async def start_sub_task(db: AsyncSession, id: int):
-        try:
-            sub_task = await db.execute(select(SubTask).where(SubTask.id == id))
-            sub_task = sub_task.scalars().first()
-            sub_task.status = '进行中'
-            sub_task.started_at = datetime.now(timezone.utc)
-            await db.commit()
-            await db.refresh(sub_task)
-            return sub_task
-        except Exception as e:
-            await db.rollback()
-            print("start_sub_task error: ", e)
-            raise HTTPException(status_code=500, detail=str(e))
-        
-    # 完成任务
-    @staticmethod
-    async def complete_sub_task(db: AsyncSession, id: int):
-        try:
-            sub_task = await db.execute(select(SubTask).where(SubTask.id == id))
-            sub_task = sub_task.scalars().first()
-            sub_task.status = '已完成'
-            sub_task.completed_at = datetime.now(timezone.utc)
-            await db.commit()
-            await db.refresh(sub_task)
-            return sub_task
-        except Exception as e:
-            await db.rollback()
-            print("complete_sub_task error: ", e)
-            raise HTTPException(status_code=500, detail=str(e))
-
+    
     # 根据负责人id获取所有任务
     @staticmethod
     async def get_sub_tasks_by_charge_id(db: AsyncSession, charge_id: int):
@@ -267,19 +240,25 @@ class SubTaskService:
     @staticmethod
     async def update_status(db: AsyncSession, id: int, status: str, progress: int):
         try:
-            sub_task = await db.execute(select(SubTask).where(SubTask.id == id))
-            sub_task = sub_task.scalars().first()
-            
-            time = datetime.now(timezone.utc)
-            if status == "进行中" :
-                sub_task.started_at = time
-            if status == "已完成" :
-                sub_task.completed_at = time
-            sub_task.status = status
-            sub_task.progress = progress
+            now = datetime.now(timezone.utc)
+            values = {"status": status, "progress": progress}
+            if status == "进行中":
+                values["started_at"] = now
+            if status == "已完成":
+                values["completed_at"] = now
+            stmt = (
+                update(SubTask)
+                .where(SubTask.id == id)
+                .values(**values)
+                .returning(SubTask)
+            )
+            result = await db.execute(stmt)
+            updated = result.scalar_one_or_none()
+            if not updated:
+                raise HTTPException(status_code=404, detail="任务不存在或未修改任何字段")
             await db.commit()
-            await db.refresh(sub_task)
-        except Exception as e:
+            return updated
+        except SQLAlchemyError as e:
             await db.rollback()
-            print("update_status error: ", e)
-            raise HTTPException(status_code=500, detail=str(e))
+            logger.error("update_status error: %s", e, exc_info=True)
+            raise HTTPException(status_code=500, detail="更新任务状态失败")

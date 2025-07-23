@@ -2,14 +2,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.client import Client
 from sqlalchemy import select, func, and_, or_
 from fastapi import HTTPException
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from backend.models.contract import Contract
 from sqlalchemy.exc import SQLAlchemyError
 
 class StatisticsService:
 
     #当前月份的开始和结束时间
-    current_date = datetime.now()
+    current_date = datetime.now(timezone.utc)
     start_date = datetime(current_date.year, current_date.month, 1)
     end_date = start_date + timedelta(days=31)
 

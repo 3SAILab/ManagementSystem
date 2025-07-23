@@ -49,30 +49,22 @@ class TicketService:
     @staticmethod
     async def get_completed_ticket_counts_by_contract(db: AsyncSession, contract_id: int):
         try:
-            # 查找与合同ID相关的所有工单
-            tickets_result = await db.execute(
-                select(Ticket).where(Ticket.contract_id == contract_id)
-            )
-            tickets = tickets_result.scalars().all()
-
-            completed_tickets = []
-            for ticket in tickets:
-                # 预加载子任务
-                sub_tasks_result = await db.execute(
-                    select(SubTask).where(SubTask.ticket_id == ticket.id)
-                )
-                sub_tasks = sub_tasks_result.scalars().all()
-
-                # 检查所有子任务是否都已完成
-                if sub_tasks and all(st.status == "已完工" for st in sub_tasks):
-                    completed_tickets.append(ticket)
-            
+            # 查找与合同ID相关的所有工单，并预加载子任务
+            stmt = select(Ticket).where(Ticket.contract_id == contract_id).options(selectinload(Ticket.sub_tasks))
+            result = await db.execute(stmt)
+            tickets = result.scalars().all()
+            # 筛选所有子任务都已完工的工单
+            completed_tickets = [
+                t for t in tickets
+                if t.sub_tasks and all(st.status == "已完成" for st in t.sub_tasks)
+            ]
             # 计算已完成工单的需求总量
             total_detail_pages = sum(t.detail_pages for t in completed_tickets)
             total_video_count = sum(t.video_count for t in completed_tickets)
             total_image_count = sum(t.image_count for t in completed_tickets)
             total_workflow_count = sum(t.workflow_count for t in completed_tickets)
-
+            # 打印任务完成情况，用于调试
+            print("任务完成情况", total_detail_pages, total_video_count, total_image_count, total_workflow_count)
             return {
                 "detail_pages": total_detail_pages,
                 "video_count": total_video_count,
