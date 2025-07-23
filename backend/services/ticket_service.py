@@ -2,6 +2,7 @@ from backend.schemas.ticket import TicketCreate
 from backend.models.employee import Employee
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from backend.models.ticket import Ticket
 from backend.models.sub_task import SubTask
 from datetime import datetime
@@ -81,4 +82,15 @@ class TicketService:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+
+    # 根据工单id获取美工和渲染
+    @staticmethod
+    async def get_charge_ticket_by_id(db: AsyncSession, ticket_id: int):
+        try:
+            result = await db.execute(select(SubTask).where(SubTask.ticket_id == ticket_id).options(selectinload(SubTask.charge)))
+            charges = result.scalars().all()
+            return charges
+        except Exception as e:
+            print("get_charge_ticket_by_id error",e)
+            raise HTTPException(status_code=500, detail=str(e))
     

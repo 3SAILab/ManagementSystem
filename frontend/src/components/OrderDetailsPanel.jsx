@@ -1,11 +1,12 @@
 // components/OrderDetailsPanel.jsx
 import { useEffect, useState } from 'react';
-import { X, Clock, ShieldAlert, Flag, SlidersHorizontal, ArrowUpCircle, Calendar, Users } from 'lucide-react';
+import { Clock, ShieldAlert, Flag, SlidersHorizontal, ArrowUpCircle, Calendar, Users } from 'lucide-react';
 import { MessageCircle } from 'lucide-react';
 import UpdateProgressCommentModal from './UpdateProgressCommentModal';
 import { getSubTaskDetailById, updateSubTaskProgress } from '../services/subTaskService';
 import Avatar from './Avatar';
 import { toast } from 'react-toastify';
+import ModalCloseButton from './ModalCloseButton';
 
 const DetailItem = ({ icon: Icon, label, children }) => (
   <div className="grid grid-cols-4 gap-4 py-3">
@@ -139,12 +140,7 @@ const OrderDetailsPanel = ({ orderId, onClose, onRefresh }) => {
         {/* Header */}
         <header className="flex-shrink-0 flex items-center justify-between p-4 border-b border-slate-200">
           <h2 className="text-lg font-bold text-slate-800 truncate">{order.ticket_name}</h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-full text-slate-500 hover:bg-slate-100"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <ModalCloseButton onClose={onClose} />
         </header>
 
         {/* Body */}

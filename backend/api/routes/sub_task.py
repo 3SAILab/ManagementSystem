@@ -11,6 +11,8 @@ from backend.services.employee_service import EmployeeService
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from backend.services.ticket_service import TicketService
+
 router = APIRouter()
 # 获取所有美工任务
 @router.get("/sub_art_tasks")
@@ -171,13 +173,13 @@ async def get_sub_task_detail(
         })
     # 获取任务相关人员(销售、美工、渲染)
     sales = await EmployeeService.get_employee_by_id(db, res.ticket.contract.sales_id)
-    art = await EmployeeService.get_employee_by_id(db, res.assignee_id)
-    render = await EmployeeService.get_employee_by_id(db, res.charge_id)
+    # 根据工单id获取美工和渲染
+    charges = await TicketService.get_charge_ticket_by_id(db, res.ticket.id)
     # 获取任务相关人员信息
     related_employees = {
         "sales": sales.name,
-        "art": art.name,
-        "render": render.name,
+        "art": charges[0].charge.name if charges[0] else None,
+        "render": charges[1].charge.name if charges[1] else None,
     }
     return {
         "order": out,

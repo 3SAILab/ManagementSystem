@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import ModalCloseButton from './ModalCloseButton';
 
 const UpdateProgressCommentModal = ({
   ticketId,
@@ -34,7 +35,7 @@ const UpdateProgressCommentModal = ({
 
   const handleCancel = () => {
     // 通知父组件取消，并还原 UI（如滑块）
-    onCancel?.(orderId, oldProgress);
+    onCancel?.();
     onClose();
   };
 
@@ -53,7 +54,10 @@ const UpdateProgressCommentModal = ({
       <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
         {/* Header */}
         <div className="border-b border-slate-200 px-6 py-4">
-          <h3 className="text-lg font-semibold text-slate-800">更新进度说明</h3>
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-slate-800">更新进度说明</h3>
+            <ModalCloseButton onClose={handleCancel} />
+          </div>
         </div>
 
         {/* Form */}
