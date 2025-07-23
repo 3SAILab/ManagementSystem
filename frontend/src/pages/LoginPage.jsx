@@ -14,7 +14,7 @@ function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
-      alert('请输入账号和密码');
+      toast.error('请输入账号和密码');
       return;
     }
     const result = await login(email, password);
@@ -22,8 +22,7 @@ function LoginPage() {
       navigate('/', { replace: true });
       toast.success('登录成功！');
     } else {
-      alert(result.error || '登录失败，请检查账号和密码');
-      toast.error('登录失败，请检查账号和密码');
+      toast.error(result.error || '登录失败，请检查账号和密码');
     }
   };
 
