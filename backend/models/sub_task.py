@@ -29,5 +29,6 @@ class SubTask(Base):
 
     # 关联工单表
     ticket = relationship("Ticket", back_populates="sub_tasks")
-
+    # 关联进度日志表
+    progress_logs = relationship("ProgressLog", back_populates="sub_task")
 

@@ -1,21 +1,11 @@
 // components/OrderDetailsPanel.jsx
 import { useEffect, useState } from 'react';
-import { X, Clock, ShieldAlert, Flag, SlidersHorizontal, ArrowUpCircle, Calendar, Tags, Users } from 'lucide-react';
+import { X, Clock, ShieldAlert, Flag, SlidersHorizontal, ArrowUpCircle, Calendar, Users } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import UpdateProgressCommentModal from './UpdateProgressCommentModal';
-import { getSubTaskDetailById } from '../services/subTaskService';
-const getAvatar = (name) => {
-  if (!name) return null;
-  return (
-    <div
-      key={name}
-      className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium border-2 border-white hover:z-10 hover:scale-110 transition-transform"
-      style={{ backgroundColor: '#6366f1' }}
-      title={name}
-    >
-      {name.charAt(0).toUpperCase()}
-    </div>
-  );
-};
+import { getSubTaskDetailById, updateSubTaskProgress } from '../services/subTaskService';
+import Avatar from './Avatar';
+import { toast } from 'react-toastify';
 
 const DetailItem = ({ icon: Icon, label, children }) => (
   <div className="grid grid-cols-4 gap-4 py-3">
@@ -27,15 +17,16 @@ const DetailItem = ({ icon: Icon, label, children }) => (
   </div>
 );
 
-const OrderDetailsPanel = ({ orderId, onClose }) => {
+const OrderDetailsPanel = ({ orderId, onClose, onRefresh }) => {
   const [order, setOrder] = useState(null);
   const [progressList, setProgressList] = useState([]); // 更语义化的命名
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-
+  const [relatedEmployees, setRelatedEmployees] = useState({});
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [pendingProgress, setPendingProgress] = useState(null);
-  
+  // 页面刷新
+  const [refresh, setRefresh] = useState(false);
   // ✅ 安全初始化：不要依赖 order，而是用 ?. 和 ?? 提供默认值
   const [currentProgress, setCurrentProgress] = useState(0);
 
@@ -49,6 +40,7 @@ const OrderDetailsPanel = ({ orderId, onClose }) => {
           setProgressList(res.data.progress_log || []);
           // ✅ 获取数据后才设置 currentProgress，避免 null
           setCurrentProgress(res.data.order.progress ?? 0);
+          setRelatedEmployees(res.data.related_employees || {});
         } else {
           setError(true);
         }
@@ -63,7 +55,7 @@ const OrderDetailsPanel = ({ orderId, onClose }) => {
     if (orderId) {
       fetchOrder();
     }
-  }, [orderId]);
+  }, [orderId, refresh]);
 
   // 滑块变化监听
   const handleSliderInput = (e) => {
@@ -91,10 +83,18 @@ const OrderDetailsPanel = ({ orderId, onClose }) => {
   };
 
   // 提交更新
-  const handleSubmitUpdate = (updatedOrderId, progress, comment) => {
-    console.log('进度更新提交:', { orderId: updatedOrderId, progress, comment });
-    // TODO: 调用 API 更新进度
+  const handleSubmitUpdate = async (progressLog) => {
+    console.log('进度更新提交:', progressLog);
+    progressLog.progress = pendingProgress;
+    const res = await updateSubTaskProgress(progressLog);
+    if (res.success) {
+      toast.success('进度更新成功');
+    } else {
+      toast.error('进度更新失败');
+    }
     setShowProgressModal(false);
+    setRefresh(!refresh);
+    onRefresh();
   };
 
   // ✅ 如果还在加载
@@ -156,7 +156,11 @@ const OrderDetailsPanel = ({ orderId, onClose }) => {
                 ? new Date(order.created_at).toLocaleString()
                 : '-'}
             </DetailItem>
-
+            <DetailItem icon={MessageCircle} label="微信群">
+              <a target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+                {order.wechat_group}
+              </a>
+            </DetailItem>
             <DetailItem icon={ShieldAlert} label="预警状态">
               <span
                 className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full capitalize ${
@@ -209,11 +213,10 @@ const OrderDetailsPanel = ({ orderId, onClose }) => {
 
             <DetailItem icon={Users} label="负责人">
               <div className="flex items-center -space-x-2">
-                {order.assignees?.length > 0 ? (
-                  order.assignees.map((name) => getAvatar(name)).filter(Boolean)
-                ) : (
-                  <span className="text-slate-500 text-sm">未分配</span>
-                )}
+                {/** 将每个相关人员信息显示出来，以头像形式 */}
+                <Avatar name={relatedEmployees.sales} />
+                <Avatar name={relatedEmployees.art} />
+                <Avatar name={relatedEmployees.render} />
               </div>
             </DetailItem>
           </dl>
@@ -233,7 +236,7 @@ const OrderDetailsPanel = ({ orderId, onClose }) => {
               <div className="space-y-6">
                 {progressList.map((activity) => (
                   <div key={activity.id} className="flex gap-3">
-                    {getAvatar(activity.name)}
+                    <Avatar name={activity.name} size="sm" />
                     <div className="flex-1">
                       <p className="text-sm">
                         <span className="font-semibold">{activity.name || '未知用户'}</span>

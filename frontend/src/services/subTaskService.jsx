@@ -64,3 +64,16 @@ export const getSubTaskDetailById = async (id) => {
       return { success: false, error: detail };
     }
 };
+
+// 更新任务进度
+export const updateSubTaskProgress = async (progressLog) => {
+    try {
+      const response = await api.put(`/update_progress/${progressLog.sub_task_id}`, progressLog);
+      console.log('更新任务进度：',response.data)
+      return { success: true, data: response.data };
+    } catch (err) {
+      const detail = err.response?.data?.detail || err.message;
+      console.error('更新任务进度失败:', detail);
+      return { success: false, error: detail };
+    }
+};

@@ -43,7 +43,6 @@ async def get_sub_tasks_unassigned(
 @router.put("/assign_task/{id}")
 async def assign_sub_task(
     id: int,
-    ticket_id: int = Body(..., embed=True),
     charge_id: int = Body(..., embed=True),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
@@ -54,7 +53,7 @@ async def assign_sub_task(
     charger = await EmployeeService.get_employee_by_id(db, charge_id)
     # 创建进度记录
     notes = f"{current_employee.name}分配任务给{charger.name}"
-    await ProgressLogService.create_progress_log(db, ticket_id, notes, current_employee.id)
+    await ProgressLogService.create_progress_log(db, id, notes, current_employee.id)
     return res
 
 # 获取任务详情(分配任务时显示任务描述)
@@ -155,11 +154,12 @@ async def get_sub_task_detail(
         "status": res.status,
         "progress": res.progress,
         "priority": res.ticket.priority,
+        "wechat_group": res.ticket.wechat_group,
         "start_date": res.started_at.astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y-%m-%d %H:%M:%S") if res.started_at else None,
         "assignee": res.assignee.name if res.assignee else None,
         "charge": res.charge.name if res.charge else None,
     }
-    # 根据工单id获取进度日志
+    # 根据任务id获取关于这个任务的所有的记录
     progress_log = await ProgressLogService.get_progress_log_by_id(db, res.ticket.id)
     log_list = []
     for log in progress_log:
@@ -169,9 +169,20 @@ async def get_sub_task_detail(
             "notes": log.notes,
             "created_at": log.log_time.astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y-%m-%d %H:%M:%S"),
         })
+    # 获取任务相关人员(销售、美工、渲染)
+    sales = await EmployeeService.get_employee_by_id(db, res.ticket.contract.sales_id)
+    art = await EmployeeService.get_employee_by_id(db, res.assignee_id)
+    render = await EmployeeService.get_employee_by_id(db, res.charge_id)
+    # 获取任务相关人员信息
+    related_employees = {
+        "sales": sales.name,
+        "art": art.name,
+        "render": render.name,
+    }
     return {
         "order": out,
-        "progress_log": log_list
+        "progress_log": log_list,
+        "related_employees": related_employees
     }
 
 
@@ -179,7 +190,6 @@ async def get_sub_task_detail(
 @router.put("/update_progress/{id}")
 async def update_progress(
     id: int,
-    ticket_id: int = Body(..., embed=True),
     progress: int = Body(..., embed=True),
     notes: str = Body(..., embed=True),
     db: AsyncSession = Depends(get_async_db),
@@ -190,9 +200,12 @@ async def update_progress(
     if res.status == "未开始":
         await SubTaskService.update_status(db, id, "进行中", progress)
     if res.status == "进行中" and progress == 100:
+        print("已完成")
         await SubTaskService.update_status(db, id, "已完成", progress)
+    if res.status == "进行中" and progress != 100:
+        await SubTaskService.update_status(db, id, "进行中", progress)
     # 创建进度记录
-    res =  await ProgressLogService.create_progress_log(db, ticket_id, notes, current_employee.id)
+    res =  await ProgressLogService.create_progress_log(db, id, notes, current_employee.id)
     return res
 
 

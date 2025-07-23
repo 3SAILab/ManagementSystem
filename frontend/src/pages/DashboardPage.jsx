@@ -9,6 +9,8 @@ const DashboardPage = () => {
   const [yellowAlerts, setYellowAlerts] = useState(0);
   const [redAlerts, setRedAlerts] = useState(0);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  // 页面刷新
+  const [refresh, setRefresh] = useState(false);
   // 初始化页面数据
   useEffect(() => {
     getPersonalTasks().then((res) => {
@@ -16,7 +18,7 @@ const DashboardPage = () => {
       setYellowAlerts(res.data.yellow_count);
       setRedAlerts(res.data.red_count);
     });
-  }, []);
+  }, [refresh]);
 
   // 点击订单卡片显示有关任务详情，创建时间、预警状态、状态、进度、优先级、开始时间、标签、负责人
   const handleSelectOrder = (orderId) => {
@@ -133,6 +135,7 @@ const DashboardPage = () => {
         <OrderDetailsPanel
           orderId={selectedOrder}
           onClose={() => setSelectedOrder(null)}
+          onRefresh={() => setRefresh(!refresh)}
         />
       )}
     </>

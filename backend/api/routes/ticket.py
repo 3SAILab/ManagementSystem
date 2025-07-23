@@ -24,9 +24,7 @@ async def create_ticket(
         
         # 创建工单
         new_ticket = await TicketService.create_ticket(db, ticket, current_employee)
-        # 创建进度记录
-        notes = f"{current_employee.name}创建了工单"
-        await ProgressLogService.create_progress_log(db, new_ticket.id, notes, current_employee.id)
+        flag = True
         # 如果需要美工，则需要创建美工任务
         if ticket.needArt:
             art_res = await SubTaskService.create_task(db, SubTaskCreate(
@@ -34,8 +32,14 @@ async def create_ticket(
                 task_type="美工",
                 status="未分配",
                 progress=0,
-                edit_count=0,
+                edit_count=0, 
             ))
+            # 创建进度记录
+            notes = f"{current_employee.name}创建了工单"
+            # 只需创建一个进度记录，因为工单创建时，美工和渲染任务是同时创建的
+            if flag:
+                await ProgressLogService.create_progress_log(db, art_res.id, notes, current_employee.id)
+                flag = False
         # 如果需要渲染，则需要创建渲染任务
         if ticket.needRender:
             render_res = await SubTaskService.create_task(db, SubTaskCreate(
@@ -45,7 +49,12 @@ async def create_ticket(
                 progress=0,
                 edit_count=0,
             ))
-        
+            # 创建进度记录
+            notes = f"{current_employee.name}创建了工单"
+            # 只需创建一个进度记录，因为工单创建时，美工和渲染任务是同时创建的若是已经创建过，则不创建
+            if flag:
+                await ProgressLogService.create_progress_log(db, render_res.id, notes, current_employee.id)
+                flag = False
         
         return {"message": "工单创建成功", "ticket": new_ticket}
         

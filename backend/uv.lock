@@ -49,6 +49,7 @@ dependencies = [
     { name = "bcrypt" },
     { name = "fastapi" },
     { name = "httptools" },
+    { name = "jose" },
     { name = "passlib" },
     { name = "phonenumbers" },
     { name = "psycopg2-binary" },
@@ -68,6 +69,7 @@ requires-dist = [
     { name = "bcrypt", specifier = "==4.3.0" },
     { name = "fastapi", specifier = "==0.116.0" },
     { name = "httptools", specifier = ">=0.6.4" },
+    { name = "jose", specifier = ">=1.0.0" },
     { name = "passlib", specifier = "==1.7.4" },
     { name = "phonenumbers", specifier = ">=9.0.9" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
@@ -256,6 +258,12 @@ sdist = { url = "https://pypi.tuna.tsinghua.edu.cn/packages/f1/70/7703c29685631f
 wheels = [
     { url = "https://pypi.tuna.tsinghua.edu.cn/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl", hash = "sha256:946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3", size = 70442, upload-time = "2024-09-15T18:07:37.964Z" },
 ]
+
+[[package]]
+name = "jose"
+version = "1.0.0"
+source = { registry = "https://pypi.tuna.tsinghua.edu.cn/simple" }
+sdist = { url = "https://pypi.tuna.tsinghua.edu.cn/packages/01/3d/832caa69cd0d3be2d608d8290be2221072669aa88e87690837f6b31c480f/jose-1.0.0.tar.gz", hash = "sha256:8436c3617cd94e1ba97828fbb1ce27c129f66c78fb855b4bb47e122b5f345fba", size = 9153, upload-time = "2015-11-13T10:52:21.506Z" }
 
 [[package]]
 name = "passlib"

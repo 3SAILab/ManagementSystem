@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 
 const UpdateProgressCommentModal = ({
-  orderId,
+  ticketId,
+  subTaskId,
   oldProgress,
   newProgress,
   onCancel,
   onSubmit,
-  onClose,
+  onClose
 }) => {
-  const [comment, setComment] = useState('');
   const formRef = useRef(null);
-
+  const [progressLog, setProgressLog] = useState({
+    ticket_id: ticketId,
+    sub_task_id: subTaskId,
+    notes: '',
+  });
   // 自动聚焦到 textarea
   const textareaRef = useRef(null);
   useEffect(() => {
@@ -21,10 +25,10 @@ const UpdateProgressCommentModal = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!comment.trim()) return;
+    if (!progressLog.notes.trim()) return;
 
     // 回传数据给父组件
-    onSubmit?.(orderId, newProgress, comment);
+    onSubmit?.(progressLog);
     onClose(); // 关闭模态
   };
 
@@ -68,8 +72,8 @@ const UpdateProgressCommentModal = ({
               id="progress-comment"
               ref={textareaRef}
               required
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              value={progressLog.notes}
+              onChange={(e) => setProgressLog({ ...progressLog, notes: e.target.value })}
               className="w-full h-24 p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
               placeholder="例如：完成了线框图初稿..."
             />
@@ -86,7 +90,7 @@ const UpdateProgressCommentModal = ({
             </button>
             <button
               type="submit"
-              disabled={!comment.trim()}
+              disabled={!progressLog.notes.trim()}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition"
             >
               确认更新

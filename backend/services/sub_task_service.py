@@ -269,6 +269,12 @@ class SubTaskService:
         try:
             sub_task = await db.execute(select(SubTask).where(SubTask.id == id))
             sub_task = sub_task.scalars().first()
+            
+            time = datetime.now(timezone.utc)
+            if status == "进行中" :
+                sub_task.started_at = time
+            if status == "已完成" :
+                sub_task.completed_at = time
             sub_task.status = status
             sub_task.progress = progress
             await db.commit()
