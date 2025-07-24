@@ -1,19 +1,15 @@
 from datetime import datetime, timedelta, timezone
-import logging
 from typing import Optional
 from sqlalchemy import update, func, or_
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 import bcrypt
 from jose import JWTError, jwt
 from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload, joinedload
-from backend.models.department import Department
+from sqlalchemy.orm import selectinload
 from backend.models.employee import Employee
-from backend.models.position import Position
-from backend.schemas.employee import EmployeePermission, EmployeeInfo, EmployeeListInfo
+from backend.schemas.employee import EmployeeInfo, EmployeeListInfo
 from backend.models.sub_task import SubTask
 # JWT相关配置
 SECRET_KEY = "your-secret-key"  # 在生产环境中应该使用环境变量
@@ -75,26 +71,16 @@ class EmployeeService:
             .returning(Employee)
         )
 
-        try:
-            async with db.begin():
-                result = await db.execute(stmt)
-                employee = result.scalar_one_or_none()
+        result = await db.execute(stmt)
+        employee = result.scalar_one_or_none()
 
-            if not employee:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="邮箱已被使用"
-                )
-
-            return employee
-
-        except SQLAlchemyError as e:
-            # 记录详细错误（包含 traceback）
-            logging.exception("员工注册失败 [email=%s]", new_employee.email)
+        if not employee:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="注册失败，请稍后重试"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="邮箱已被使用"
             )
+        return employee
+
     
     #获取当前员工权限信息
     @staticmethod
@@ -104,14 +90,12 @@ class EmployeeService:
             detail="无法验证凭据",
             headers={"WWW-Authenticate": "Bearer"},
         )
-        try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            email: str = payload.get("sub")
-            logging.info(f"当前用户邮箱: {email}")
-            if email is None:
-                raise credentials_exception
-        except JWTError:
+        
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
             raise credentials_exception
+        
         result = await db.execute(
             select(Employee)
             .options(
@@ -145,24 +129,21 @@ class EmployeeService:
             selectinload(Employee.department),
             selectinload(Employee.position),
         )
-        try:
-            result = await db.execute(stmt)
-            emps = result.scalars().all()
-            # 构造返回列表
-            return [
-                EmployeeListInfo(
-                    id=e.id,
-                    name=e.name,
-                    email=e.email,
-                    department_id=e.department.id,
-                    position_id=e.position.id,
-                    department_name=e.department.name,
-                    position_name=e.position.name
-                )
-                    for e in emps
-                ] 
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"查询员工列表失败: {str(e)}")
+        result = await db.execute(stmt)
+        emps = result.scalars().all()
+        # 构造返回列表
+        return [
+            EmployeeListInfo(
+                id=e.id,
+                name=e.name,
+                email=e.email,
+                department_id=e.department.id,
+                position_id=e.position.id,
+                department_name=e.department.name,
+                position_name=e.position.name
+            )
+                for e in emps
+        ] 
     
     #获取上级列表
     LEVEL_HIERARCHY = {
@@ -218,48 +199,38 @@ class EmployeeService:
     #修改员工工作信息
     @staticmethod
     async def update_employee_work_info(db: AsyncSession, id: int, employee: EmployeeInfo):
-       try:
-           existing = await db.execute(select(Employee).where(Employee.id==id))
-           if not existing:
-               raise HTTPException(404, "员工不存在")
-           await db.execute(update(Employee).where(Employee.id==id).values(**employee.model_dump(exclude_unset=True)))
-           await db.commit()
-           return employee
-       except Exception as e:
-           await db.rollback()
-           print(f"修改员工工作信息失败: {str(e)}")
-           raise HTTPException(500, f"系统错误: {str(e)}")
+        existing = await db.execute(select(Employee).where(Employee.id==id))
+        if not existing:
+            raise HTTPException(404, "员工不存在")
+        await db.execute(update(Employee).where(Employee.id==id).values(**employee.model_dump(exclude_unset=True)))
+        await db.flush()
+        return employee
        
     #获取组内成员以及工作负载
     @staticmethod
     async def get_group_members(db: AsyncSession, employee_id: int):
-        try:
-            # 修正后的版本：统计所有任务（与第一个方法等价）
-            stmt = (
-                select(
-                    Employee.id,
-                    Employee.name,
-                    func.count(SubTask.id).label("task_count")
-                )
-                .outerjoin(SubTask, SubTask.charge_id == Employee.id)  # 使用outerjoin确保没有任务的员工也被包含
-                .where(
-                    or_(
-                        Employee.id == employee_id,
-                        Employee.manager_id == employee_id
-                    )
-                )
-                .group_by(Employee.id, Employee.name)
+        # 修正后的版本：统计所有任务（与第一个方法等价）
+        stmt = (
+            select(
+                Employee.id,
+                Employee.name,
+                func.count(SubTask.id).label("task_count")
             )
-            result = await db.execute(stmt)
-            rows = result.all()
-            
-            return [
-                {"id": id, "name": name, "task_count": task_count}
-                for id, name, task_count in rows
-            ]
-        except SQLAlchemyError as e:
-            print("get_group_members", e)
-            raise HTTPException(500, "系统错误")
-
+            .outerjoin(SubTask, SubTask.charge_id == Employee.id)  # 使用outerjoin确保没有任务的员工也被包含
+            .where(
+                or_(
+                    Employee.id == employee_id,
+                    Employee.manager_id == employee_id
+                )
+            )
+            .group_by(Employee.id, Employee.name)
+        )
+        result = await db.execute(stmt)
+        rows = result.all()
+        
+        return [
+            {"id": id, "name": name, "task_count": task_count}
+            for id, name, task_count in rows
+        ]
 
         

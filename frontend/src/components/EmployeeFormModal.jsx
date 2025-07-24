@@ -576,7 +576,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                   type="number"
                   step="0.01"
                   name="work_performance_score"
-                  value={employee.work_performance_score || 0}
+                  value={employee.work_performance_score || ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -587,7 +587,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                   type="number"
                   step="0.01"
                   name="attendance_performance_score"
-                  value={employee.attendance_performance_score || 0}
+                  value={employee.attendance_performance_score || ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />

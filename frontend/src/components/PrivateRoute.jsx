@@ -3,11 +3,22 @@ import { useEmployeePermissionStore } from '../store/employee';
 import { menuItems } from '../config/menuConfig';
 
 export default function PrivateRoute({ currentPath, children }) {
-    console.log('PrivateRoute正常运行');
     const { employee } = useEmployeePermissionStore();
-    //获取路径对应的权限
+    
+    // 检查权限的辅助函数
+    const checkAccess = (access) => {
+        if (!access) return true;
+        
+        const { roles, departments, positions } = access;
+        const roleMatch = roles ? roles.includes(employee?.role) : true;
+        const departmentMatch = departments ? departments.includes(employee?.department_name) : true;
+        const positionMatch = positions ? positions.includes(employee?.position_name) : true;
+        
+        return roleMatch && departmentMatch && positionMatch;
+    };
+    
+    // 获取路径对应的权限
     const getAccessByPath = (path) => {
-        // 遍历父菜单和子菜单，寻找匹配的 path，并合并 access
         for (const parent of menuItems) {
             if (parent.children) {
                 const child = parent.children.find(child => child.path === path);
@@ -15,26 +26,38 @@ export default function PrivateRoute({ currentPath, children }) {
                     return child.access || parent.access;
                 }
             }
-            // 如果父菜单本身有 path
             if (parent.path === path) {
                 return parent.access;
             }
         }
         return undefined;
     };
-    //判断是否有权限
-    const hasAccess = (path) => {
-        const access = getAccessByPath(path);
-        if (!access) return true;
-        
-        const { roles, departments, positions } = access;
-        const roleMatch = roles ? roles.includes(employee?.role) : true;
-        const departmentMatch = departments ? departments.includes(employee?.department_name) : true;
-        const positionMatch = positions ? positions.includes(employee?.position_name) : true;
     
-        return roleMatch && departmentMatch && positionMatch;
+    // 获取用户有权限的第一个页面
+    const getFirstAccessiblePath = () => {
+        for (const menuGroup of menuItems) {
+            const groupAccess = checkAccess(menuGroup.access);
+            if (groupAccess && menuGroup.children) {
+                for (const child of menuGroup.children) {
+                    const childAccess = checkAccess(child.access || menuGroup.access);
+                    if (childAccess) {
+                        return child.path;
+                    }
+                }
+            }
+        }
+        return '/'; // 默认首页
     };
-    if (!hasAccess(currentPath)) return <Navigate to="/login" replace />;
-    //验证通过
+    
+    // 检查当前路径权限
+    const currentAccess = getAccessByPath(currentPath);
+    const hasCurrentPathAccess = checkAccess(currentAccess);
+    
+    // 如果没有当前路径权限，跳转到有权限的第一个页面
+    if (!hasCurrentPathAccess) {
+        const firstPath = getFirstAccessiblePath();
+        return <Navigate to={firstPath} replace />;
+    }
+    
     return children;
 }

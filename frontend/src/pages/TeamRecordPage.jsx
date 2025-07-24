@@ -2,19 +2,13 @@ import React, { useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
 import FilterDropdown from '../components/FilterDropdown';
 import Pagination from '../components/Pagination';
-import { toast } from 'react-toastify';
 import { getClientActivityLogStatistics } from '../services/statisticsService';
 import { getClientsWithSalesName } from '../services/clientService';
+import ClientSidePanel from '../components/ClientSidePanel';
 
 const TeamRecordPage = () => {
     // 客户跟进记录ID
-    const [clientLogId, setClientLogId] = useState(null);
-    // 客户ID
-    const [clientId, setClientId] = useState(null);
-    // 客户模态框
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    // 新增跟进记录模态框
-    const [isAddClientActivityLogModalOpen, setIsAddClientActivityLogModalOpen] = useState(false);
+    const [clientLogId, setClientLogId] = useState(null);    
     // 跟进状态映射
     const followUpStatusMap = {
         '刚开始跟进': { text: '刚开始跟进', classes: 'bg-slate-100 text-slate-700' },
@@ -225,6 +219,7 @@ const TeamRecordPage = () => {
                                         {clients.map((client) => (
                                             <tr
                                                 key={client.id}
+                                                onClick={() => setClientLogId(client.id)}
                                                 className={`hover:bg-slate-50 cursor-pointer`}
                                             >
                                                 <td className="p-4 text-sm font-semibold text-slate-700">{client.name}</td>
@@ -302,6 +297,8 @@ const TeamRecordPage = () => {
                         </div>
                     </div>
                 </div>
+                {/* 侧边栏 */}
+                <ClientSidePanel refresh={refresh} clientId={clientLogId} />
             </div>
         </div>
     );

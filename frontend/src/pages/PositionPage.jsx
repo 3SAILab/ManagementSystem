@@ -3,6 +3,7 @@ import AddPositionModal from '../components/AddPositonModal';
 import { getPositions, addPosition, deletePosition } from '../services/positionService'; 
 import { toast } from 'react-toastify';
 import { Plus } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const PositionPage = () => {
   const [positions, setPositions] = useState([]);
@@ -43,6 +44,12 @@ const PositionPage = () => {
 
   const handleDelete = async (id) => {
     try {
+      if (!(await Swal.fire({
+        text: `确定要删除该职位吗？`,
+        showCancelButton: true,
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      })).isConfirmed) return;
       const result = await deletePosition(id);
       if (result.success) {
         setPositions(result.data);

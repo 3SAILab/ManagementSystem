@@ -29,7 +29,11 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <DashboardPage />, 
+            element: (
+              <PrivateRoute currentPath="/">
+                <DashboardPage />
+              </PrivateRoute>
+            ),
             handle: { title: '工单看板' },
           },
           {

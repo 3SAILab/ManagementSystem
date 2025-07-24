@@ -32,7 +32,6 @@ async def get_client_activity_log_statistics(
         "averageTransactionCycle": average_cycle,
         "averageTransactionCycleChange": average_cycle_change
     }
-    
 
     return api_response(success=True, data=data)
 
@@ -58,7 +57,6 @@ async def get_monthly_sales(
         "monthlyPendingOrderCount": monthly_pending_order_count,
         "monthlyPendingOrderCountChange": monthly_pending_order_count_change
     }
-    print(data)
     return api_response(success=True, data=data)
 
 
@@ -97,5 +95,4 @@ async def get_client_activity_log_statistics_by_sales_id(
         "averageTransactionCycleChange": average_cycle_change
     }
     
-
     return api_response(success=True, data=data)

@@ -176,9 +176,9 @@ async def get_sub_task_detail(
     sales = await EmployeeService.get_employee_by_id(db, res.ticket.contract.sales_id)
     # 根据工单id获取美工和渲染
     charges = await TicketService.get_charge_ticket_by_id(db, res.ticket.id)
-    # 提取“美工”和“渲染”负责人（如果有多条，只取第一条）
-    art_person = next((c.charge.name for c in charges if c.task_type == '美工'), None)
-    render_person = next((c.charge.name for c in charges if c.task_type == '渲染'), None)
+    # 提取"美工"和"渲染"负责人（如果有多条，只取第一条）
+    art_person = next((c.charge.name for c in charges if c.task_type == '美工' and c.charge is not None), None)
+    render_person = next((c.charge.name for c in charges if c.task_type == '渲染' and c.charge is not None), None)
     # 获取任务相关人员信息
     related_employees = {
         "sales": sales.name,

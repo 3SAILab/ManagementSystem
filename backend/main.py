@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 import uvicorn
@@ -127,6 +128,25 @@ app.add_middleware(
     allow_methods=["*"],  # 允许所有 HTTP 方法
     allow_headers=["*"],  # 允许所有请求头
 )
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    # 业务/校验错误（400、401、404、422…）在这里统一格式化输出
+    logger.warning(f"[{request.method} {request.url}] {exc.status_code} — {exc.detail}")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"code": exc.status_code, "message": exc.detail},
+    )
+
+@app.exception_handler(Exception)
+async def all_exception_handler(request: Request, exc: Exception):
+    # 未捕获的异常（500）在这里统一日志＋友好提示
+    logger.error(f"[{request.method} {request.url}] 未处理异常", exc_info=exc)
+    return JSONResponse(
+        status_code=500,
+        content={"code": 500, "message": "服务器内部错误，请稍后再试"},
+    )
+
 
 
 # 包含你的 API 路由

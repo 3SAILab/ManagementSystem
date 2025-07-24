@@ -258,14 +258,14 @@ const SalesDashboard = () => {
           </div>
 
           <div className="flex items-center mb-5">
-            <h2 className="text-2xl font-bold">¥{statistics.monthlySales || 0}</h2>
+            <h2 className="text-2xl font-bold">¥{statistics.monthlyCommission || 0}</h2>
             <span className="text-green-500 flex items-center text-sm ml-2">
               <span className="w-4 h-4 mr-1">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 8l-6 6h12z" />
                 </svg>
               </span>
-              {getTrendIndicator(statistics.monthlySalesChange || 0)}
+              {getTrendIndicator(statistics.monthlyCommissionChange || 0)}
             </span>
             <span className="text-slate-500 text-sm ml-2">同比上期</span>
           </div>

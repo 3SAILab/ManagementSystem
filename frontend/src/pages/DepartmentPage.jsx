@@ -3,6 +3,7 @@ import { getDepartments, addDepartment, deleteDepartment } from '../services/dep
 import AddDepartmentModal from '../components/AddDepartmentModal';
 import { toast } from 'react-toastify';
 import { Plus } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 export default function DepartmentPage() {
   const [departments, setDepartments] = useState([]);
@@ -45,8 +46,12 @@ export default function DepartmentPage() {
 
   // 删除部门
   const handleDelete = async (department) => {
-    if (!window.confirm(`确定要删除 "${department.name}" 吗？`)) return;
-
+    if (!(await Swal.fire({
+      text: `确定要删除 "${department.name}" 吗？`,
+      showCancelButton: true,
+      confirmButtonText: '确定',
+      cancelButtonText: '取消'
+    })).isConfirmed) return;
     try {
       await deleteDepartment(department.id);
       setDepartments((prev) =>

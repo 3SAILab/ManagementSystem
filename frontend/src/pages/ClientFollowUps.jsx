@@ -102,6 +102,7 @@ const ClientFollowUps = () => {
                     toast.success('新增客户成功！');
                     setClients(prev => [res.data, ...prev]);
                     setIsModalOpen(false);
+                    setRefresh(!refresh);
                     // 重置页码
                     setFilters(prev => ({ ...prev, page: 1 }));
                 }else{

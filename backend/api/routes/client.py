@@ -2,12 +2,15 @@ from fastapi import APIRouter, Depends, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.employee import Employee
 from backend.db.session import get_async_db
-from backend.schemas.client import ClientFilter, ClientCreate, PaginatedClient, ClientOut, ClientStatus
+from backend.schemas.client import ClientFilter, ClientCreate, PaginatedClient, ClientOut
 from typing import List
 from fastapi import Query
 from backend.api.routes.employee import get_current_employee
 from backend.services.client_service import ClientService
 from backend.utils.response import api_response
+from backend.services.client_activity_log_service import ClientActivityLogService
+from backend.schemas.client_activity_log import ClientActivityLogCreate
+from datetime import datetime, timezone
 
 router = APIRouter()
 
@@ -64,8 +67,16 @@ async def add_client(
     # 验证权限
 
     # 添加客户
-    await ClientService.add_client(db, client, current_employee.id)
+    new_client = await ClientService.add_client(db, client, current_employee.id)
 
+    # 添加客户活动日志
+    client_activity_log = ClientActivityLogCreate(
+        client_id=new_client.id,
+        log_content=f"客户添加成功",
+        status="刚开始跟进",
+        log_time=datetime.now(timezone.utc)
+    )
+    await ClientActivityLogService.add_client_activity_log(db, client_activity_log, current_employee.id)
     return api_response(success=True, data=client)
 
 #编辑客户信息
@@ -105,11 +116,8 @@ async def update_client_status(
     # 验证权限
     status = status_data.get("status")
     # 直接使用字符串状态
-    try:
-        await ClientService.update_client_status(db, id, status)
-        return api_response(success=True, data={"msg": f"客户状态已更新为 {status}"})
-    except Exception as e:
-        return api_response(success=False, data={"msg": f"更新客户状态失败: {str(e)}"})
+    await ClientService.update_client_status(db, id, status)
+    return api_response(success=True, data={"msg": f"客户状态已更新为 {status}"})
     
 # 获取客户列表包括销售名称
 @router.get("/client/get_clients_with_sales_name")

@@ -1,7 +1,6 @@
-from fastapi import APIRouter, Depends, Body, Path
+from fastapi import APIRouter, Depends, Body
 from backend.models.employee import Employee
 from backend.services.client_activity_log_service import ClientActivityLogService
-from backend.services.employee_service import EmployeeService
 from backend.db.session import get_async_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.schemas.client_activity_log import ClientActivityLogCreate

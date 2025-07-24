@@ -61,14 +61,23 @@ def get_db():
 async def get_async_db():
     """获取数据库会话的依赖函数（异步）"""
     if async_engine:
-        # 使用异步引擎
         async with AsyncSessionLocal() as session:
-            yield session
+            try:
+                yield session
+            except:
+                await session.rollback()
+                raise      # 一定要让原始异常冒泡
+            else:
+                await session.commit()
     else:
-        # 使用线程池模拟异步
         db = SessionLocal()
         try:
             yield db
+        except:
+            db.rollback()
+            raise
+        else:
+            db.commit()
         finally:
             db.close()
 
