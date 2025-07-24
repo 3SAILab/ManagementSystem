@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Body, Query
+from fastapi import APIRouter, Depends, Body, Query, Path
 from backend.models.employee import Employee
 from backend.models.sub_task import SubTask
 from backend.schemas.contract import ContractCreate, ContractFilter, ContractList, PaginatedContract
@@ -55,7 +55,8 @@ async def get_contracts(
             total_amount=contract.total_amount,
             paid_amount=contract.paid_amount,
             commission_rate=contract.commission_rate,
-            created_at=contract.created_at
+            created_at=contract.created_at,
+            status=contract.status
         ) 
         for contract in contracts
     ]
@@ -68,6 +69,19 @@ async def get_contracts(
         total_pages=total_pages
     )
     return paginated.model_dump()
+
+# 更改合同状态
+@router.put("/contracts/{id}/status")
+async def update_contract_status(
+    id: int,
+    status: str = Body(..., embed=True),
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    #权限认证
+
+    return await ContractService.update_contract_status(db, id, status)
+
 
 # 合同详情页初始化数据
 # 返回数据：黄色预警总个数、红色预警总个数、美工任务列表、渲染任务列表、已完成需求情况、未完成需求情况

@@ -16,7 +16,6 @@ const SidebarNav = () => {
     if (!access) return true;
 
     const { roles, departments, positions } = access;
-    console.log("当前用户权限", employee?.role, employee?.department_name, employee?.position_name)
     // 用 department_id、position_id 或者把名称存入 Store
     return (roles ? roles.includes(employee.role) : true)
         && (departments ? departments.includes(employee.department_name) : true)

@@ -186,10 +186,25 @@ class StatisticsService:
             last_month_client_count = result.scalar_one_or_none() or 0
             
             # 计算客户转化率变化
-            if last_month_count > 0:
-                return current_month_count / current_month_client_count, (current_month_count / current_month_client_count - last_month_count / last_month_client_count) / last_month_count / last_month_client_count * 100
+            if current_month_client_count == 0:
+                current_month_rate = 0.0
             else:
-                return current_month_count / current_month_client_count, 0.0
+                current_month_rate = current_month_count / current_month_client_count
+
+            # 初始化变化率
+            change_percentage = 0.0
+
+            # 只有当上月计数和上月客户数都大于0时，才计算变化率
+            if last_month_count > 0 and last_month_client_count > 0:
+                # 进一步检查上月的分母（虽然 last_month_count > 0，但 last_month_client_count 仍可能为 0 导致错误）
+                last_month_rate = last_month_count / last_month_client_count
+                # 为了避免下面计算变化率时 last_month_rate 为 0 导致除零，也检查一下
+                if last_month_rate != 0:
+                    change_percentage = (current_month_rate - last_month_rate) / last_month_rate * 100
+                # 如果 last_month_rate == 0, change_percentage 保持 0.0
+
+            # 返回结果
+            return current_month_rate, change_percentage
         except Exception as e:
             print("获取每月客户转化率失败:", e)
             raise HTTPException(status_code=500, detail=f"获取每月客户转化率失败: {str(e)}")
@@ -277,22 +292,46 @@ class StatisticsService:
     @staticmethod
     async def get_monthly_sales(db: AsyncSession, employee_id: int):
         try:
-            # 获取当前月份的销售额
+            # 获取当前月份的销售额(坏单只统计预付金额其余正常统计)
+            # 统计坏单
+            bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount)).where(
+                and_(
+                    Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    Contract.sales_id == employee_id,
+                    Contract.status == "坏单"
+                )
+            ))
+            bad_contract_sales = bad_contract_result.scalar_one_or_none() or 0
+            # 统计正常单
             result = await db.execute(select(func.sum(Contract.total_amount)).where(
                 and_(
                     Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
-                    Contract.sales_id == employee_id
+                    Contract.sales_id == employee_id,
+                    Contract.status != "坏单"
                 )
             ))
             current_month_sales = result.scalar_one_or_none() or 0
+            current_month_sales += bad_contract_sales
             # 获取上个月的销售额
+            # 统计坏单
+            bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount)).where(
+                and_(
+                    Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                    Contract.sales_id == employee_id,
+                    Contract.status == "坏单"
+                )
+            ))
+            bad_contract_sales = bad_contract_result.scalar_one_or_none() or 0
+            # 统计正常单
             result = await db.execute(select(func.sum(Contract.total_amount)).where(
                 and_(
                     Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
-                    Contract.sales_id == employee_id
+                    Contract.sales_id == employee_id,
+                    Contract.status != "坏单"
                 )
             ))
             last_month_sales = result.scalar_one_or_none() or 0
+            last_month_sales += bad_contract_sales
             # 计算销售额变化
             if last_month_sales > 0:
                 return current_month_sales, (current_month_sales - last_month_sales) / last_month_sales * 100
@@ -306,26 +345,49 @@ class StatisticsService:
     @staticmethod
     async def get_monthly_commission(db: AsyncSession, employee_id: int):
         try:
-            # 获取当前月份的提点
+            # 获取当前月份的提点(坏单只统计预付金额其余正常统计)
+            # 统计坏单
+            bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount * Contract.commission_rate / 100)).where(
+                and_(
+                    Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    Contract.sales_id == employee_id,
+                    Contract.status == "坏单"
+                )
+            ))
+            bad_contract_commission = bad_contract_result.scalar_one_or_none() or 0
+            # 统计正常单
             result = await db.execute(select(func.sum(Contract.total_amount * Contract.commission_rate / 100)).where(
                 and_(
                     Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
-                    Contract.sales_id == employee_id
+                    Contract.sales_id == employee_id,
+                    Contract.status != "坏单"
                 )
             ))
             current_month_commission = result.scalar_one_or_none() or 0
-
+            current_month_commission += bad_contract_commission
             # 格式化为两位小数
             current_month_commission = round(float(current_month_commission), 2)
 
             # 获取上个月的提点
+            # 统计坏单
+            bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount * Contract.commission_rate / 100)).where(
+                and_(
+                    Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                    Contract.sales_id == employee_id,
+                    Contract.status == "坏单"
+                )
+            ))
+            bad_contract_commission = bad_contract_result.scalar_one_or_none() or 0
+            # 统计正常单
             result = await db.execute(select(func.sum(Contract.total_amount * Contract.commission_rate / 100)).where(
                 and_(
                     Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
-                    Contract.sales_id == employee_id
+                    Contract.sales_id == employee_id,
+                    Contract.status != "坏单"
                 )
             ))
             last_month_commission = result.scalar_one_or_none() or 0
+            last_month_commission += bad_contract_commission
             # 格式化为两位小数
             last_month_commission = round(float(last_month_commission), 2)
 
@@ -376,7 +438,7 @@ class StatisticsService:
                 and_(
                     Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
                     Contract.sales_id == employee_id,
-                    Contract.total_amount - Contract.paid_amount > 0
+                    Contract.status == "待结算"
                 )
             ))
             current_month_pending_order_count = result.scalar_one_or_none() or 0
@@ -385,7 +447,7 @@ class StatisticsService:
                 and_(
                     Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
                     Contract.sales_id == employee_id,
-                    Contract.total_amount - Contract.paid_amount > 0
+                    Contract.status == "待结算"
                 )
             ))
             last_month_pending_order_count = result.scalar_one_or_none() or 0
@@ -403,17 +465,29 @@ class StatisticsService:
     async def get_monthly_sales_statistics(db: AsyncSession, employee_id: int):
         try:
             monthly_sales_statistics = []
-            # 获取员工今年各月度销售统计数据
+            # 获取员工今年各月度销售统计数据(其中坏单只统计预付金额其余正常统计)
             for month in range(1, 13):
                 start_date = datetime(StatisticsService.current_date.year, month, 1)
                 end_date = start_date + timedelta(days=31)
-                result = await db.execute(select(func.sum(Contract.total_amount * Contract.commission_rate / 100)).where(
+                # 统计坏单
+                bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount)).where(
                     and_(
                         Contract.created_at.between(start_date, end_date),
-                        Contract.sales_id == employee_id
+                        Contract.sales_id == employee_id,
+                        Contract.status == "坏单"
+                    )
+                ))
+                bad_contract_sales = bad_contract_result.scalar_one_or_none() or 0
+                # 统计正常单
+                result = await db.execute(select(func.sum(Contract.total_amount)).where(
+                    and_(
+                        Contract.created_at.between(start_date, end_date),
+                        Contract.sales_id == employee_id,
+                        Contract.status != "坏单"
                     )
                 ))
                 monthly_sales = result.scalar_one_or_none() or 0
+                monthly_sales += bad_contract_sales
                 # 格式化为两位小数
                 monthly_sales = round(float(monthly_sales), 2)
                 monthly_sales_statistics.append(monthly_sales)

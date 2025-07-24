@@ -40,7 +40,7 @@ class ContractList(BaseModel):
     paid_amount: float
     commission_rate: float
     created_at: datetime
-
+    status: str
 # 合同过滤
 class ContractFilter(BaseModel):
     name: Optional[str] = None

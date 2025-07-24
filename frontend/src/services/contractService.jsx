@@ -7,7 +7,6 @@ export const addContract = async (contract) => {
         const response = await api.post("/contracts", contract);
         return response.data;
     } catch (error) {
-        console.error("添加合同失败:", error);
         throw error;
     }
 };
@@ -19,10 +18,8 @@ export const getContracts = async ({ name, status, contract_type, page, page_siz
             params: { name, status, contract_type, page, page_size },
             paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
         });
-        console.log("合同列表:", response.data);
         return {success: true, data: response.data};
     } catch (error) {
-        console.error('获取合同列表失败:', error);
         return { success: false, error: error.message };
     }
 };
@@ -33,7 +30,19 @@ export const getContractDetail = async (id) => {
         const response = await api.get(`/contracts/${id}`);
         return response.data;
     } catch (error) {
-        console.error("获取合同详情失败:", error);
         throw error;
+    }
+};
+
+// 更改合同状态
+export const updateContractStatus = async (id, status) => {
+    try {
+        const payload = {
+            status: status
+        }
+        const response = await api.put(`/contracts/${id}/status`, payload);
+        return {success: true, data: response.data};
+    } catch (error) {
+        return {success: false, error: '合同状态更新失败'};
     }
 };

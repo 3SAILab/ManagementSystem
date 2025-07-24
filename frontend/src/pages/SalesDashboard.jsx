@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
 import * as echarts from 'echarts';
-import { getContracts } from '../services/contractService';
+import { getContracts, updateContractStatus } from '../services/contractService';
 import { getMonthlySales, getMonthlySalesStatistics } from '../services/statisticsService';
 import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const getTrendIndicator = (change) => {
   const isPositive = change > 0;
@@ -170,6 +171,32 @@ const SalesDashboard = () => {
       setStatistics(res.data);
     });
   }, []);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingContract, setEditingContract] = useState(null);
+  const [newStatus, setNewStatus] = useState('');
+  const handleOpenModal = (contract) => {
+    setEditingContract(contract);
+    setNewStatus(contract.status);
+    setIsModalOpen(true);
+  };
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingContract(null);
+    setNewStatus('');
+  };
+  const handleConfirmStatusChange = async () => {
+    const res = await updateContractStatus(editingContract.id, newStatus);
+    if(res.success){
+      toast.success('合同状态更新成功');
+      // 更新合同列表
+      getContracts(filters).then(res => {
+        setContracts(res.data.contracts);
+      });
+      handleCloseModal();
+    }else{
+      toast.error(res.error);
+    }
+  };
   return (
     <div className="p-6 space-y-6">
       {/* KPI Cards */}
@@ -231,14 +258,14 @@ const SalesDashboard = () => {
           </div>
 
           <div className="flex items-center mb-5">
-            <h2 className="text-2xl font-bold">¥301,800</h2>
+            <h2 className="text-2xl font-bold">¥{statistics.monthlySales || 0}</h2>
             <span className="text-green-500 flex items-center text-sm ml-2">
               <span className="w-4 h-4 mr-1">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 8l-6 6h12z" />
                 </svg>
               </span>
-              5.2%
+              {getTrendIndicator(statistics.monthlySalesChange || 0)}
             </span>
             <span className="text-slate-500 text-sm ml-2">同比上期</span>
           </div>
@@ -252,11 +279,6 @@ const SalesDashboard = () => {
               <span className="w-3 h-3 rounded-full bg-indigo-500 mr-2"></span>
               <span>收入</span>
               <span className="ml-2 font-medium">¥50,300</span>
-            </div>
-            <div className="flex items-center">
-              <span className="w-3 h-3 rounded-full bg-blue-400 mr-2"></span>
-              <span>目标</span>
-              <span className="ml-2 font-medium">¥65,390</span>
             </div>
           </div>
         </div>
@@ -286,13 +308,14 @@ const SalesDashboard = () => {
                 <th className="p-4 text-sm font-semibold text-slate-600">提点</th>
                 <th className="p-4 text-sm font-semibold text-slate-600">类型</th>
                 <th className="p-4 text-sm font-semibold text-slate-600">状态</th>
+                <th className="p-4 text-sm font-semibold text-slate-600">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {contracts.map((contract) => {
-                const status = contract.total_amount - contract.paid_amount > 0 ? '待结算' : '已结算';
                 // 提点保留两位小数
-                const commission = Math.round(contract.total_amount * contract.commission_rate / 100 * 100) / 100;
+                //如果是坏单，提点为预付金额*提点
+                const commission = contract.status === '坏单' ? Math.round(contract.paid_amount * contract.commission_rate / 100 * 100) / 100 : Math.round(contract.total_amount * contract.commission_rate / 100 * 100) / 100;
                 return (
                   <tr key={contract.id} 
                   onClick={() => navigate(`/contract_detail/${contract.id}`)}
@@ -309,9 +332,21 @@ const SalesDashboard = () => {
                       </span>
                     </td>
                     <td className="p-4">
-                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${statusBadgeClass(status)}`}>
-                        {status}
+                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${statusBadgeClass(contract.status)}`}>
+                        {contract.status}
                       </span>
+                    </td>
+                    <td className="p-4">
+                      {/* 修改后的按钮 */}
+                      <button
+                        className="px-3 py-1 rounded-md bg-white shadow-sm text-sm"
+                        onClick={(e) => {
+                          e.stopPropagation(); // 阻止行点击事件触发
+                          handleOpenModal(contract);
+                        }}
+                      >
+                        更改状态
+                      </button>
                     </td>
                   </tr>
                 );
@@ -337,7 +372,45 @@ const SalesDashboard = () => {
 
 
       </div>
-      
+      {/* **新增模态框** */}
+      {isModalOpen && editingContract && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-96">
+            <h3 className="text-lg font-semibold mb-4">更改订单状态</h3>
+            <p className="mb-2 text-slate-600">客户: {editingContract.client_name || '未知客户'}</p>
+            <p className="mb-4 text-slate-600">合同金额: ¥{editingContract.total_amount.toLocaleString()}</p>
+            
+            <label htmlFor="status-select" className="block text-sm font-medium text-slate-700 mb-1">
+              选择新状态:
+            </label>
+            <select
+              id="status-select"
+              value={newStatus}
+              onChange={(e) => setNewStatus(e.target.value)}
+              className="w-full p-2 border border-slate-300 rounded-md mb-6"
+            >
+              <option value="待结算">待结算</option>
+              <option value="已结算">已结算</option>
+              <option value="坏单">坏单</option>
+            </select>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleCloseModal}
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleConfirmStatusChange}
+                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+              >
+                确定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

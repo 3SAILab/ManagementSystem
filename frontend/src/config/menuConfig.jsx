@@ -1,11 +1,14 @@
 export const menuItems = [
   
   {
-    label: '基础信息',
+    label: '工单看板',
+    access: {
+      roles: ['admin', 'manager', 'employee'],
+      departments: ['生产部'],
+      positions: ['美工主管', '渲染主管','美工','渲染']
+    },
     children: [
       { label: '工单看板', path: '/', icon: 'layout-dashboard' },
-      { label: '我的任务', path: '/my_tasks', icon: 'check-square' },
-      { label: '写日报', path: '/daily_report', icon: 'edit-2' },
     ]
   },
   {

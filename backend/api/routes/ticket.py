@@ -19,9 +19,7 @@ async def create_ticket(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    try:
-        print(f"创建工单: {ticket}")
-        
+    try:        
         # 创建工单
         new_ticket = await TicketService.create_ticket(db, ticket, current_employee)
         flag = True

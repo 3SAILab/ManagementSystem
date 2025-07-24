@@ -8,10 +8,8 @@ export const getClients = async ({ name, status, source, page, page_size }) => {
             params: { name, status, source, page, page_size },
             paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
         });
-        console.log("客户列表:", response.data);
         return {success: true, data: response.data};
     } catch (error) {
-        console.error('获取客户列表失败:', error);
         return { success: false, error: error.message };
     }
 };
@@ -31,12 +29,9 @@ export const addClient = async (client) => {
             scale: client.scale,
             status: "刚开始跟进",
         }
-        console.log("添加客户:", payload);
         const response = await api.post('/client/add', payload);
-        console.log("添加客户:", response.data);
         return {success: true, data: response.data};
     } catch (error) {
-        console.error('添加客户失败:', error);
         return { success: false, error: error.message };
     }
 };
@@ -50,10 +45,8 @@ export const updateClient = async (client,clientId) => {
             return { success: false, error: '客户ID不能为空' };
         }
         const response = await api.put(`/client/update/${clientId}`, client);
-        console.log("编辑客户:", response.data);
         return {success: true, data: response.data};
     } catch (error) {
-        console.error('编辑客户失败:', error);
         return { success: false, error: error.message };
     }
 };
@@ -62,10 +55,8 @@ export const updateClient = async (client,clientId) => {
 export const getClientInfo = async (clientId) => {
     try {
         const response = await api.get(`/client/get/${clientId}`);
-        console.log("客户信息:", response.data);
         return {success: true, data: response.data.data};
     } catch (error) {
-        console.error('获取客户信息失败:', error);
         return { success: false, error: error.message };
     }
 };
@@ -74,10 +65,8 @@ export const getClientInfo = async (clientId) => {
 export const updateClientStatus = async (clientId, status) => {
     try {
         const response = await api.put(`/client/update_status/${clientId}`, { status });
-        console.log("更新客户状态:", response.data);
         return {success: true, data: response.data};
     } catch (error) {
-        console.error('更新客户状态失败:', error);
         return { success: false, error: error.message };
     }
 };
@@ -89,10 +78,8 @@ export const getClientsWithSalesName = async ({ name, status, source, page, page
             params: { name, status, source, page, page_size },
             paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
         });
-        console.log("团队记录:", response.data);
         return {success: true, data: response.data};
     } catch (error) {
-        console.error('获取客户列表失败:', error);
         return { success: false, error: error.message };
     }
 };

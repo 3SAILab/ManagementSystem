@@ -9,24 +9,20 @@ export const getPositions = async () => {
       }
   
       const data = response.data;
-      console.log("data的内容为",data);
       return { success: true, data };
   } catch (error) {
-    console.error('查询职位失败:', error);
     return { success: false, error: error.response.data.detail };
   }
 };
 //新增职位
 export const addPosition = async (position) => {
   try {
-    console.log('新增职位:', position);
     const response = await api.post(
       '/add_position',
        position 
     );
     return { success: true, data: response.data };
   } catch (error) {
-    console.error('新增职位失败:', error);
     return { success: false, error: error.response?.data?.detail || error.message };
   }
 };
@@ -39,7 +35,6 @@ export const deletePosition = async (id) => {
     );
     return { success: true, data: response.data };
   } catch (error) {
-    console.error('删除职位失败:', error);
     return { success: false, error: error.response.data.detail };
   }
 };
@@ -48,10 +43,8 @@ export const deletePosition = async (id) => {
 export const getPositionsByDepartmentId = async (department_id) => {
   try {
     const response = await api.get(`/get_positions_by_department_id?department_id=${department_id}`);
-    console.log('职位信息：',response.data)
     return { success: true, data: response.data };
   } catch (error) {
-    console.error('获取职位信息失败:', error);
     return { success: false, error: error.response.data.detail };
   }
 };

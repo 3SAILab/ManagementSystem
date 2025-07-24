@@ -11,7 +11,6 @@ export const getClientActivityLogStatistics = async () => {
             return {success: false, error: response.data.error};
         }
     } catch (error) {
-        console.error('获取客户活动日志统计数据失败:', error);
         return { success: false, error: error.message };
     }
 };
@@ -26,7 +25,6 @@ export const getClientActivityLogStatisticsBySalesId = async () => {
             return {success: false, error: response.data.error};
         }
     } catch (error) {
-        console.error('获取客户活动日志统计数据失败:', error);
         return { success: false, error: error.message };
     }
 };
@@ -41,7 +39,6 @@ export const getMonthlySales = async () => {
             return {success: false, error: response.data.error};
         }
     } catch (error) {
-        console.error('获取员工本月销售统计数据失败:', error);
         return { success: false, error: error.message };
     }
 };
@@ -56,7 +53,6 @@ export const getMonthlySalesStatistics = async () => {
             return {success: false, error: response.data.error};
         }
     } catch (error) {
-        console.error('获取月度销售统计数据失败:', error);
         return { success: false, error: error.message };
     }
 };

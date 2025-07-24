@@ -574,8 +574,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">工作绩效分 (%)</label>
                 <input
                   type="number"
-                  min="0"
-                  max="100"
+                  step="0.01"
                   name="work_performance_score"
                   value={employee.work_performance_score || 0}
                   onChange={handleInputChange}
@@ -586,8 +585,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">考勤绩效分 (%)</label>
                 <input
                   type="number"
-                  min="0"
-                  max="100"
+                  step="0.01"
                   name="attendance_performance_score"
                   value={employee.attendance_performance_score || 0}
                   onChange={handleInputChange}

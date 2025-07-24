@@ -4,9 +4,8 @@ import api from "./api";
 export const addTicket = async (ticket) => {
     try {
         const response = await api.post('/tickets', ticket);
-        return response.data;
+        return {success: true, data: response.data};
     } catch (error) {
-        console.error('创建工单失败:', error);
         throw error;
     }
 };
@@ -15,9 +14,8 @@ export const addTicket = async (ticket) => {
 export const getTickets = async () => {
     try {
         const response = await api.get('/tickets');
-        return response.data;
+        return {success: true, data: response.data};
     } catch (error) {
-        console.error('获取工单失败:', error);
         throw error;
     }
 };
@@ -26,9 +24,8 @@ export const getTickets = async () => {
 export const getTicketsByContractId = async (contractId) => {
     try {
         const response = await api.get(`/tickets/contract/${contractId}`);
-        return response.data;
+        return {success: true, data: response.data};
     } catch (error) {
-        console.error('获取合同工单失败:', error);
         throw error;
     }
 };

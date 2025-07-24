@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, DateTime, Enum, Integer, ForeignKey, Text, Numeric, func
+from sqlalchemy import Column, DateTime, Enum, Integer, ForeignKey, String, Text, Numeric, func
 from sqlalchemy.orm import relationship
 from ..db.session import Base
 
@@ -16,6 +16,7 @@ class Contract(Base):
     client_id = Column(Integer, ForeignKey("client.id"), nullable=False) #客户ID
     sales_id = Column(Integer, ForeignKey("employee.id"), nullable=False) #销售ID
     contract_type = Column(Enum(ContractType), nullable=False) #合同类型
+    status = Column(String(50), nullable=False) #合同状态
     total_amount = Column(Numeric(12, 2), nullable=False) #总金额
     paid_amount = Column(Numeric(12, 2), nullable=False) #已支付金额
     commission_rate = Column(Numeric(5, 2), nullable=False) #佣金比例

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import OrderCard from '../components/OrderCard';
 import OrderDetailsPanel from '../components/OrderDetailsPanel';
 import { getPersonalTasks } from '../services/subTaskService';
+import { toast } from 'react-toastify';
 
 const DashboardPage = () => {
   const [orders, setOrders] = useState([]);
@@ -14,9 +15,13 @@ const DashboardPage = () => {
   // 初始化页面数据
   useEffect(() => {
     getPersonalTasks().then((res) => {
-      setOrders(res.data.sub_tasks);
-      setYellowAlerts(res.data.yellow_count);
-      setRedAlerts(res.data.red_count);
+      if(res.success){
+        setOrders(res.data.sub_tasks);
+        setYellowAlerts(res.data.yellow_count);
+        setRedAlerts(res.data.red_count);
+      }else{
+        toast.error('页面加载失败，请刷新重试');
+      }
     });
   }, [refresh]);
 

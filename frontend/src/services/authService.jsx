@@ -30,7 +30,6 @@ export const login = async (email, password) => {
       
     } catch (err) {
       const detail = err.response?.data?.detail || err.message;
-      console.error('登录错误:', detail);
       return { success: false, error: detail };
     }
 };
@@ -45,7 +44,6 @@ export const logout = async () => {
     });
     return { success: true };
   } catch (err) {
-    console.error('登出错误:', err);
     return { success: false, error: err.message };
   }
 };
@@ -57,11 +55,9 @@ export const getEmployeePermission = async () => {
     useEmployeePermissionStore.setState({
       employee: response.data,
     });
-    console.log("员工权限信息", response.data);
     return { success: true};
   } catch (err) {
     const detail = err.response?.data?.detail || err.message;
-    console.error('获取员工信息失败:', detail);
     return { success: false, error: detail };
   }
 };
@@ -70,11 +66,9 @@ export const getEmployeePermission = async () => {
 export const getEmployeeList = async () => {
   try {
     const response = await api.get('/employee/list');
-    console.log('员工列表：',response.data)
     return { success: true, data: response.data };
   } catch (err) {
     const detail = err.response?.data?.detail || err.message;
-    console.error('获取员工列表失败:', detail);
     return { success: false, error: detail };
   }
 };
@@ -83,11 +77,9 @@ export const getEmployeeList = async () => {
 export const getEmployeeById = async (id) => {
   try {
     const response = await api.get(`/employee/${id}`);
-    console.log('员工信息：',response.data)
     return { success: true, data: response.data };
   } catch (err) {
     const detail = err.response?.data?.detail || err.message;
-    console.error('获取员工信息失败:', detail);
     return { success: false, error: detail };
   }
 };
@@ -96,11 +88,9 @@ export const getEmployeeById = async (id) => {
 export const getManagers = async (department_id, role) => {
   try {
     const response = await api.get(`/manager/list?department_id=${department_id}&role=${role}`);
-    console.log('上级列表：',response.data)
     return { success: true, data: response.data };
   } catch (err) {
     const detail = err.response?.data?.detail || err.message;
-    console.error('获取上级列表失败:', detail);
       return { success: false, error: detail };
   }
 };
@@ -118,7 +108,6 @@ export const addEmployee = async (employee) => {
     return { success: true, data: response.data };
   } catch (err) {
     const detail = err.response?.data?.detail || err.message;
-    console.error('新增员工失败:', detail);
     return { success: false, error: detail };
   }
 };
@@ -130,7 +119,6 @@ export const updateEmployeeWorkInfo = async (id, employee) => {
     return { success: true, data: response.data };
   } catch (err) {
     const detail = err.response?.data?.detail || err.message;
-    console.error('修改员工工作信息失败:', detail);
     return { success: false, error: detail };
   }
 };
@@ -139,11 +127,9 @@ export const updateEmployeeWorkInfo = async (id, employee) => {
 export const getGroupMembers = async () => {
   try {
     const response = await api.get(`/group/members`);
-    console.log('组内成员：',response.data)
     return { success: true, data: response.data };
   } catch (err) {
     const detail = err.response?.data?.detail || err.message;
-    console.error('获取组内成员失败:', detail);
     return { success: false, error: detail };
   }
 };

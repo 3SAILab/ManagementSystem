@@ -31,10 +31,8 @@ const ContractDetailPage = () => {
                 artTasks: res.art_tasks,
                 renderTasks: res.render_tasks,
             });
-            console.log('合同详情：',res)
         }).catch(err => {
             toast.error("加载合同详情失败");
-            console.error("Error fetching contract details:", err);
         });
     }
 
@@ -56,14 +54,16 @@ const ContractDetailPage = () => {
             };
             
             const result = await addTicket(ticketWithContractId);
-            console.log('工单创建成功:', result);
-            
-            // 关闭模态框
-            setCreateOrderModal(false);
-            init();
-            toast.success('创建工单成功');
+            if(result.success){
+              // 关闭模态框
+              setCreateOrderModal(false);
+              init();
+              toast.success('创建工单成功');
+            }else{
+              toast.error('创建工单失败，请重试');
+            }
         } catch (err) {
-            toast.error('创建工单失败，请重试');
+            
         } 
     };
   return (
