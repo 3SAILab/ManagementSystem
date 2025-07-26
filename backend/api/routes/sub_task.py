@@ -210,6 +210,8 @@ async def update_progress(
         await SubTaskService.update_status(db, id, "已完成", progress)
     if res.status == "进行中" and progress != 100:
         await SubTaskService.update_status(db, id, "进行中", progress)
+    if res.status == "已完成" and progress != 100:
+        await SubTaskService.update_status(db, id, "进行中", progress)
     # 创建进度记录
     res =  await ProgressLogService.create_progress_log(db, id, notes, current_employee.id)
     return res

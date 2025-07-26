@@ -54,7 +54,7 @@ class EmployeeService:
         return employee
     
 
-    # 修正后的方法
+    # 重置密码
     @staticmethod
     async def reset_password(db: AsyncSession, email: str, new_password: str):
         # 正确获取查询结果
@@ -68,7 +68,7 @@ class EmployeeService:
             return {"success":False,"message": "新密码不能和旧密码相同"}
         # 更新密码
         employee.password_hash = EmployeeService.get_password_hash(new_password)
-        await db.flush()  # 使用 commit 而不是 flush
+        await db.flush()  
         await db.refresh(employee)  # 刷新对象状态
         
         return {"success":True,"message": "密码重置成功"}
@@ -229,7 +229,7 @@ class EmployeeService:
     #获取组内成员以及工作负载
     @staticmethod
     async def get_group_members(db: AsyncSession, employee_id: int):
-        # 修正后的版本：统计所有任务（与第一个方法等价）
+        # 统计所有任务
         stmt = (
             select(
                 Employee.id,

@@ -571,7 +571,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">工作绩效分 (%)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">工作绩效 (元)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -582,7 +582,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">考勤绩效分 (%)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">考勤绩效 (元)</label>
                 <input
                   type="number"
                   step="0.01"

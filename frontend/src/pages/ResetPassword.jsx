@@ -72,7 +72,7 @@ const PasswordReset = ({ onSuccess, onError, className = '' }) => {
         const newErrors = {};
         if (!verificationCode) newErrors.verificationCode = '请输入验证码';
         if (!newPassword) newErrors.newPassword = '请输入新密码';
-        if (newPassword.length < 6) newErrors.newPassword = '密码长度至少6位';
+        if (newPassword.length < 8) newErrors.newPassword = '密码长度至少8位';
         if (!confirmPassword) newErrors.confirmPassword = '请确认新密码';
         if (newPassword !== confirmPassword) newErrors.confirmPassword = '两次输入的密码不一致';
 

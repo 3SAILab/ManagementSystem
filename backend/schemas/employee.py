@@ -86,7 +86,11 @@ class EmployeeInfo(BaseModel):
         if not re.match(r"^1[3-9]\d{9}$", v):
             raise ValueError("联系电话格式不正确")
         return v
-    
+    @field_validator("password")
+    def validate_password(cls, v):
+        if v is None or len(v) < 8:
+            raise ValueError("密码长度不能少于8位")
+        return v
     @field_validator("id_number")
     def validate_id_card(cls, v):
         # 允许空值
