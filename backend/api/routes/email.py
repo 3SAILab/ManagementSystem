@@ -69,7 +69,6 @@ async def reset_password(
     """ 
     # 验证验证码
     result =  email_service.verify_code(request.email, request.code, "reset_password")
-    print("重置密码结果", result)
     if result['verified']:
         #重置密码
         result = await EmployeeService.reset_password(db, request.email, request.new_password)

@@ -123,7 +123,7 @@ origins =[
 # 配置 CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # 允许所有来源
+    allow_origins=origins,  # 允许的来源
     allow_credentials=True,  # 允许携带凭证（如 Cookie）
     allow_methods=["*"],  # 允许所有 HTTP 方法
     allow_headers=["*"],  # 允许所有请求头

@@ -48,7 +48,7 @@ export default function Layout() {
               <span className="text-sm text-slate-700">{employee?.name || '用户'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <button id="edit-profile-btn" className="text-slate-500 hover:text-indigo-600" title="个人中心"
+              <button id="edit-profile-btn" className="text-slate-500 hover:text-indigo-600" title="重置密码"
                 onClick={() => navigate('/reset_password')}
               >
                 <Settings2 className="w-4 h-4" />

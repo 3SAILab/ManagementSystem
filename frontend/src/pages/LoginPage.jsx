@@ -21,7 +21,7 @@ function LoginPage() {
       navigate('/', { replace: true });
       toast.success('登录成功！');
     } else {
-      toast.error(result.error || '登录失败，请检查账号和密码');
+      toast.error('登录失败，请检查账号和密码');
     }
   };
 

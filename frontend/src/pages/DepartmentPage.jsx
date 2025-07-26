@@ -17,10 +17,10 @@ export default function DepartmentPage() {
         if (res.success) {
           setDepartments(res.data);
         } else {
-          console.error('获取部门列表失败:', res.error);
+          toast.error('页面加载失败请重试');
         }
       } catch (error) {
-        console.error('获取部门列表失败:', error);
+        toast.error('页面加载失败请重试');
       }
     }
 
@@ -36,11 +36,10 @@ export default function DepartmentPage() {
         setIsModalOpen(false);    // 关闭模态框
         toast.success('新增部门成功！');
       } else {
-        alert(res.error || '新增失败，请重试');
+        toast.error('新增失败，请重试');
       }
     } catch (error) {
-      alert('新增失败，请重试');
-      console.error('新增部门失败:', error);
+      toast.error('系统错误，请重试')
     }
   };
 
@@ -59,8 +58,7 @@ export default function DepartmentPage() {
       );
       toast.success('删除部门成功！');
     } catch (error) {
-      alert('删除失败，请重试');
-      console.error('删除部门失败:', error);
+      toast.error('删除失败，请重试');
     }
   };
 

@@ -23,7 +23,7 @@ export default function EmployeeManagementPage() {
         setDepartments(departments.data);
         setAllEmployees(employees.data);
       } else {
-        console.error('获取数据失败:', employees.error || departments.error);
+        toast.error("页面加载错误")
       }
     };
 

@@ -150,7 +150,6 @@ export const sendVerificationCode = async (email, purpose) => {
 export const verifyCode = async (email, code, purpose) => {
   try {
     const response = await api.post('/email/verify-code', { email, code, purpose });
-    console.log("验证验证码结果", response.data);
     return { success: response.data.success, data: response.data };
   } catch (err) {
     const detail = err.response?.data?.detail || err.message;
@@ -162,7 +161,6 @@ export const verifyCode = async (email, code, purpose) => {
 export const resetPassword = async (email, code, new_password) => {
   try {
     const response = await api.post('/email/reset-password', { email, code, new_password });
-    console.log(response.data);
     if (response.data.success) {
       return { success: true, message: response.data.message };
     }
