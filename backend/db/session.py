@@ -4,17 +4,10 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 import asyncio
 from contextlib import asynccontextmanager
-from dotenv import load_dotenv
-import os
-from pathlib import Path
+from backend.config import settings
 
-# 显式指定.env文件的路径，确保总能正确加载
-# 假设.env文件位于 'backend' 目录下
-env_path = Path(__file__).parent.parent / '.env'
-load_dotenv(dotenv_path=env_path)
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-
+# 获取数据库URL
+DATABASE_URL = settings.DATABASE_URL
 
 # 创建同步数据库引擎（用于模型创建和同步操作）
 engine = create_engine(

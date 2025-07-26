@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { Mail, Lock, BrainCircuit } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Typewriter from '../components/Typewriter'
 import {login} from '../services/authService'
 import '../index.css';
 import { toast } from 'react-toastify';
 
 function LoginPage() {
-  console.log('成功进入LoginPage');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
@@ -92,9 +91,9 @@ function LoginPage() {
                   <label htmlFor="password" className="block text-sm font-medium text-slate-700">
                     密码
                   </label>
-                  <a href="#" id="forgot-password-link" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                  <Link to="/reset_password" id="forgot-password-link" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
                     忘记密码?
-                  </a>
+                  </Link>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

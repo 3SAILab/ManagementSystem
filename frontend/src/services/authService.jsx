@@ -133,3 +133,42 @@ export const getGroupMembers = async () => {
     return { success: false, error: detail };
   }
 };
+
+
+//发送验证码
+export const sendVerificationCode = async (email, purpose) => {
+  try {
+    const response = await api.post('/email/send-code', { email, purpose });
+    return { success: true, data: response.data };
+  } catch (err) {
+    const detail = err.response?.data?.detail || err.message;
+    return { success: false, error: detail };
+  }
+};
+
+//验证验证码
+export const verifyCode = async (email, code, purpose) => {
+  try {
+    const response = await api.post('/email/verify-code', { email, code, purpose });
+    console.log("验证验证码结果", response.data);
+    return { success: response.data.success, data: response.data };
+  } catch (err) {
+    const detail = err.response?.data?.detail || err.message;
+    return { success: false, error: detail };
+  }
+};
+
+//重置密码
+export const resetPassword = async (email, code, new_password) => {
+  try {
+    const response = await api.post('/email/reset-password', { email, code, new_password });
+    console.log(response.data);
+    if (response.data.success) {
+      return { success: true, message: response.data.message };
+    }
+    return { success: false, message: response.data.message };
+  } catch (err) {
+    const detail = err.response?.data?.detail || err.message;
+    return { success: false, error: detail };
+  }
+};

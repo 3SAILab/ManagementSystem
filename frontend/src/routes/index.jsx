@@ -14,11 +14,16 @@ import ClientFollowUps from '../pages/ClientFollowUps';
 import TeamRecordPage from '../pages/TeamRecordPage';
 import ContractDetailPage from '../pages/ContractDetailPage'
 import WorkAssignmentPage from '../pages/WorkAssignmentPage'
+import ResetPassword from '../pages/ResetPassword'
 
 const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />, 
+  },
+  {
+    path: '/reset_password',
+    element: <ResetPassword />,
   },
   {
     element: <RequireAuth />,

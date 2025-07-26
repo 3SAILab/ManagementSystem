@@ -116,8 +116,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 origins =[
-    "http://192.168.10.36:5174", #react 前端地址
-    "http://localhost:5174"
+    "http://192.168.10.36:5173", #react 前端地址
+    "http://localhost:5173"
 ]
 
 # 配置 CORS

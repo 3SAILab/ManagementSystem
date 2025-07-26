@@ -35,8 +35,8 @@ class Employee(Base):
     manager_id = Column(Integer, ForeignKey("employee.id")) #上级ID
 
     base_salary = Column(Numeric(12, 2), nullable=False) #基本工资
-    work_performance_score = Column(Numeric(5, 2)) #工作绩效分数
-    attendance_performance_score = Column(Numeric(5, 2)) #出勤绩效分数
+    work_performance_score = Column(Numeric(10, 2)) #工作绩效工资
+    attendance_performance_score = Column(Numeric(10, 2)) #出勤绩效工资
     total_salary = Column(Numeric(12, 2)) #总工资
 
     is_probation = Column(Boolean, nullable=False) #是否试用期

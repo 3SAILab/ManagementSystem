@@ -53,6 +53,26 @@ class EmployeeService:
             return None
         return employee
     
+
+    # 修正后的方法
+    @staticmethod
+    async def reset_password(db: AsyncSession, email: str, new_password: str):
+        # 正确获取查询结果
+        result = await db.execute(select(Employee).where(Employee.email == email))
+        employee = result.scalar_one_or_none()  # 获取单个结果或 None
+        
+        if not employee:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="员工不存在")
+        # 验证密码是否重复
+        if EmployeeService.verify_password(new_password, employee.password_hash):
+            return {"success":False,"message": "新密码不能和旧密码相同"}
+        # 更新密码
+        employee.password_hash = EmployeeService.get_password_hash(new_password)
+        await db.flush()  # 使用 commit 而不是 flush
+        await db.refresh(employee)  # 刷新对象状态
+        
+        return {"success":True,"message": "密码重置成功"}
+
     #创建新员工
     @staticmethod
     async def create_employee(db: AsyncSession, new_employee: EmployeeInfo) -> Employee:
