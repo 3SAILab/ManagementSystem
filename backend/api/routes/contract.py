@@ -93,26 +93,27 @@ async def get_contract_detail(
 ):
     art_tasks = await SubTaskService.get_art_tasks_by_contract_id(db, id)
     render_tasks = await SubTaskService.get_render_tasks_by_contract_id(db, id)
-    # 黄色预警（美工任务状态为进行中且距离开始时间两天未完成，渲染任务状态为进行中且距离开始时间一天未完成）
-    # 红色预警（美工任务状态为进行中且距离开始时间三天未完成，渲染任务状态为进行中且距离开始时间两天未完成）
     # 任务名称、组长、负责人、创建时间、状态、预警情况
-    
     yellow_count = 0
     red_count = 0
 
     art_tasks_out = []
     now = datetime.now(tz=ZoneInfo("Asia/Shanghai"))
     for task in art_tasks:
+        yellow_threshold = task.estimated_completion_time
+        red_threshold = task.estimated_completion_time + 1
         warning = "正常"
         if task.status == "进行中" and task.started_at:
-            if task.started_at < now - timedelta(days=3):
+            elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.created_at).days
+            if elapsed_days > red_threshold:
                 warning = "红色预警"
                 red_count += 1
-            elif task.started_at < now - timedelta(days=2):
+            elif elapsed_days > yellow_threshold:
                 warning = "黄色预警"
                 yellow_count += 1
         beijing_time = task.created_at.astimezone(ZoneInfo("Asia/Shanghai"))
         art_tasks_out.append({
+            "id": task.id,
             "name": task.ticket.name,
             "leader": task.assignee.name if task.assignee else None,
             "charge": task.charge.name if task.charge else None,
@@ -124,17 +125,20 @@ async def get_contract_detail(
         })
     render_tasks_out = []
     for task in render_tasks:
+        yellow_threshold = task.estimated_completion_time
+        red_threshold = task.estimated_completion_time + 1
         warning = "正常"
         if task.status == "进行中" and task.started_at:
-            # 渲染任务的预警时间不同
-            if task.started_at < now - timedelta(days=2):
+            elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.created_at).days
+            if elapsed_days > red_threshold:
                 warning = "红色预警"
                 red_count += 1
-            elif task.started_at < now - timedelta(days=1):
+            elif elapsed_days > yellow_threshold:
                 warning = "黄色预警"
                 yellow_count += 1
         beijing_time = task.created_at.astimezone(ZoneInfo("Asia/Shanghai"))
         render_tasks_out.append({
+            "id": task.id,
             "name": task.ticket.name,
             "leader": task.assignee.name if task.assignee else None,
             "charge": task.charge.name if task.charge else None,

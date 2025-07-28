@@ -278,7 +278,7 @@ const SalesDashboard = () => {
             <div className="flex items-center">
               <span className="w-3 h-3 rounded-full bg-indigo-500 mr-2"></span>
               <span>收入</span>
-              <span className="ml-2 font-medium">¥50,300</span>
+              <span className="ml-2 font-medium">¥{ statistics.monthlyCommission }</span>
             </div>
           </div>
         </div>

@@ -12,10 +12,10 @@ const Avatar = ({
 
   // 定义不同尺寸的配置
   const sizeConfig = {
-    sm: { width: 'w-5', height: 'h-5', fontSize: 'text-xs' },
-    md: { width: 'w-6', height: 'h-6', fontSize: 'text-xs' },
-    lg: { width: 'w-8', height: 'h-8', fontSize: 'text-sm' },
-    xl: { width: 'w-10', height: 'h-10', fontSize: 'text-base' }
+    sm: { width: 'w-6', height: 'h-6', fontSize: 'text-sm' },
+    md: { width: 'w-8', height: 'h-8', fontSize: 'text-sm' },
+    lg: { width: 'w-10', height: 'h-10', fontSize: 'text-base' },
+    xl: { width: 'w-12', height: 'h-12', fontSize: 'text-lg' }
   };
 
   const config = sizeConfig[size] || sizeConfig.md;

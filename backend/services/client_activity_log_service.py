@@ -1,7 +1,7 @@
 from backend.schemas.client_activity_log import ClientActivityLogCreate, ClientActivityLogInfo
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
-from backend.models.client_activity_log import ClientActivityLog, ClientStatus
+from backend.models.client_activity_log import ClientActivityLog
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from backend.models.employee import Employee
@@ -11,7 +11,6 @@ class ClientActivityLogService:
     @staticmethod
     async def add_client_activity_log(db: AsyncSession, client_activity_log: ClientActivityLogCreate, sales_id: int):
         db_client_activity_log = ClientActivityLog(**client_activity_log.model_dump(), sales_id=sales_id)
-        db_client_activity_log.status = ClientStatus(db_client_activity_log.status)
         db.add(db_client_activity_log)
         await db.flush()
         await db.refresh(db_client_activity_log)

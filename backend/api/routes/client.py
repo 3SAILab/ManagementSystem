@@ -11,6 +11,8 @@ from backend.utils.response import api_response
 from backend.services.client_activity_log_service import ClientActivityLogService
 from backend.schemas.client_activity_log import ClientActivityLogCreate
 from datetime import datetime, timezone
+from backend.services.employee_service import EmployeeService
+from backend.models.client_activity_log import Status
 
 router = APIRouter()
 
@@ -163,7 +165,26 @@ async def get_clients_with_sales_name(
     )
     return paginated.model_dump()
 
-
+# 修改客户负责人
+@router.put("/client/update_sales/{id}")
+async def update_client_sales(
+    id: int,
+    sales_id: int = Body(..., description="销售ID"),
+    notes: str = Body(None, description="备注"),
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    # 验证权限
+    await ClientService.update_client_sales(db, id, sales_id)
+    # 如果客户负责人修改成功则添加一条记录
+    client_activity_log = ClientActivityLogCreate(
+        client_id=id,
+        log_content=notes,
+        status=Status.更换负责人,
+        log_time=datetime.now(timezone.utc)
+    )
+    await ClientActivityLogService.add_client_activity_log(db, client_activity_log, current_employee.id)
+    return api_response(success=True, data={"msg": f"客户负责人已更新为 {sales_id}"})
 
 
 

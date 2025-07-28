@@ -56,6 +56,7 @@ export const menuItems = [
     },
     children: [
       { label: '工单分配', path: '/work_assignment', icon: 'check-square' },
+      { label: '团队任务监控', path: 'team_dashboard', icon: 'contact' }
     ]
   }
 ];

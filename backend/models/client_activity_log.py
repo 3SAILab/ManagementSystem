@@ -15,6 +15,7 @@ class Status(enum.Enum):
     客户流失 = "客户流失"
     试单中 = "试单中"
     复购 = "复购"
+    更换负责人 = "更换负责人"
 
 class ClientActivityLog(Base):
     __tablename__ = "client_activity_log"
@@ -22,7 +23,7 @@ class ClientActivityLog(Base):
     id = Column(Integer, primary_key=True)
     client_id = Column(Integer, ForeignKey("client.id"), nullable=False) #客户ID
     sales_id = Column(Integer, ForeignKey("employee.id"), nullable=False) #销售ID
-    status = Column(SQLEnum(ClientStatus, name="client_status_enum", native_enum=False), nullable=False) #状态
+    status = Column(SQLEnum(Status, name="client_log_status_enum"), nullable=False) #状态
     log_content = Column(Text, nullable=False) #跟进内容
     log_time = Column(DateTime(timezone=True), server_default=func.now()) #跟进时间
 

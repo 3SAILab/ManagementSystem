@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ClientSidePanel from '../components/ClientSidePanel'; // 侧边栏组件
-import * as Icons from 'lucide-react';
+import { Search,MessageCircle,Edit,Plus,ArrowUp,ArrowDown } from 'lucide-react';
 import FilterDropdown from '../components/FilterDropdown';
 import { getClients, addClient, updateClient } from '../services/clientService';
 import Pagination from '../components/Pagination';
@@ -129,9 +129,9 @@ const ClientFollowUps = () => {
                             : 'text-red-500'
                         }`}>
                             {statistics.monthlyClientCountChange >= 0 ? (
-                                <Icons.ArrowUp className="w-4 h-4" />
+                                <ArrowUp className="w-4 h-4" />
                             ) : (
-                                <Icons.ArrowDown className="w-4 h-4" />
+                                <ArrowDown className="w-4 h-4" />
                             )}
                             {Math.abs(statistics.monthlyClientCountChange).toFixed(1)}%
                         </p>
@@ -149,9 +149,9 @@ const ClientFollowUps = () => {
                             : 'text-red-500'
                         }`}>
                             {statistics.monthlyTransactionVolumeChange >= 0 ? (
-                                <Icons.ArrowUp className="w-4 h-4" />
+                                <ArrowUp className="w-4 h-4" />
                             ) : (
-                                <Icons.ArrowDown className="w-4 h-4" />
+                                <ArrowDown className="w-4 h-4" />
                             )}
                             {Math.abs(statistics.monthlyTransactionVolumeChange).toFixed(1)}%
                         </p>
@@ -172,9 +172,9 @@ const ClientFollowUps = () => {
                     }`}
                     >
                     {statistics.monthlyTransactionConversionRateChange >= 0 ? (
-                        <Icons.ArrowUp className="w-4 h-4" />
+                        <ArrowUp className="w-4 h-4" />
                     ) : (
-                        <Icons.ArrowDown className="w-4 h-4" />
+                        <ArrowDown className="w-4 h-4" />
                     )}
                     {Math.abs(statistics.monthlyTransactionConversionRateChange).toFixed(1)}%
                     </p>
@@ -192,9 +192,9 @@ const ClientFollowUps = () => {
                             : 'text-red-500'
                         }`}>
                             {statistics.averageTransactionCycleChange >= 0 ? (
-                                <Icons.ArrowUp className="w-4 h-4" />
+                                <ArrowUp className="w-4 h-4" />
                             ) : (
-                                <Icons.ArrowDown className="w-4 h-4" />
+                                <ArrowDown className="w-4 h-4" />
                             )}
                             {Math.abs(statistics.averageTransactionCycleChange).toFixed(1)}天
                         </p>
@@ -214,7 +214,7 @@ const ClientFollowUps = () => {
                             {/* 搜索框 */}
                             <div className="relative w-full max-w-xs">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Icons.Search className="w-5 h-5 text-slate-400" />
+                                    <Search className="w-5 h-5 text-slate-400" />
                                 </div>
                                 <input type="text" placeholder="搜索客户名称" className="form-input !pl-10 w-full bg-slate-50 border-slate-200"
                                     value={filters.name}
@@ -231,7 +231,7 @@ const ClientFollowUps = () => {
                                     () => {
                                         setIsModalOpen(true);
                                     }}>
-                                    <Icons.Plus className="w-4 h-4" /> 添加客户
+                                    <Plus className="w-4 h-4" /> 添加客户
                                 </button>
                             </div>
                         </div>
@@ -325,13 +325,13 @@ const ClientFollowUps = () => {
                                                             setIsAddClientActivityLogModalOpen(true);
                                                             setClientLogId(client.id);
                                                         }}>
-                                                            <Icons.MessageCircle className="w-5 h-5 text-indigo-500" />
+                                                            <MessageCircle className="w-5 h-5 text-indigo-500" />
                                                         </button>
                                                         <button className="p-1 rounded hover:bg-slate-100" title="编辑客户信息" onClick={() => {
                                                             setIsModalOpen(true);
                                                             setClientId(client.id);
                                                         }}>
-                                                            <Icons.Edit className="w-5 h-5" />
+                                                            <Edit className="w-5 h-5" />
                                                         </button>
                                                     </div>
                                                 </td>

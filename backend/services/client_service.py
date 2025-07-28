@@ -85,6 +85,8 @@ class ClientService:
             raise HTTPException(status_code=404, detail="客户不存在")
         # 将 Client 对象映射到 ClientCreate 模型
         client_create = ClientCreate(
+            id=client.id,
+            sales_id=client.sales_id,
             name=client.name,
             contact_name=client.contact_name,
             contact_phone=client.contact_phone,
@@ -170,3 +172,19 @@ class ClientService:
         result = await db.execute(stmt)
         clients = list(result.scalars().all())
         return clients, total
+
+    # 修改客户负责人
+    @staticmethod
+    async def update_client_sales(db: AsyncSession, id: int, sales_id: int):
+        # 检查客户是否存在
+        result = await db.execute(select(Client).where(Client.id == id))
+        client = result.scalars().first()
+        if not client:
+            raise HTTPException(status_code=404, detail="客户不存在")
+        
+        # 更新客户负责人
+        client.sales_id = sales_id
+        await db.flush()
+        return client
+
+

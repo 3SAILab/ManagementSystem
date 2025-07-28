@@ -41,7 +41,7 @@ class Employee(Base):
 
     is_probation = Column(Boolean, nullable=False) #是否试用期
     password_hash = Column(String(255), nullable=False) #密码
-    status = Column(Enum(EmployeeStatus), nullable=False) #状态
+    status = Column(Enum(EmployeeStatus), nullable=False) #状态(在职\离职\休假)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False) #创建时间
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) #更新时间
 

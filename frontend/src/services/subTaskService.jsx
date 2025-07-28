@@ -21,11 +21,11 @@ export const getSubTaskById = async (id) => {
     }
 };
 // 分配任务
-export const assignSubTask = async (id, charge_id, ticket_id) => {
+export const assignSubTask = async (id, charge_id, estimated_completion_time) => {
     try {
       const response = await api.put(
         `/assign_task/${id}`,
-        { charge_id, ticket_id }
+        { charge_id, estimated_completion_time }
       );
       return { success: true, data: response.data };
     } catch (err) {
@@ -62,6 +62,17 @@ export const getSubTaskDetailById = async (id) => {
 export const updateSubTaskProgress = async (progressLog) => {
     try {
       const response = await api.put(`/update_progress/${progressLog.sub_task_id}`, progressLog);
+      return { success: true, data: response.data };
+    } catch (err) {
+      const detail = err.response?.data?.detail || err.message;
+      return { success: false, error: detail };
+    }
+};
+
+// 获取团队任务列表
+export const getTeamTasks = async (filters) => {
+    try {
+      const response = await api.get(`/team_tasks`, { params: filters });
       return { success: true, data: response.data };
     } catch (err) {
       const detail = err.response?.data?.detail || err.message;

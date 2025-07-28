@@ -124,9 +124,9 @@ export const updateEmployeeWorkInfo = async (id, employee) => {
 };
 
 //获取组内成员以及工作负载
-export const getGroupMembers = async () => {
+export const getGroupMembersWithTaskCount = async () => {
   try {
-    const response = await api.get(`/group/members`);
+    const response = await api.get(`/group/members/with_task_count`);
     return { success: true, data: response.data };
   } catch (err) {
     const detail = err.response?.data?.detail || err.message;
@@ -165,6 +165,17 @@ export const resetPassword = async (email, code, new_password) => {
       return { success: true, message: response.data.message };
     }
     return { success: false, message: response.data.message };
+  } catch (err) {
+    const detail = err.response?.data?.detail || err.message;
+    return { success: false, error: detail };
+  }
+};
+
+// 获取组内成员列表
+export const getGroupMembers = async () => {
+  try {
+    const response = await api.get(`/group/members`);
+    return { success: true, data: response.data };
   } catch (err) {
     const detail = err.response?.data?.detail || err.message;
     return { success: false, error: detail };

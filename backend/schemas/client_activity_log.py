@@ -1,10 +1,11 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
 class ClientActivityLogCreate(BaseModel):
     client_id: int
     log_content: str
-    status: str
+    status: Optional[str] = None
     log_time: datetime
 
 class ClientActivityLogInfo(BaseModel):

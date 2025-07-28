@@ -15,6 +15,7 @@ import TeamRecordPage from '../pages/TeamRecordPage';
 import ContractDetailPage from '../pages/ContractDetailPage'
 import WorkAssignmentPage from '../pages/WorkAssignmentPage'
 import ResetPassword from '../pages/ResetPassword'
+import TeamDashboardPage from '../pages/TeamDashboard';
 
 const router = createBrowserRouter([
   {
@@ -130,6 +131,15 @@ const router = createBrowserRouter([
               </PrivateRoute>
             ),
             handle: { title: '工单分配' },
+          },
+          {
+            path: 'team_dashboard',
+            element:(
+              <PrivateRoute currentPath='team_record'>
+                <TeamDashboardPage />
+              </PrivateRoute>
+            ),
+            handle: { title: '团队任务监控' }
           }
         ],
       },

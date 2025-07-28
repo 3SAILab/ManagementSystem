@@ -154,15 +154,15 @@ async def update_employee_work_info(
     return await EmployeeService.update_employee_work_info(db, id, employee)
 
 #获取组内成员以及工作负载
-@router.get("/group/members")
-async def get_group_members(
+@router.get("/group/members/with_task_count")
+async def get_group_members_with_task_count(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
     #判断当前用户身份
     if current_employee.department.name == "生产部":
         #获取组内成员以及工作负载(成员未完成的任务个数)
-        employees = await EmployeeService.get_group_members(db, current_employee.id)
+        employees = await EmployeeService.get_group_members_with_task_count(db, current_employee.id)
         return employees
     else:
         raise HTTPException(status_code=403, detail="无权限访问")
@@ -182,3 +182,17 @@ async def logout(response: Response):
         samesite="lax"
     )
     return {"message": "登出成功"}
+
+
+#获取组内成员列表
+@router.get("/group/members")
+async def get_group_members(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    #判断当前用户身份
+    #获取组内成员列表
+    employees = await EmployeeService.get_group_members(db, current_employee.id)
+    return employees
+    
+

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getSubTasks } from '../services/subTaskService';
-import { getGroupMembers } from '../services/authService';
+import { getGroupMembersWithTaskCount } from '../services/authService';
 import AssignWorkModal from '../components/AssignWorkModal';
 import { assignSubTask } from '../services/subTaskService';
 import { toast } from 'react-toastify';
@@ -17,7 +17,7 @@ const WorkAssignmentPage = () => {
         setTasks(res.data);
       }
     });
-    getGroupMembers().then((res) => {
+    getGroupMembersWithTaskCount().then((res) => {
       if (res.success) {
         setGroupMembers(res.data);
       }
@@ -25,7 +25,7 @@ const WorkAssignmentPage = () => {
   }, []);
   // 分配任务
   const handleAssignSave = (task) => {
-    assignSubTask(task.id, task.charge_id, selectedTicketId).then((res) => {
+    assignSubTask(task.id, task.charge_id, task.estimated_completion_time).then((res) => {
       if (res.success) {
         toast.success('分配成功');
         // 刷新任务列表
@@ -35,7 +35,7 @@ const WorkAssignmentPage = () => {
           }
         });
         // 刷新团队成员列表
-        getGroupMembers().then((res) => {
+        getGroupMembersWithTaskCount().then((res) => {
           if (res.success) {
             setGroupMembers(res.data);
           }
@@ -63,6 +63,8 @@ const WorkAssignmentPage = () => {
                     <th className="p-4 text-sm font-semibold text-slate-600">工单名称</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">客户</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">创建时间</th>
+                    <th className="p-4 text-sm font-semibold text-slate-600">销售</th>
+                    <th className="p-4 text-sm font-semibold text-slate-600">负责人</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">状态</th>
                     <th className="p-4 text-sm font-semibold text-slate-600 text-center">操作</th>
                   </tr>
@@ -80,7 +82,13 @@ const WorkAssignmentPage = () => {
                             {task.ticket.client.name}
                           </td>
                           <td className="p-4 text-slate-600">
-                            {new Date(task.created_at).toLocaleDateString()}
+                            {new Date(task.created_at).toLocaleString()}
+                          </td>
+                          <td className="p-4 text-slate-600">
+                            {task.sales}
+                          </td>
+                          <td className="p-4 text-slate-600">
+                            {task.charge_name || '-'}
                           </td>
                           <td className="p-4 text-slate-600">
                             {task.status}

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from sqlalchemy import update, func, or_
+from sqlalchemy import update, func, or_, and_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
@@ -9,6 +9,7 @@ from jose import JWTError, jwt
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from backend.models.employee import Employee
+from backend.models.employee import EmployeeStatus
 from backend.schemas.employee import EmployeeInfo, EmployeeListInfo
 from backend.models.sub_task import SubTask
 # JWT相关配置
@@ -228,7 +229,7 @@ class EmployeeService:
        
     #获取组内成员以及工作负载
     @staticmethod
-    async def get_group_members(db: AsyncSession, employee_id: int):
+    async def get_group_members_with_task_count(db: AsyncSession, employee_id: int):
         # 统计所有任务
         stmt = (
             select(
@@ -236,12 +237,16 @@ class EmployeeService:
                 Employee.name,
                 func.count(SubTask.id).label("task_count")
             )
-            .outerjoin(SubTask, SubTask.charge_id == Employee.id)  # 使用outerjoin确保没有任务的员工也被包含
+            .outerjoin(SubTask, and_(SubTask.charge_id == Employee.id, SubTask.status != "已完成"))  # 使用outerjoin确保没有任务的员工也被包含
             .where(
-                or_(
+                and_(
+                    or_(
                     Employee.id == employee_id,
                     Employee.manager_id == employee_id
+                    ),
+                    Employee.status != EmployeeStatus.inactive
                 )
+                
             )
             .group_by(Employee.id, Employee.name)
         )
@@ -253,4 +258,12 @@ class EmployeeService:
             for id, name, task_count in rows
         ]
 
-        
+    #获取组内成员
+    @staticmethod
+    async def get_group_members(db: AsyncSession, employee_id: int):
+        # 获取组内成员
+        stmt = select(Employee).where(and_(or_( Employee.id == employee_id, Employee.manager_id == employee_id), Employee.status != EmployeeStatus.inactive ))
+        result = await db.execute(stmt)
+        emps = result.scalars().all()
+        return emps
+

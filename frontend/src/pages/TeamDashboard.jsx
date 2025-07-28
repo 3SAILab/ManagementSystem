@@ -1,30 +1,40 @@
-// OrderDashboard.jsx
 import { useEffect, useState } from 'react';
+import { Search } from 'lucide-react';
 import OrderCard from '../components/OrderCard';
 import OrderDetailsPanel from '../components/OrderDetailsPanel';
 import Pagination from '../components/Pagination';
-import { getPersonalTasks } from '../services/subTaskService';
+import { getTeamTasks } from '../services/subTaskService';
 import { toast } from 'react-toastify';
 
-const DashboardPage = () => {
+const TeamDashboardPage = () => {
   const [orders, setOrders] = useState([]);
   const [yellowAlerts, setYellowAlerts] = useState(0);
   const [redAlerts, setRedAlerts] = useState(0);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  // 过滤条件
+  const [filters, setFilters] = useState({
+    task_name: '',
+    charge_name: '',
+    page: 1,
+    page_size: 20
+  });
+  // 总页数
+  const [total, setTotal] = useState(0);
   // 页面刷新
   const [refresh, setRefresh] = useState(false);
   // 初始化页面数据
   useEffect(() => {
-    getPersonalTasks().then((res) => {
+    getTeamTasks(filters).then((res) => {
       if(res.success){
         setOrders(res.data.sub_tasks);
+        setTotal(res.data.total);
         setYellowAlerts(res.data.yellow_count);
         setRedAlerts(res.data.red_count);
       }else{
         toast.error('页面加载失败，请刷新重试');
       }
     });
-  }, [refresh]);
+  }, [refresh, filters]);
 
   // 点击订单卡片显示有关任务详情，创建时间、预警状态、状态、进度、优先级、开始时间、标签、负责人
   const handleSelectOrder = (orderId) => {
@@ -61,7 +71,34 @@ const DashboardPage = () => {
             <p className="text-3xl font-bold text-red-500">{redAlerts}</p>
           </div>
         </div>
-
+        <div className="flex gap-4 items-center">
+            {/* 按任务名称搜索 */}
+            <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="w-5 h-5 text-slate-400" />
+                </div>
+                <input 
+                    type="text" 
+                    placeholder="搜索任务名称" 
+                    className="form-input !pl-10 w-full bg-slate-50 border-slate-200"
+                    value={filters.task_name}
+                    onChange={(e) => setFilters({ ...filters, task_name: e.target.value })}
+                />
+            </div>
+            {/* 按负责人名称搜索 */}
+            <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="w-5 h-5 text-slate-400" />
+                </div>
+                <input 
+                    type="text" 
+                    placeholder="搜索负责人名称" 
+                    className="form-input !pl-10 w-full bg-slate-50 border-slate-200"
+                    value={filters.charge_name}
+                    onChange={(e) => setFilters({ ...filters, charge_name: e.target.value })}
+                />
+            </div>
+        </div>
         {/* 工单列表三栏 */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
           {/* 未开始 */}
@@ -80,6 +117,7 @@ const DashboardPage = () => {
                     warning={order.warning}
                     clientName={order.client_name}
                     estimatedCompletionTime={order.estimated_completion_time}
+                    chargeName={order.charge_name}
                     onClick={() => handleSelectOrder(order.sub_task_id)}
                   />
                 ))
@@ -105,6 +143,7 @@ const DashboardPage = () => {
                     warning={order.warning}
                     clientName={order.client_name}
                     estimatedCompletionTime={order.estimated_completion_time}
+                    chargeName={order.charge_name}
                     onClick={() => handleSelectOrder(order.sub_task_id)}
                   />
                 ))
@@ -130,6 +169,7 @@ const DashboardPage = () => {
                     warning={order.warning}
                     clientName={order.client_name}
                     estimatedCompletionTime={order.estimated_completion_time}
+                    chargeName={order.charge_name}
                     onClick={() => handleSelectOrder(order.sub_task_id)}
                   />
                 ))
@@ -137,6 +177,19 @@ const DashboardPage = () => {
                 <p className="text-slate-500 text-sm p-2">暂无工单</p>
               )}
             </div>
+          </div>
+        </div>
+        {/* 分页组件 */}
+        <div className="p-4 border-t border-slate-200 text-sm text-slate-600 flex justify-between items-center">
+          <span>显示 {orders.length} / 共 {total} 条数据</span>
+          <div className="flex items-center gap-2">
+            {/* 分页按钮 */}
+            <Pagination
+              totalItems={total}
+              itemsPerPage={filters.page_size}
+              currentPage={filters.page}
+              onPageChange={(page) => setFilters({...filters, page: page})}
+            />
           </div>
         </div>
       </div>
@@ -151,4 +204,4 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage;
+export default TeamDashboardPage;

@@ -1,5 +1,4 @@
-
-const OrderCard = ({ subTaskId, ticketName, progress, warning, clientName, onClick }) => {
+const OrderCard = ({ subTaskId, ticketName, progress, warning, clientName, estimatedCompletionTime, chargeName = null, onClick }) => {
   return (
     <div
       key={subTaskId}
@@ -44,9 +43,17 @@ const OrderCard = ({ subTaskId, ticketName, progress, warning, clientName, onCli
       {/* 底部信息：负责人 + 客户 */}
       <div className="text-sm text-slate-400 flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
         <div className="flex items-center -space-x-2">
-            {/** */}
+            <span className="text-xs">预计所需时间: {estimatedCompletionTime}天</span>
         </div>
-        <span className="text-xs">客户: {clientName}</span>
+        {/** 如果chargeName为空则不显示 */}
+        {chargeName && (
+            <div className="flex items-center -space-x-2">
+                <span className="text-xs">负责人: {chargeName}</span>
+            </div>
+        )}
+        <div className="flex items-center -space-x-2">
+            <span className="text-xs">客户: {clientName}</span>
+        </div>
       </div>
     </div>
   );

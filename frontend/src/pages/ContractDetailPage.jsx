@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getContractDetail } from '../services/contractService';
 import { addTicket } from '../services/ticketService';
 import AddTicketModal from '../components/AddTicketModal';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { toast } from 'react-toastify';
+import ReadOnlyOrderDetailsPanel from '../components/ReadOnlyOrderDetailsPanel';
 
 const ContractDetailPage = () => {
     // 创建工单模态框是否显示
@@ -19,7 +20,8 @@ const ContractDetailPage = () => {
         artTasks: [],
         renderTasks: [],
     });
-
+    // 选中的工单
+    const [selectedTicket, setSelectedTicket] = useState(null);
     // 根据合同id刷新页面
     const init = () => {
         getContractDetail(id).then(res => {
@@ -163,14 +165,14 @@ const ContractDetailPage = () => {
                     <th className="p-4 text-sm font-semibold text-slate-600">组长</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">负责人</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">任务进度</th>
-                    <th className="p-4 text-sm font-semibold text-slate-600">修改次数</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">预警</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {contractData.artTasks.map((artTask, index) => {
+                  {contractData.artTasks.map((artTask) => {
                     return (
-                      <tr key={index} 
+                      <tr key={artTask.id} 
+                          onClick={() => setSelectedTicket(artTask.id)}
                           className={`hover:bg-slate-50 cursor-pointer`}
                       >
                         <td className="p-4 font-medium text-slate-800">{artTask.created_at}</td>
@@ -178,7 +180,6 @@ const ContractDetailPage = () => {
                         <td className="p-4 text-slate-600">{artTask.leader || '暂无'}</td>
                         <td className="p-4 text-slate-600">{artTask.charge || '暂无'}</td>
                         <td className="p-4 text-slate-600">{artTask.status}</td>
-                        <td className="p-4 text-slate-600">{artTask.edit_count}</td>
                         <td className="p-4 text-slate-600">{artTask.warning}</td>
                       </tr>
                     );
@@ -207,14 +208,14 @@ const ContractDetailPage = () => {
                     <th className="p-4 text-sm font-semibold text-slate-600">组长</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">负责人</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">任务进度</th>
-                    <th className="p-4 text-sm font-semibold text-slate-600">修改次数</th>
                     <th className="p-4 text-sm font-semibold text-slate-600">预警</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {contractData.renderTasks.map((renderTask, index) => {
+                  {contractData.renderTasks.map((renderTask) => {
                     return (
-                      <tr key={index}
+                      <tr key={renderTask.id}
+                          onClick={() => setSelectedTicket(renderTask.id)}
                           className={`hover:bg-slate-50 cursor-pointer`}
                       >
                         <td className="p-4 font-medium text-slate-800">{renderTask.created_at}</td>
@@ -222,7 +223,6 @@ const ContractDetailPage = () => {
                         <td className="p-4 text-slate-600">{renderTask.leader || '暂无'}</td>
                         <td className="p-4 text-slate-600">{renderTask.charge || '暂无'}</td>
                         <td className="p-4 text-slate-600">{renderTask.status}</td>
-                        <td className="p-4 text-slate-600">{renderTask.edit_count}</td>
                         <td className="p-4 text-slate-600">{renderTask.warning}</td>
                       </tr>
                     );
@@ -241,6 +241,13 @@ const ContractDetailPage = () => {
         onAdd={handleAddTicket}
         contractId={parseInt(id)}
       />
+      {/* 工单详情 */}
+      {selectedTicket !== null && (
+        <ReadOnlyOrderDetailsPanel
+          onClose={() => setSelectedTicket(null)}
+          orderId={selectedTicket}
+        />
+      )}
     </div>
   );
 };

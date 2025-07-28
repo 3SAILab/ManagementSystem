@@ -35,3 +35,8 @@ class SubTaskUpdate(BaseModel):
     status: Optional[str] = None
 
 
+class SubTaskFilter(BaseModel):
+    task_name: Optional[str] = None
+    charge_name: Optional[str] = None
+    page: int = 1
+    page_size: int = 20

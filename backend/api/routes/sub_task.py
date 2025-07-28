@@ -1,5 +1,6 @@
 from typing import Optional
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Query
+from backend.schemas.sub_task import SubTaskFilter
 from backend.services.sub_task_service import SubTaskService
 from backend.db.session import get_async_db
 from backend.api.routes.employee import get_current_employee
@@ -37,20 +38,21 @@ async def get_sub_tasks_unassigned(
     current_employee: Employee = Depends(get_current_employee)
 ):
     if current_employee.position.name == "美工主管":
-        return await SubTaskService.get_art_tasks_unassigned(db)
+        return await SubTaskService.get_art_tasks_uncompleted(db)
     elif current_employee.position.name == "渲染主管":
-        return await SubTaskService.get_render_tasks_unassigned(db)
+        return await SubTaskService.get_render_tasks_uncompleted(db)
 
 # 分配任务
 @router.put("/assign_task/{id}")
 async def assign_sub_task(
     id: int,
     charge_id: int = Body(..., embed=True),
+    estimated_completion_time: int = Body(2, embed=True),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
     # 分配任务
-    res = await SubTaskService.assign_sub_task(db, id, charge_id, current_employee.id)
+    res = await SubTaskService.assign_sub_task(db, id, charge_id, current_employee.id, estimated_completion_time)
     # 获取负责人信息
     charger = await EmployeeService.get_employee_by_id(db, charge_id)
     # 创建进度记录
@@ -67,8 +69,16 @@ async def get_sub_task(
     res = await SubTaskService.get_sub_task(db, id)
     out = {
         "id": res.id,
+        "charge_id": res.charge_id,
         "ticket_name": res.ticket.name,
         "notes": res.ticket.notes,
+        "detail_pages": res.ticket.detail_pages,
+        "video_count": res.ticket.video_count,
+        "image_count": res.ticket.image_count,
+        "workflow_count": res.ticket.workflow_count,
+        "priority": res.ticket.priority,
+        "platform": res.ticket.platform,
+        "wechat_group": res.ticket.wechat_group,
     }
     return out
 
@@ -76,8 +86,9 @@ async def get_sub_task(
 @router.get("/personal_tasks")
 async def get_personal_tasks(
     db: AsyncSession = Depends(get_async_db),
-    current_employee: Employee = Depends(get_current_employee)
+    current_employee: Employee = Depends(get_current_employee),
 ):
+    # 获取任务列表
     sub_tasks = await SubTaskService.get_sub_tasks_by_charge_id(db, current_employee.id)
     # 黄色预警（美工任务状态为已完成以外的状态且距离创建时间两天未完成，渲染任务状态为已完成以外的状态且距离创建时间一天未完成）
     # 红色预警（美工任务状态为已完成以外的状态且距离创建时间三天未完成，渲染任务状态为已完成以外的状态且距离创建时间两天未完成）
@@ -116,11 +127,13 @@ async def get_personal_tasks(
             "client_name": task.ticket.contract.client.name,
             "status" : task.status,
             "sub_task_id": task.id,
+            "estimated_completion_time": task.estimated_completion_time,
+            "sales_name": task.ticket.contract.sales.name if task.ticket.contract.sales else None,
         })
     return {
         "sub_tasks": sub_tasks_out,
         "yellow_count": yellow_count,
-        "red_count": red_count
+        "red_count": red_count,
     }
 
 # 根据任务id获取任务详情(点击订单卡片显示有关任务详情，创建时间、预警状态、状态、进度、优先级、开始时间、标签、负责人)
@@ -135,13 +148,11 @@ async def get_sub_task_detail(
     # 获取预警状态(黄色预警（美工任务状态为不是已完成且距离创建时间两天未完成，渲染任务状态为不是已完成且距离创建时间一天未完成）
     # 红色预警（美工任务状态为不是已完成且距离创建时间三天未完成，渲染任务状态为不是已完成且距离创建时间两天未完成）)
     # 获取任务类型
-    is_design_task = res.task_type == '美工'      # 美工任务
-    is_render_task = res.task_type == '渲染'   # 渲染任务
     # 获取预警阈值
-    yellow_threshold = 2 if is_design_task else 1 if is_render_task else None
-    red_threshold = 3 if is_design_task else 2 if is_render_task else None
+    yellow_threshold = res.estimated_completion_time
+    red_threshold = res.estimated_completion_time + 1
     warning = "正常"
-    if res.status != "已完成":
+    if res.status == "进行中" and res.started_at:
         elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - res.created_at).days
         if elapsed_days > red_threshold:
             warning = "红色预警"
@@ -158,9 +169,11 @@ async def get_sub_task_detail(
         "progress": res.progress,
         "priority": res.ticket.priority,
         "wechat_group": res.ticket.wechat_group,
-        "start_date": res.started_at.astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y-%m-%d %H:%M:%S") if res.started_at else None,
+        "started_at": res.started_at.astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y-%m-%d %H:%M:%S") if res.started_at else None,
+        "completed_at": res.completed_at.astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y-%m-%d %H:%M:%S") if res.completed_at else None,
         "assignee": res.assignee.name if res.assignee else None,
         "charge": res.charge.name if res.charge else None,
+        "estimated_completion_time": res.estimated_completion_time,
     }
     # 根据任务id获取关于这个任务的所有的记录
     progress_log = await ProgressLogService.get_progress_log_by_id(db, res.ticket.id)
@@ -191,6 +204,61 @@ async def get_sub_task_detail(
         "related_employees": related_employees
     }
 
+# 团队工单页面信息初始化
+@router.get("/team_tasks")
+async def get_team_tasks(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee),
+    task_name: str = Query(None),
+    charge_name: str = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+):
+    # 获取任务列表
+    filter_params = SubTaskFilter(task_name=task_name, charge_name=charge_name, page=page, page_size=page_size)
+    sub_tasks,total = await SubTaskService.get_team_sub_tasks(db, current_employee.id, filter_params)
+    # 黄色预警（美工任务状态为已完成以外的状态且距离创建时间两天未完成，渲染任务状态为已完成以外的状态且距离创建时间一天未完成）
+    # 红色预警（美工任务状态为已完成以外的状态且距离创建时间三天未完成，渲染任务状态为已完成以外的状态且距离创建时间两天未完成）
+    yellow_count = 0
+    red_count = 0
+    sub_tasks_out = []  # 存储带警告信息的任务（可选输出）
+
+    for task in sub_tasks:
+        warning = "正常"
+
+        if task.status != "已完成":
+            elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.created_at).days
+
+            # 黄色预警条件
+            yellow_threshold = task.estimated_completion_time
+            red_threshold = task.estimated_completion_time + 1
+
+            if yellow_threshold is not None:
+                if elapsed_days > red_threshold:
+                    warning = "红色预警"
+                    red_count += 1
+                elif elapsed_days > yellow_threshold:
+                    warning = "黄色预警"
+                    yellow_count += 1
+        elif task.status == "已完成":
+            warning = "已完成"
+        sub_tasks_out.append({
+            "name": task.ticket.name,
+            "progress": task.progress,
+            "warning": warning,
+            "client_name": task.ticket.contract.client.name,
+            "status" : task.status,
+            "charge_name": task.charge.name,
+            "sub_task_id": task.id,
+            "estimated_completion_time": task.estimated_completion_time,
+            "sales_name": task.ticket.contract.sales.name if task.ticket.contract.sales else None,
+        })
+    return {
+        "sub_tasks": sub_tasks_out,
+        "yellow_count": yellow_count,
+        "red_count": red_count,
+        "total": total
+    }
 
 # 更新任务进度
 @router.put("/update_progress/{id}")
@@ -201,17 +269,15 @@ async def update_progress(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    # 先判断任务状态是否为未开始，如果为未开始，则更新任务状态为进行中
     res = await SubTaskService.get_sub_task(db, id)
-    if res.status == "未开始":
-        await SubTaskService.update_status(db, id, "进行中", progress)
-    if res.status == "进行中" and progress == 100:
-        print("已完成")
-        await SubTaskService.update_status(db, id, "已完成", progress)
-    if res.status == "进行中" and progress != 100:
-        await SubTaskService.update_status(db, id, "进行中", progress)
-    if res.status == "已完成" and progress != 100:
-        await SubTaskService.update_status(db, id, "进行中", progress)
+    # 若新进度progress为1-99，则新任务状态为进行中，若新进度progress为100，则新任务状态为已完成
+    # 若新进度progress为0，则新任务状态为未开始
+    if progress == 100:
+        await SubTaskService.update_status(db, id, progress, res.status, "已完成")
+    elif progress == 0:
+        await SubTaskService.update_status(db, id, progress, res.status, "未开始")
+    else:
+        await SubTaskService.update_status(db, id, progress, res.status, "进行中")
     # 创建进度记录
     res =  await ProgressLogService.create_progress_log(db, id, notes, current_employee.id)
     return res

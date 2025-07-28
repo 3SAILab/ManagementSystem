@@ -83,3 +83,15 @@ export const getClientsWithSalesName = async ({ name, status, source, page, page
         return { success: false, error: error.message };
     }
 };
+
+// 修改客户负责人
+export const updateClientSales = async (clientId, salesId, notes) =>{
+    try {
+        const response = await api.put(`/client/update_sales/${clientId}`, { sales_id: salesId, notes: notes });
+        return {success: true, data: response.data};
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+

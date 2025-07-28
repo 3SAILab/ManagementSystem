@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import * as Icons from 'lucide-react';
+import { Search, Edit, ArrowUp, ArrowDown } from 'lucide-react';
 import FilterDropdown from '../components/FilterDropdown';
 import Pagination from '../components/Pagination';
 import { getClientActivityLogStatistics } from '../services/statisticsService';
-import { getClientsWithSalesName } from '../services/clientService';
+import { getClientsWithSalesName, updateClientSales } from '../services/clientService';
 import ClientSidePanel from '../components/ClientSidePanel';
+import CustomerSalesModal from '../components/CustomerSalesModal';
+import { toast } from 'react-toastify';
 
 const TeamRecordPage = () => {
     // 客户跟进记录ID
-    const [clientLogId, setClientLogId] = useState(null);    
+    const [clientLogId, setClientLogId] = useState(null);  
+    // 客户ID
+    const [clientId, setClientId] = useState(null);
+    // 是否打开模态框
+    const [isModalOpen, setIsModalOpen] = useState(false);
     // 跟进状态映射
     const followUpStatusMap = {
         '刚开始跟进': { text: '刚开始跟进', classes: 'bg-slate-100 text-slate-700' },
@@ -74,7 +80,20 @@ const TeamRecordPage = () => {
             }
         });
     }, [filters, refresh]);
-    
+    // 处理保存
+    const handleSave = (client) => {
+        // 更新客户负责人
+        updateClientSales(clientId, client.sales_id, client.notes).then(res => {
+            if (res.success) {
+                toast.success('客户负责人更新成功');
+                setRefresh(!refresh);
+                setIsModalOpen(false);
+                setClientId(null);
+            } else {
+                toast.error("更新失败");
+            }
+        });
+    };
     return (
         <div className="flex flex-col h-full min-h-0 bg-slate-50 p-0">
             {/* 统计面板 */}
@@ -92,9 +111,9 @@ const TeamRecordPage = () => {
                             : 'text-red-500'
                         }`}>
                             {statistics.monthlyClientCountChange >= 0 ? (
-                                <Icons.ArrowUp className="w-4 h-4" />
+                                <ArrowUp className="w-4 h-4" />
                             ) : (
-                                <Icons.ArrowDown className="w-4 h-4" />
+                                <ArrowDown className="w-4 h-4" />
                             )}
                             {Math.abs(statistics.monthlyClientCountChange).toFixed(1)}%
                         </p>
@@ -112,9 +131,9 @@ const TeamRecordPage = () => {
                             : 'text-red-500'
                         }`}>
                             {statistics.monthlyTransactionVolumeChange >= 0 ? (
-                                <Icons.ArrowUp className="w-4 h-4" />
+                                <ArrowUp className="w-4 h-4" />
                             ) : (
-                                <Icons.ArrowDown className="w-4 h-4" />
+                                <ArrowDown className="w-4 h-4" />
                             )}
                             {Math.abs(statistics.monthlyTransactionVolumeChange).toFixed(1)}%
                         </p>
@@ -135,9 +154,9 @@ const TeamRecordPage = () => {
                     }`}
                     >
                     {statistics.monthlyTransactionConversionRateChange >= 0 ? (
-                        <Icons.ArrowUp className="w-4 h-4" />
+                        <ArrowUp className="w-4 h-4" />
                     ) : (
-                        <Icons.ArrowDown className="w-4 h-4" />
+                        <ArrowDown className="w-4 h-4" />
                     )}
                     {Math.abs(statistics.monthlyTransactionConversionRateChange).toFixed(1)}%
                     </p>
@@ -155,9 +174,9 @@ const TeamRecordPage = () => {
                             : 'text-red-500'
                         }`}>
                             {statistics.averageTransactionCycleChange >= 0 ? (
-                                <Icons.ArrowUp className="w-4 h-4" />
+                                <ArrowUp className="w-4 h-4" />
                             ) : (
-                                <Icons.ArrowDown className="w-4 h-4" />
+                                <ArrowDown className="w-4 h-4" />
                             )}
                             {Math.abs(statistics.averageTransactionCycleChange).toFixed(1)}天
                         </p>
@@ -177,7 +196,7 @@ const TeamRecordPage = () => {
                             {/* 搜索框 */}
                             <div className="relative w-full max-w-xs">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Icons.Search className="w-5 h-5 text-slate-400" />
+                                    <Search className="w-5 h-5 text-slate-400" />
                                 </div>
                                 <input type="text" placeholder="搜索客户名称" className="form-input !pl-10 w-full bg-slate-50 border-slate-200"
                                     value={filters.name}
@@ -211,6 +230,7 @@ const TeamRecordPage = () => {
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户规模</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">销售</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
                                         </tr>
                                     </thead>
 
@@ -275,6 +295,15 @@ const TeamRecordPage = () => {
                                                 <td className="p-4 text-slate-500">
                                                     {client.sales_name || '未知销售'}
                                                 </td>
+                                                <td className="p-4 text-sm text-slate-500">
+                                                    <button className="text-slate-500 hover:text-slate-700" onClick={() => {
+                                                            setIsModalOpen(true);
+                                                            setClientId(client.id);
+                                                        }
+                                                    }>
+                                                        <Edit className="w-5 h-5" />
+                                                    </button>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -297,6 +326,15 @@ const TeamRecordPage = () => {
                         </div>
                     </div>
                 </div>
+                {/* 客户销售模态框 */}
+                {isModalOpen&&<CustomerSalesModal 
+                    id={clientId} 
+                    onClose={() => {setIsModalOpen(false),setClientId(null)}} 
+                    onSave={handleSave} 
+                    refresh={refresh}
+                    />
+                }
+                
                 {/* 侧边栏 */}
                 <ClientSidePanel refresh={refresh} clientId={clientLogId} />
             </div>

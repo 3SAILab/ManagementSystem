@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import * as Icons from 'lucide-react';
 import { getClientInfo } from '../services/clientService';
 import { getClientActivityLog } from '../services/clientActivityLogService';
+import Avatar from './Avatar';
 
 const ClientSidePanel = ({ clientId, refresh }) => {
   const [clientInfo, setClientInfo] = useState({
@@ -57,7 +58,7 @@ const ClientSidePanel = ({ clientId, refresh }) => {
       {/* Header */}
       <header className="p-4 border-b border-slate-200 flex justify-between items-center">
         <h3 className="text-lg font-bold">
-          #{clientInfo.id} {clientInfo.name}
+          {clientInfo.name}
         </h3>
       </header>
   
@@ -82,14 +83,6 @@ const ClientSidePanel = ({ clientId, refresh }) => {
           ) : (
             <div className="space-y-4">
               {clientActivityLogs?.map((activityLog, idx) => {
-                // 头像首字母
-                const initials = activityLog.sales_name
-                  ? activityLog.sales_name
-                      .split('')
-                      .slice(0, 1)
-                      .map(char => char[0].toUpperCase())
-                      .join('')
-                  : 'NA';
                 // 时间格式化
                 const timeStr = activityLog.log_time
                   ? new Date(activityLog.log_time).toLocaleString('zh-CN', { hour12: false })
@@ -99,14 +92,24 @@ const ClientSidePanel = ({ clientId, refresh }) => {
                     key={activityLog.id + activityLog.log_time + idx}
                     className="flex gap-3 items-start bg-slate-50 rounded-lg p-3 shadow-sm"
                   >
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-base font-bold">
-                      {initials}
-                    </div>
+                    {/* 头像 */}
+                    <Avatar
+                      name={activityLog.sales_name || 'NA'}
+                      size={40}
+                    />
+                    {/* 内容 */}
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-slate-800">{activityLog.sales_name}</span>
                       </div>
-                      <div className=" text-slate-600 mt-1 text-base">将状态更新为：<span className="bg-indigo-100 px-2 py-0.5 rounded-md">{activityLog.status}</span></div>
+                      {/* 状态 */}
+                      {activityLog.status !== "更换负责人" && (
+                        <div className=" text-slate-600 mt-1 text-base">将状态更新为：<span className="bg-indigo-100 px-2 py-0.5 rounded-md">{activityLog.status}</span></div>
+                      )}
+                      {activityLog.status === "更换负责人" && (
+                        <div className=" text-slate-600 mt-1 text-base">将负责人更新为：<span className="bg-indigo-100 px-2 py-0.5 rounded-md">{activityLog.sales_name}</span></div>
+                      )}
+                      {/* 内容 */}
                       <div className="text-slate-700 mt-1">{activityLog.log_content}</div>
                       <div className="text-xs text-slate-400 mt-1">{timeStr}</div>
                     </div>
