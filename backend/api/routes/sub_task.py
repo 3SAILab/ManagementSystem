@@ -47,7 +47,7 @@ async def get_sub_tasks_unassigned(
 async def assign_sub_task(
     id: int,
     charge_id: int = Body(..., embed=True),
-    estimated_completion_time: int = Body(2, embed=True),
+    estimated_completion_time: int = Body(..., embed=True),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
@@ -79,6 +79,7 @@ async def get_sub_task(
         "priority": res.ticket.priority,
         "platform": res.ticket.platform,
         "wechat_group": res.ticket.wechat_group,
+        "estimated_completion_time": res.estimated_completion_time,
     }
     return out
 

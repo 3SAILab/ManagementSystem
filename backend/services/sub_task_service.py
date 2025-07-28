@@ -169,8 +169,8 @@ class SubTaskService:
         sub_task.charge_id = charge_id
         sub_task.assignee_id = assignee_id 
         sub_task.estimated_completion_time = estimated_completion_time
-        if sub_task.status == None:
-            sub_task.status = '未开始' 
+        if sub_task.charge_id == None:
+            sub_task.status = '未开始' # 如果没有负责人，则任务状态为未开始
         sub_task.assigned_at = datetime.now(timezone.utc)
         await db.flush()
         await db.refresh(sub_task)
