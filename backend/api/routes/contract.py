@@ -100,8 +100,8 @@ async def get_contract_detail(
     art_tasks_out = []
     now = datetime.now(tz=ZoneInfo("Asia/Shanghai"))
     for task in art_tasks:
-        yellow_threshold = task.estimated_completion_time
-        red_threshold = task.estimated_completion_time + 1
+        yellow_threshold = task.estimated_completion_time if task.estimated_completion_time else 2
+        red_threshold = task.estimated_completion_time + 1 if task.estimated_completion_time else 3
         warning = "正常"
         if task.status == "进行中" and task.started_at:
             elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.created_at).days
@@ -125,8 +125,8 @@ async def get_contract_detail(
         })
     render_tasks_out = []
     for task in render_tasks:
-        yellow_threshold = task.estimated_completion_time
-        red_threshold = task.estimated_completion_time + 1
+        yellow_threshold = task.estimated_completion_time if task.estimated_completion_time else 2
+        red_threshold = task.estimated_completion_time + 1 if task.estimated_completion_time else 3
         warning = "正常"
         if task.status == "进行中" and task.started_at:
             elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.created_at).days

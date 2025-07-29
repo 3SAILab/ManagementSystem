@@ -72,7 +72,8 @@ class SubTaskService:
         new_sub_task = SubTask(
             **task.model_dump(),
             progress=0,  # 初始进度为0
-            edit_count=0  # 初始修改次数为0
+            edit_count=0,  # 初始修改次数为0
+            estimated_completion_time=2  # 初始预计完成时间为2天
         )
         db.add(new_sub_task)
         await db.flush()

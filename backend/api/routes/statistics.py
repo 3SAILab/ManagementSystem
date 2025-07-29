@@ -21,16 +21,16 @@ async def get_client_activity_log_statistics(
     monthly_conversion_rate, monthly_conversion_rate_change = await StatisticsService.get_monthly_client_conversion_rate(db)
     average_cycle, average_cycle_change = await StatisticsService.get_average_transaction_cycle(db)
 
-    # 构造 JSON 数据结构
+    # 构造 JSON 数据结构,只保留小数点后两位
     data = {
-        "monthlyClientCount": monthly_client_count,
-        "monthlyClientCountChange": monthly_client_count_change,
-        "monthlyTransactionVolume": monthly_transaction_volume,
-        "monthlyTransactionVolumeChange": monthly_transaction_volume_change,
-        "monthlyTransactionConversionRate": monthly_conversion_rate,
-        "monthlyTransactionConversionRateChange": monthly_conversion_rate_change,
-        "averageTransactionCycle": average_cycle,
-        "averageTransactionCycleChange": average_cycle_change
+        "monthlyClientCount": round(monthly_client_count, 2),
+        "monthlyClientCountChange": round(monthly_client_count_change, 2),
+        "monthlyTransactionVolume": round(monthly_transaction_volume, 2),
+        "monthlyTransactionVolumeChange": round(monthly_transaction_volume_change, 2),
+        "monthlyTransactionConversionRate": round(monthly_conversion_rate, 2),
+        "monthlyTransactionConversionRateChange": round(monthly_conversion_rate_change, 2),
+        "averageTransactionCycle": round(average_cycle, 2),
+        "averageTransactionCycleChange": round(average_cycle_change, 2)
     }
 
     return api_response(success=True, data=data)
@@ -48,14 +48,14 @@ async def get_monthly_sales(
     monthly_pending_order_count, monthly_pending_order_count_change = await StatisticsService.get_monthly_pending_order_count(db, current_employee.id)
 
     data = {
-        "monthlySales": monthly_sales,
-        "monthlySalesChange": monthly_sales_change,
-        "monthlyCommission": monthly_commission,
-        "monthlyCommissionChange": monthly_commission_change,
-        "monthlyOrderCount": monthly_order_count,
-        "monthlyOrderCountChange": monthly_order_count_change,
-        "monthlyPendingOrderCount": monthly_pending_order_count,
-        "monthlyPendingOrderCountChange": monthly_pending_order_count_change
+        "monthlySales": round(monthly_sales, 2),
+        "monthlySalesChange": round(monthly_sales_change, 2),
+        "monthlyCommission": round(monthly_commission, 2),
+        "monthlyCommissionChange": round(monthly_commission_change, 2),
+        "monthlyOrderCount": round(monthly_order_count, 2),
+        "monthlyOrderCountChange": round(monthly_order_count_change, 2),
+        "monthlyPendingOrderCount": round(monthly_pending_order_count, 2),
+        "monthlyPendingOrderCountChange": round(monthly_pending_order_count_change, 2)
     }
     return api_response(success=True, data=data)
 
@@ -85,14 +85,14 @@ async def get_client_activity_log_statistics_by_sales_id(
 
     # 构造 JSON 数据结构
     data = {
-        "monthlyClientCount": monthly_client_count,
-        "monthlyClientCountChange": monthly_client_count_change,
-        "monthlyTransactionVolume": monthly_transaction_volume,
-        "monthlyTransactionVolumeChange": monthly_transaction_volume_change,
-        "monthlyTransactionConversionRate": monthly_conversion_rate,
-        "monthlyTransactionConversionRateChange": monthly_conversion_rate_change,
-        "averageTransactionCycle": average_cycle,
-        "averageTransactionCycleChange": average_cycle_change
+        "monthlyClientCount": round(monthly_client_count, 2),
+        "monthlyClientCountChange": round(monthly_client_count_change, 2),
+        "monthlyTransactionVolume": round(monthly_transaction_volume, 2),
+        "monthlyTransactionVolumeChange": round(monthly_transaction_volume_change, 2),
+        "monthlyTransactionConversionRate": round(monthly_conversion_rate, 2),
+        "monthlyTransactionConversionRateChange": round(monthly_conversion_rate_change, 2),
+        "averageTransactionCycle": round(average_cycle, 2),
+        "averageTransactionCycleChange": round(average_cycle_change, 2)
     }
     
     return api_response(success=True, data=data)
