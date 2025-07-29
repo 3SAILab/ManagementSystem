@@ -25,7 +25,7 @@ async def add_contract(
     
     return await ContractService.add_contract(db, contract, current_employee.id)
 
-# 获取合同
+# 获取个人成交合同
 @router.get("/contracts")
 async def get_contracts(
     name: str = Query(None),
@@ -46,7 +46,7 @@ async def get_contracts(
 
     total_pages = (total + page_size - 1) // page_size  # 正确的分页计算
 
-    #将Client对象转换为ClientOut对象
+    #将Contract对象转换为ContractList对象
     contracts_out = [
         ContractList(
             id=contract.id,
@@ -69,6 +69,31 @@ async def get_contracts(
         total_pages=total_pages
     )
     return paginated.model_dump()
+
+# 销售主管根据客户id获取成交合同列表
+@router.get("/contracts/client/{client_id}")
+async def get_contracts_by_client_id(
+    client_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    #权限认证
+    
+    contracts = await ContractService.get_contracts_by_client_id(db, client_id)
+    contracts_out = [
+        ContractList(
+            id=contract.id,
+            client_name=contract.client.name,
+            contract_type=contract.contract_type.value,
+            total_amount=contract.total_amount,
+            paid_amount=contract.paid_amount,
+            commission_rate=contract.commission_rate,
+            created_at=contract.created_at,
+            status=contract.status
+        ) 
+        for contract in contracts
+    ]
+    return contracts_out
 
 # 更改合同状态
 @router.put("/contracts/{id}/status")

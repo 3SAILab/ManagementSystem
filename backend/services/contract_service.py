@@ -36,7 +36,7 @@ class ContractService:
         await db.flush()
         return api_response(success=True, data={"msg": "合同添加成功"})
 
-    # 获取客户列表
+    # 获取个人成交合同列表
     @staticmethod
     async def get_contracts(db: AsyncSession, filter_params: ContractFilter, employee_id: int) -> Tuple[List[Contract], int]:
         stmt = select(Contract).options(selectinload(Contract.client))
@@ -103,3 +103,12 @@ class ContractService:
         contract.updated_at = datetime.now(timezone.utc)
         await db.flush()
         return api_response(success=True, data={"msg": "合同状态更新成功"})
+
+
+    # 销售主管根据客户id获取合同
+    @staticmethod
+    async def get_contracts_by_client_id(db: AsyncSession, client_id: int) -> List[Contract]:
+        stmt = select(Contract).where(Contract.client_id == client_id).options(selectinload(Contract.client))
+        result = await db.execute(stmt)
+        contracts = result.scalars().all()
+        return contracts

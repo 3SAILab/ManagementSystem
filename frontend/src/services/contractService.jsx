@@ -11,7 +11,7 @@ export const addContract = async (contract) => {
     }
 };
 
-// 获取合同
+// 获取个人成交合同
 export const getContracts = async ({ name, status, contract_type, page, page_size }) => {
     try {
         const response = await api.get('/contracts', {
@@ -44,5 +44,15 @@ export const updateContractStatus = async (id, status) => {
         return {success: true, data: response.data};
     } catch (error) {
         return {success: false, error: '合同状态更新失败'};
+    }
+};
+
+// 销售主管根据客户id获取合同
+export const getContractsByClientId = async (client_id) => {
+    try {
+        const response = await api.get(`/contracts/client/${client_id}`);
+        return {success: true, data: response.data};
+    } catch (error) {
+        return {success: false, error: "数据加载失败"};
     }
 };
