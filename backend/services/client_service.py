@@ -77,28 +77,28 @@ class ClientService:
 
     # 根据客户ID获取客户信息
     @staticmethod
-    async def get_client_info(db: AsyncSession, id: int) -> ClientCreate:
+    async def get_client_info(db: AsyncSession, id: int) -> dict:
         # 查询客户信息并只消费一次 result
         result = await db.execute(select(Client).where(Client.id == id))
         client = result.scalars().first()
         if not client:
             raise HTTPException(status_code=404, detail="客户不存在")
         # 将 Client 对象映射到 ClientCreate 模型
-        client_create = ClientCreate(
-            id=client.id,
-            sales_id=client.sales_id,
-            name=client.name,
-            contact_name=client.contact_name,
-            contact_phone=client.contact_phone,
-            address=client.address,
-            activity_name=client.activity_name,
-            source=client.source.value,
-            online_source=client.online_source,
-            product_type=client.product_type,
-            scale=client.scale.value,
-            status=client.status.value,
-        )
-        return client_create
+        clientInfo = {
+            "id": client.id,
+            "sales_id": client.sales_id,
+            "name": client.name,
+            "contact_name": client.contact_name,
+            "contact_phone": client.contact_phone,
+            "address": client.address,
+            "activity_name": client.activity_name,
+            "source": client.source.value,
+            "online_source": client.online_source,
+            "product_type": client.product_type,
+            "scale": client.scale.value,
+            "status": client.status.value,
+        }
+        return clientInfo
 
     # 更改客户状态
     @staticmethod

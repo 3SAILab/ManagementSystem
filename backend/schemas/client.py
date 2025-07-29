@@ -34,7 +34,6 @@ class ClientFilter(BaseModel):
 
 class ClientCreate(BaseModel):
     id: Optional[int] = None
-    sales_id: Optional[int] = None
     name: str
     contact_name: str
     contact_phone: str
