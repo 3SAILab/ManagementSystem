@@ -19,9 +19,11 @@ async def send_verification_code(request: EmailRequest, background_tasks: Backgr
     - **email**: 接收验证码的邮箱地址
     - **purpose**: 验证码用途 (register, login, reset_password, general)
     """
+    logger.info(f"发送验证码请求: {request.email}, 用途: {request.purpose}")
     # 检查邮箱是否存在
     employee = await EmployeeService.get_employee_by_email(db, request.email)
     if not employee:
+        logger.info(f"邮箱不存在: {request.email}")
         return EmailResponse(
             success=True,
             message="如果该邮箱已注册，验证码已发送，请查收邮箱。",
@@ -32,7 +34,7 @@ async def send_verification_code(request: EmailRequest, background_tasks: Backgr
     
     # 检查邮箱是否被禁用
     
-    logger.info(f"发送验证码请求: {request.email}, 用途: {request.purpose}")
+    
 
     result = email_service.send_verification_code(request.email, background_tasks, request.purpose)
     if result["success"]:
