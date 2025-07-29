@@ -54,6 +54,12 @@ class EmployeeService:
             return None
         return employee
     
+    #根据邮箱获取员工信息
+    @staticmethod
+    async def get_employee_by_email(db: AsyncSession, email: str) -> Employee:
+        result = await db.execute(select(Employee).where(Employee.email == email))
+        employee = result.scalars().first()
+        return employee
 
     # 重置密码
     @staticmethod

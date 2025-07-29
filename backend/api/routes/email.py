@@ -12,14 +12,28 @@ router = APIRouter()
 email_service = EmailVerificationService()
 
 @router.post("/email/send-code", response_model=EmailResponse, summary="发送验证码")
-async def send_verification_code(request: EmailRequest, background_tasks: BackgroundTasks):
+async def send_verification_code(request: EmailRequest, background_tasks: BackgroundTasks, db:AsyncSession = Depends(get_async_db)):
     """
     发送邮箱验证码
     
     - **email**: 接收验证码的邮箱地址
     - **purpose**: 验证码用途 (register, login, reset_password, general)
     """
+    # 检查邮箱是否存在
+    employee = await EmployeeService.get_employee_by_email(db, request.email)
+    if not employee:
+        return EmailResponse(
+            success=True,
+            message="如果该邮箱已注册，验证码已发送，请查收邮箱。",
+            data={
+                "remaining_attempts": 0
+            }
+        )
+    
+    # 检查邮箱是否被禁用
+    
     logger.info(f"发送验证码请求: {request.email}, 用途: {request.purpose}")
+
     result = email_service.send_verification_code(request.email, background_tasks, request.purpose)
     if result["success"]:
         logger.info(f"验证码发送成功: {request.email}")

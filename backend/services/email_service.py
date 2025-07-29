@@ -135,7 +135,7 @@ class EmailVerificationService:
             #    消息可以提示用户“已发送”或更准确的“已处理，请查收”
             return {
                 "success": True,
-                "message": "验证码已发送，请查收邮箱。", # 或 "验证码处理中，请查收邮箱。"
+                "message": "如果该邮箱已注册，验证码已发送，请查收邮箱。", # 或 "验证码处理中，请查收邮箱。"
                 "data": {
                     "remaining_attempts": remaining
                 }
