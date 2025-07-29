@@ -20,9 +20,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    op.execute("ALTER TYPE client_status_enum ADD VALUE '更换负责人'")
+    pass
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.execute("ALTER TYPE client_status_enum DROP VALUE '更换负责人'")
+    pass
