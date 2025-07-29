@@ -1,10 +1,9 @@
-// src/services/api.js
 import axios from 'axios';
 import { useEmployeePermissionStore } from '../store/employee';
-
+const baseURL = import.meta.env.VITE_API_URL
 // 创建 Axios 实例
 const api = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: baseURL,
   headers: {
     'Content-Type': 'application/json',
   },

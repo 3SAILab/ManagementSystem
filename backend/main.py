@@ -154,4 +154,4 @@ app.include_router(api_router)
 
 # 启动命令
 if __name__ == "__main__":
-    uvicorn.run("backend.main:app", host="localhost", port=8000, reload=True)
+    uvicorn.run("backend.main:app", reload=True)
