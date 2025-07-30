@@ -62,96 +62,124 @@ const SalesDashboard = () => {
     page_size: 10
 });
 
+  const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
+  // 图表数据状态
+  const [chartData, setChartData] = useState([]);
+
+  // 获取图表数据
   useEffect(() => {
-    const initChart = async () => {
-      const res = await getMonthlySalesStatistics();
-      console.log("res.data", res.data);
-      const option = {
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'cross',
-            label: {
-              backgroundColor: '#6a7985',
-            },
-          },
-        },
-        legend: {
-          data: ['收入'],
-          top: 10,
-          left: 'center',
-        },
-        grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '3%',
-          containLabel: true,
-        },
-        xAxis: {
-          type: 'category',
-          boundaryGap: false,
-          data: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
-        },
-        yAxis: {
-          type: 'value',
-          axisLabel: {
-            formatter: '{value} 元',
-          },
-        },
-        series: [
-          {
-            name: '收入',
-            type: 'line',
-            smooth: true,
-            symbol: 'circle', // 数据点为圆形
-            symbolSize: 6, // 数据点大小
-            itemStyle: {
-              color: '#6366F1', // indigo-500
-            },
-            lineStyle: {
-              width: 2,
-            },
-            data: res.data,
-          },
-          /** 
-          {
-            name: '目标',
-            type: 'line',
-            smooth: true,
-            symbol: 'circle', // 数据点为圆形
-            symbolSize: 6, // 数据点大小
-            itemStyle: {
-              color: '#3792fc', // 深蓝色
-            },
-            lineStyle: {
-              width: 2,
-            },
-            data: [9000, 10000, 8000, 9500, 7000, 20000, 18000, 15000, 17000, 20000, 23000, 26000],
-          },
-          */
-        ],
-      };
-
-      chartInstance.current = echarts.init(document.getElementById('revenue-chart'));
-      chartInstance.current.setOption(option);
-
-      // 自适应屏幕变化
-      window.addEventListener('resize', () => {
-        chartInstance.current.resize();
-      });
-
-      return () => {
-        if (chartInstance.current) {
-          chartInstance.current.dispose();
-          chartInstance.current = null;
-        }
-      };
+    const fetchChartData = async () => {
+      try {
+        const res = await getMonthlySalesStatistics();
+        console.log("res.data", res.data);
+        setChartData(res.data || []);
+      } catch (error) {
+        console.error('获取图表数据失败:', error);
+        setChartData([]);
+      }
     };
 
-    initChart();
+    fetchChartData();
   }, []);
+
+  // 初始化图表
+  useEffect(() => {
+    if (!chartRef.current || chartData.length === 0) return;
+
+    const option = {
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'cross',
+          label: {
+            backgroundColor: '#6a7985',
+          },
+        },
+      },
+      legend: {
+        data: ['收入'],
+        top: 10,
+        left: 'center',
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true,
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: {
+          formatter: '{value} 元',
+        },
+      },
+      series: [
+        {
+          name: '收入',
+          type: 'line',
+          smooth: true,
+          symbol: 'circle', // 数据点为圆形
+          symbolSize: 6, // 数据点大小
+          itemStyle: {
+            color: '#6366F1', // indigo-500
+          },
+          lineStyle: {
+            width: 2,
+          },
+          data: chartData,
+        },
+        /** 
+        {
+          name: '目标',
+          type: 'line',
+          smooth: true,
+          symbol: 'circle', // 数据点为圆形
+          symbolSize: 6, // 数据点大小
+          itemStyle: {
+            color: '#3792fc', // 深蓝色
+          },
+          lineStyle: {
+            width: 2,
+          },
+          data: [9000, 10000, 8000, 9500, 7000, 20000, 18000, 15000, 17000, 20000, 23000, 26000],
+        },
+        */
+      ],
+    };
+
+    // 初始化图表实例
+    if (!chartInstance.current) {
+      chartInstance.current = echarts.init(chartRef.current);
+    }
+
+    // 设置图表配置
+    chartInstance.current.setOption(option, true);
+
+    // 自适应屏幕变化
+    const handleResize = () => {
+      if (chartInstance.current) {
+        chartInstance.current.resize();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    // 清理函数
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (chartInstance.current) {
+        chartInstance.current.dispose();
+        chartInstance.current = null;
+      }
+    };
+  }, [chartData]); // 依赖于图表数据变化
 
   // 合同列表
   const [contracts, setContracts] = useState([]);
@@ -271,7 +299,7 @@ const SalesDashboard = () => {
           </div>
 
           <div className="h-64 mb-4">
-            <div id="revenue-chart" style={{ width: '100%', height: '100%' }}></div>
+          <div ref={chartRef} style={{ width: '100%', height: '256px' }}></div>
           </div>
 
           <div className="flex gap-8 text-sm">

@@ -19,6 +19,7 @@ class EmployeeRole(enum.Enum):
     employee = "employee"
     manager = "manager"
     admin = "admin"
+    owner = "owner"
 
 class Employee(Base):
     __tablename__ = "employee"

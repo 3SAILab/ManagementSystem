@@ -16,7 +16,7 @@ class EmployeePermission(BaseModel):
     name: str
     department_name: str
     position_name: str
-    role: Literal['employee', 'manager', 'admin']
+    role: Literal['employee', 'manager', 'admin', 'owner']
     is_probation: bool
     class Config:
         from_attributes = True
@@ -58,7 +58,7 @@ class EmployeeInfo(BaseModel):
     attendance_performance_score: Optional[float] = None
     is_probation: bool
     status: Literal['active', 'inactive', 'on_leave']
-    role: Literal['employee', 'manager', 'admin']
+    role: Literal['employee', 'manager', 'admin', 'owner']
     address: Optional[dict] = None
     emergency_contact: Optional[dict] = None
     education: Optional[str] = None

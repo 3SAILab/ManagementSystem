@@ -174,6 +174,7 @@ class EmployeeService:
     
     #获取上级列表
     LEVEL_HIERARCHY = {
+        "owner": 4,
         "admin": 3,
         "manager": 2,
         "employee": 1

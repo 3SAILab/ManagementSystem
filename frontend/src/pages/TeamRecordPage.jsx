@@ -269,6 +269,7 @@ const TeamRecordPage = () => {
                                     {/* 表头 */}
                                     <thead>
                                         <tr>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户名称</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">创建时间</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户来源</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">产品类型</th>

@@ -127,7 +127,7 @@ async def get_employee_info(
 @router.get("/manager/list", response_model=list[EmployeeListInfo])
 async def get_managers(
     department_id: int = Query(...),
-    role: Literal['employee', 'manager', 'admin'] = Query(...),
+    role: Literal['employee', 'manager', 'admin', 'owner'] = Query(...),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):

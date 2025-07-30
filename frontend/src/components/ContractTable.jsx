@@ -79,11 +79,9 @@ const ContractTable = ({ contracts = [] }) => {
         <tbody className="divide-y divide-slate-200">
           {contracts.map((contract) => {
             const commission = calculateCommission(contract);
-            
             return (
               <tr 
                 key={contract.id} 
-                onClick={() => navigate(`/contract_detail/${contract.id}`)}
                 className="hover:bg-slate-50 cursor-pointer"
               >
                 <td className="p-4 text-slate-600">{formatCurrency(contract.total_amount)}</td>

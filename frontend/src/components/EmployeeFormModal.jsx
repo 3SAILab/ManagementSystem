@@ -444,6 +444,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                   <option value="employee">普通员工</option>
                   <option value="manager">组长</option>
                   <option value="admin">主管</option>
+                  <option value="owner">总负责人</option>
                 </select>
               </div>
 

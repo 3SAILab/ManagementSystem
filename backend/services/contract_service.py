@@ -98,8 +98,6 @@ class ContractService:
         if not contract:
             raise HTTPException(status_code=404, detail="合同不存在")
         contract.status = status
-        if status == '已结算':
-            contract.paid_amount = contract.total_amount
         contract.updated_at = datetime.now(timezone.utc)
         await db.flush()
         return api_response(success=True, data={"msg": "合同状态更新成功"})

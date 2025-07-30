@@ -100,16 +100,12 @@ async def get_personal_tasks(
     for task in sub_tasks:
         warning = "正常"
 
-        if task.status != "已完成":
+        if task.status == "进行中":
             elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.created_at).days
 
-            # 判断任务类型：假设 task.type 取值为 'design'（美工）、'rendering'（渲染）等
-            is_design_task = task.task_type == '美工'      # 美工任务
-            is_render_task = task.task_type == '渲染'   # 渲染任务
-
             # 黄色预警条件
-            yellow_threshold = 2 if is_design_task else 1 if is_render_task else None
-            red_threshold = 3 if is_design_task else 2 if is_render_task else None
+            yellow_threshold = task.estimated_completion_time
+            red_threshold = task.estimated_completion_time + 1
 
             if yellow_threshold is not None:
                 if elapsed_days > red_threshold:
@@ -227,7 +223,7 @@ async def get_team_tasks(
     for task in sub_tasks:
         warning = "正常"
 
-        if task.status != "已完成":
+        if task.status == "进行中":
             elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.created_at).days
 
             # 黄色预警条件

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.employee import Employee
 from backend.db.session import get_async_db
@@ -96,3 +96,33 @@ async def get_client_activity_log_statistics_by_sales_id(
     }
     
     return api_response(success=True, data=data)
+
+
+# 销售主管查看本月销售数据
+@router.get("/statistics/sales-data-statistics")
+async def get_sales_data_statistics(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    """销售主管查看本月销售数据统计
+    
+    返回数据包括：
+    - 销售额、定金额、尾款已支付金额、尾款未支付金额、总到款金额
+    - 线上订单数量、线下订单数量、线上销售额、线下销售额
+    - 销售个人业绩、产品类目分布
+    """
+    # 检查权限（只有销售主管可以查看）
+    if current_employee.position.name != "销售主管":
+        raise HTTPException(
+            status_code=403,
+            detail="权限不足，只有销售主管可以查看销售数据统计"
+        )
+        
+    # 获取销售数据统计
+    statistics = await StatisticsService.get_sales_data_statistics(db)
+        
+    return {
+        "success": True,
+        "data": statistics,
+        "message": "获取销售数据统计成功"
+    }

@@ -45,6 +45,7 @@ export const menuItems = [
     },
     children: [
       { label: '团队记录', path: '/team_record', icon: 'contact' },
+      { label: '销售数据', path: '/sales_data', icon: 'bar-chart-3' },  
     ]
   },
   {

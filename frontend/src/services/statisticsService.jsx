@@ -43,7 +43,7 @@ export const getMonthlySales = async () => {
     }
 };
 
-// 获取月度销售统计数据
+// 获取员工各月度销售提点统计数据
 export const getMonthlySalesStatistics = async () => {
     try {
         const response = await api.get('/statistics/monthly-sales-statistics');
@@ -56,3 +56,17 @@ export const getMonthlySalesStatistics = async () => {
         return { success: false, error: error.message };
     }
 };
+
+// 本月销售数据
+export const getSalesData = async () => {
+    try {
+        const response = await api.get('/statistics/sales-data-statistics');
+        if (response.data.success) {
+            return {success: true, data: response.data.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
