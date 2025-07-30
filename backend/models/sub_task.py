@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import (
-    Column, DateTime, Integer, String, ForeignKey, func, text
+    Column, DateTime, Integer, String, ForeignKey, func, text, Float
 )
 from sqlalchemy.orm import relationship
 from ..db.session import Base
@@ -15,6 +15,7 @@ class SubTask(Base):
     progress = Column(Integer, nullable=False) # 进度(0-100)
     edit_count = Column(Integer, nullable=False) # 修改次数
     estimated_completion_time = Column(Integer, server_default=text("2"), nullable=True) # 预计完成时间 /天
+    difficulty_score = Column(Float, nullable=True) # 难度系数
     assignee_id = Column(Integer, ForeignKey('employee.id'), nullable=True) # 分配人    
     charge_id = Column(Integer, ForeignKey('employee.id'), nullable=True) # 负责人
     assigned_at = Column(DateTime(timezone=True), nullable=True) #分配时间

@@ -48,11 +48,12 @@ async def assign_sub_task(
     id: int,
     charge_id: int = Body(..., embed=True),
     estimated_completion_time: int = Body(..., embed=True),
+    difficulty_score: float = Body(..., embed=True),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
     # 分配任务
-    res = await SubTaskService.assign_sub_task(db, id, charge_id, current_employee.id, estimated_completion_time)
+    res = await SubTaskService.assign_sub_task(db, id, charge_id, current_employee.id, estimated_completion_time, difficulty_score)
     # 获取负责人信息
     charger = await EmployeeService.get_employee_by_id(db, charge_id)
     # 创建进度记录

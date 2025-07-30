@@ -59,6 +59,15 @@ async def get_monthly_sales(
     }
     return api_response(success=True, data=data)
 
+# 获取员工本月各周期销售统计数据
+@router.get("/statistics/monthly-sales-by-cycle")
+async def get_monthly_sales_by_cycle(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    # 获取统计数据
+    monthly_sales_by_cycle = await StatisticsService.get_monthly_sales_by_cycle(db, current_employee.id)
+    return api_response(success=True, data=monthly_sales_by_cycle)
 
 # 获取月度销售统计数据
 @router.get("/statistics/monthly-sales-statistics")

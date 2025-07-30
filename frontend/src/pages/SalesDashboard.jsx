@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
 import * as echarts from 'echarts';
 import { getContracts, updateContractStatus } from '../services/contractService';
-import { getMonthlySales, getMonthlySalesStatistics } from '../services/statisticsService';
+import { getMonthlySales, getMonthlySalesStatistics, getMonthlySalesByCycle } from '../services/statisticsService';
 import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -64,25 +64,39 @@ const SalesDashboard = () => {
 
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
-
+  // 当前视图
+  const [currentView, setCurrentView] = useState('月度');
   // 图表数据状态
   const [chartData, setChartData] = useState([]);
-
+  // 各周期销售统计数据
+  const [salesByCycle, setSalesByCycle] = useState([]);
+  // 图表标签
+  const [chartLabels, setChartLabels] = useState([]);
   // 获取图表数据
   useEffect(() => {
     const fetchChartData = async () => {
       try {
-        const res = await getMonthlySalesStatistics();
-        console.log("res.data", res.data);
-        setChartData(res.data || []);
+        if (currentView === '月度') {
+          const res = await getMonthlySalesStatistics();
+          console.log("res.data", res.data);
+          setChartData(res.data || []);
+          setChartLabels(['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']);
+        } else if (currentView === '周期') {
+          const res = await getMonthlySalesByCycle();
+          console.log("res.data", res.data);
+          setSalesByCycle(res.data || []);
+          setChartData(res.data.map(cycle => cycle.total_amount));
+          setChartLabels(res.data.map(cycle => `${cycle.cycle} 周期`));
+        }
       } catch (error) {
         console.error('获取图表数据失败:', error);
         setChartData([]);
+        setChartLabels([]);
       }
     };
 
     fetchChartData();
-  }, []);
+  }, [currentView]);
 
   // 初始化图表
   useEffect(() => {
@@ -112,7 +126,7 @@ const SalesDashboard = () => {
       xAxis: {
         type: 'category',
         boundaryGap: false,
-        data: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
+        data: chartLabels,
       },
       yAxis: {
         type: 'value',
@@ -135,22 +149,6 @@ const SalesDashboard = () => {
           },
           data: chartData,
         },
-        /** 
-        {
-          name: '目标',
-          type: 'line',
-          smooth: true,
-          symbol: 'circle', // 数据点为圆形
-          symbolSize: 6, // 数据点大小
-          itemStyle: {
-            color: '#3792fc', // 深蓝色
-          },
-          lineStyle: {
-            width: 2,
-          },
-          data: [9000, 10000, 8000, 9500, 7000, 20000, 18000, 15000, 17000, 20000, 23000, 26000],
-        },
-        */
       ],
     };
 
@@ -195,8 +193,13 @@ const SalesDashboard = () => {
   // 获取员工本月销售统计数据
   useEffect(() => {
     getMonthlySales().then(res => {
-      console.log(res.data);
       setStatistics(res.data);
+    });
+  }, []);
+  // 获取员工本月各周期销售统计数据
+  useEffect(() => {
+    getMonthlySalesByCycle().then(res => {
+      setSalesByCycle(res.data);
     });
   }, []);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -281,7 +284,18 @@ const SalesDashboard = () => {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-slate-800">收入</h3>
             <div className="flex bg-slate-100 rounded-lg p-1 text-sm">
-              <button className="px-3 py-1 rounded-md bg-white shadow-sm">月度</button>
+              <button
+                onClick={() => setCurrentView('月度')}
+                className={`px-3 py-1 rounded-md bg-white shadow-sm ${currentView === '月度' ? 'font-bold' : ''}`}
+              >
+                月度
+              </button>
+              <button
+                onClick={() => setCurrentView('周期')}
+                className={`px-3 py-1 rounded-md bg-white shadow-sm ${currentView === '周期' ? 'font-bold' : ''}`}
+              >
+                周期
+              </button>
             </div>
           </div>
 

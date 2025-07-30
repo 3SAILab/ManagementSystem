@@ -164,12 +164,13 @@ class SubTaskService:
 
     # 分配任务(设置任务分配人id和任务负责人id)
     @staticmethod
-    async def assign_sub_task(db: AsyncSession, id: int, charge_id: int, assignee_id: int, estimated_completion_time: int):
+    async def assign_sub_task(db: AsyncSession, id: int, charge_id: int, assignee_id: int, estimated_completion_time: int, difficulty_score: float):
         sub_task = await db.execute(select(SubTask).where(SubTask.id == id))
         sub_task = sub_task.scalars().first()
         sub_task.charge_id = charge_id
         sub_task.assignee_id = assignee_id 
         sub_task.estimated_completion_time = estimated_completion_time
+        sub_task.difficulty_score = difficulty_score
         if sub_task.charge_id == None:
             sub_task.status = '未开始' # 如果没有负责人，则任务状态为未开始
         sub_task.assigned_at = datetime.now(timezone.utc)

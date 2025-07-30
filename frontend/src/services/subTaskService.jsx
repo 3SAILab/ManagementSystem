@@ -21,11 +21,15 @@ export const getSubTaskById = async (id) => {
     }
 };
 // 分配任务
-export const assignSubTask = async (id, charge_id, estimated_completion_time) => {
+export const assignSubTask = async (task) => {
     try {
       const response = await api.put(
-        `/assign_task/${id}`,
-        { charge_id, estimated_completion_time }
+        `/assign_task/${task.id}`,
+        {
+          charge_id: task.charge_id,
+          estimated_completion_time: task.estimated_completion_time,
+          difficulty_score: task.difficulty_score
+        }
       );
       return { success: true, data: response.data };
     } catch (err) {

@@ -66,21 +66,11 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
       });
     }
   }, [id]); // 依赖 id 变化触发
-  // 格式校验函数
-  const validateField = (name, value) => {
-    let error = '';
-    if (name === 'contact_phone' && value && !/^1[3-9]\d{9}$/.test(value)) {
-      error = '联系电话格式不正确';
-    }
-    setErrors(prev => ({ ...prev, [name]: error }));
-  };
+
   // 处理输入变化
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    // 校验手机号格式
-    if (['contact_phone'].includes(name)) {
-      validateField(name, value);
-    }
+
     if (name === 'street') {
       setFormData(prev => ({
         ...prev,
@@ -180,7 +170,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
               </div>
               <div>
                 <label htmlFor="contact-phone" className="block text-sm font-medium text-slate-700">
-                  联系电话 <span className="text-red-500">*</span>
+                  联系方式 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -191,7 +181,6 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
                   className="form-input block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
                   required
                 />
-                {errors.contact_phone && <p className="text-sm text-red-500 mt-1">{errors.contact_phone}</p>}
               </div>
               <div>
                 <label htmlFor="client-source" className="block text-sm font-medium text-slate-700">

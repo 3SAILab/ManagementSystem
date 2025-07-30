@@ -57,6 +57,21 @@ export const getMonthlySalesStatistics = async () => {
     }
 };
 
+// 获取员工本月各周期销售统计数据
+export const getMonthlySalesByCycle = async () => {
+    try {
+        const response = await api.get('/statistics/monthly-sales-by-cycle');
+        if (response.data.success) {
+            return {success: true, data: response.data.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+
 // 本月销售数据
 export const getSalesData = async () => {
     try {

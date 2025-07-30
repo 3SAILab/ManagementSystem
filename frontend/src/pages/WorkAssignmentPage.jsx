@@ -25,7 +25,7 @@ const WorkAssignmentPage = () => {
   }, []);
   // 分配任务
   const handleAssignSave = (task) => {
-    assignSubTask(task.id, task.charge_id, task.estimated_completion_time).then((res) => {
+    assignSubTask(task).then((res) => {
       if (res.success) {
         toast.success('分配成功');
         // 刷新任务列表

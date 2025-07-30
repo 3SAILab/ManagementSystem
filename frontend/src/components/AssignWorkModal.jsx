@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { getSubTaskById } from '../services/subTaskService';
 import ModalCloseButton from './ModalCloseButton';
 import { toast } from 'react-toastify';
@@ -8,7 +8,6 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
     id: '',
     ticket_name: '',
     notes: '',
-    charge_id: '',
     detail_pages: 0,
     video_count: 0,
     image_count: 0,
@@ -16,24 +15,34 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
     priority: '高',
     platform: '国内',
   });
-  // 负责人
-  const [charge_id, setCharge_id] = useState();
+  // 提交信息
+  const [formData, setFormData] = useState({
+    id: '',
+    charge_id: '',
+    estimated_completion_time: '',
+    difficulty_score: '',
+  })
   // 初始化任务分配状态
   useEffect(() => {
     getSubTaskById(id).then((res) => {
       if (res.success) {
         setTask(res.data);
-        setCharge_id(res.data.charge_id);
+        setFormData({
+          id: res.data.id,
+          charge_id: res.data.charge_id,
+          estimated_completion_time: res.data.estimated_completion_time,
+          difficulty_score: res.data.difficulty_score,
+        })
       }
     });
   }, [id]);
 
   // 处理下拉框变化
   const handleAssigneeChange = (charge_id) => {
-    setTask(prev => ({
+    setFormData(prev => ({
       ...prev,
       charge_id: charge_id,
-    }));
+    }))
   };
 
   return (
@@ -122,6 +131,7 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
               {task.notes || '暂无备注信息'}
             </div>
           </div>
+          {/* 预计所需时间 */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
               预计所需时间 (天)<span className="text-red-500">*</span>
@@ -130,10 +140,26 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
               type="number"
               min="0"
               className="w-full px-4 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-              value={task.estimated_completion_time ?? 2}
+              value={formData.estimated_completion_time ?? 2}
               onChange={(e) => {
                 const value = e.target.value === '' ? '' : Number(e.target.value);
-                setTask(prev => ({ ...prev, estimated_completion_time: value }));
+                setFormData(prev => ({ ...prev, estimated_completion_time: value }));
+              }}
+            />
+          </div>
+          {/* 难度系数 */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              难度系数<span className="text-red-500">*</span>
+            </label>
+            <input
+              type="float"
+              min="0"
+              className="w-full px-4 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+              value={formData.difficulty_score ?? 1}
+              onChange={(e) => {
+                const value = e.target.value === '' ? '' : parseFloat(e.target.value);
+                setFormData(prev => ({ ...prev, difficulty_score: value }));
               }}
             />
           </div>
@@ -142,7 +168,7 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
             <label className="block text-sm font-medium text-slate-700 mb-2">分配给：</label>
             <select
               className="w-full px-4 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-              value={charge_id || ''}
+              value={formData.charge_id || ''}
               onChange={(e) => handleAssigneeChange(e.target.value)}
             >
               <option value="">请选择负责人</option>
@@ -170,19 +196,19 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
             onClick={
               () => {
                 //如果输入的不是大于0的数字不合法，提示
-                if (task.estimated_completion_time === '') {
+                if (formData.estimated_completion_time === '') {
                   toast.error('预计所需时间不能为空');
                   return;
-                } else if (task.estimated_completion_time <= 0) {
+                } else if (formData.estimated_completion_time <= 0) {
                   toast.error('预计所需时间必须大于0');
                   return;
                 }
                 // 负责人不能为空
-                if (!task.charge_id) {
+                if (!formData.charge_id) {
                   toast.error('负责人不能为空');
                   return;
                 }
-                onSave(task)
+                onSave(formData)
                 onClose()
               }
             }

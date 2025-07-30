@@ -45,11 +45,6 @@ class ClientCreate(BaseModel):
     scale: ClientScale
     status: ClientStatus = "刚开始跟进"
 
-    @field_validator("contact_phone")
-    def validate_phone(cls, v):
-        if not re.match(r"^1[3-9]\d{9}$", v):
-            raise ValueError("联系电话格式不正确")
-        return v
 
 class ClientOut(BaseModel):
     id: int = Field(...)
