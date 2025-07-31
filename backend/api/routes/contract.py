@@ -11,6 +11,7 @@ from backend.services.ticket_service import TicketService
 from backend.services.contract_service import ContractService
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+from backend.utils.response import api_response
 
 router = APIRouter()
 
@@ -195,3 +196,27 @@ async def get_contract_detail(
         "yellow_count": yellow_count,
         "red_count": red_count
     }
+
+
+# 合同剩余需求
+@router.get("/contracts/{id}/remaining_requirements")
+async def get_remaining_requirements(
+    id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    #权限认证
+    result = await ContractService.get_remaining_requirements(db, id)
+
+    return api_response(success=True, data=result)
+
+# 删除合同
+@router.delete("/contracts/{id}")
+async def delete_contract(
+    id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    #权限认证
+    
+    return await ContractService.delete_contract(db, id)

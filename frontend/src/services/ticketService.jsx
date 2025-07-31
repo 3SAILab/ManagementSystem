@@ -20,11 +20,54 @@ export const getTickets = async () => {
     }
 };
 
-//根据合同ID获取工单
+//根据合同id获取工单列表
 export const getTicketsByContractId = async (contractId) => {
     try {
         const response = await api.get(`/tickets/contract/${contractId}`);
-        return {success: true, data: response.data};
+        if(response.data.success){
+            return {success: true, data: response.data.data};
+        }else{
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        throw error;
+    }
+};
+
+//根据工单id获取工单信息
+export const getTicketInfo = async (ticketId) => {
+    try {
+        const response = await api.get(`/tickets/${ticketId}`);
+        if(response.data.success){
+            return {success: true, data: response.data.data};
+        }else{
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        throw error;
+    }
+};
+
+//根据工单id更新工单信息
+export const updateTicketInfo = async (ticketId, ticket) => {
+    const params = {
+        name: ticket.name,
+        detail_pages: ticket.detail_pages,
+        video_count: ticket.video_count,
+        image_count: ticket.image_count,
+        workflow_count: ticket.workflow_count,
+        wechat_group: ticket.wechat_group,
+        notes: ticket.notes,
+        priority: ticket.priority,
+        platform: ticket.platform,
+    }
+    try {
+        const response = await api.put(`/tickets/${ticketId}`, params);
+        if(response.data.success){
+            return {success: true, data: response.data.data};
+        }else{
+            return {success: false, error: response.data.error};
+        }
     } catch (error) {
         throw error;
     }

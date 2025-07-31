@@ -54,6 +54,8 @@ const PositionPage = () => {
       if (result.success) {
         setPositions(result.data);
         toast.success('删除职位成功！');
+      }else{
+        toast.error(result.error);
       }
     } catch (error) {
       console.error('删除职位失败:', error);

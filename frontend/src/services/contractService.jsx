@@ -56,3 +56,32 @@ export const getContractsByClientId = async (client_id) => {
         return {success: false, error: "数据加载失败"};
     }
 };
+
+// 获取合同剩余需求
+export const getRemainingRequirements = async (id) => {
+    try {
+        const response = await api.get(`/contracts/${id}/remaining_requirements`);
+        if(response.data.success){
+            return {success: true, data: response.data.data};
+        }else{
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return {success: false,error: "数据加载失败"}
+    }
+}
+
+// 删除合同
+export const deleteContract = async (id) => {
+    try {
+        const response = await api.delete(`/contracts/${id}`);
+        if(response.data.success){
+            return {success: true, data: response.data.data};
+        }else{
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return {success: false, error: "数据加载失败"};
+    }
+}
+

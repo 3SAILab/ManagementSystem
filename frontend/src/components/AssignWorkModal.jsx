@@ -140,7 +140,7 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
               type="number"
               min="0"
               className="w-full px-4 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-              value={formData.estimated_completion_time ?? 2}
+              value={formData.estimated_completion_time ?? ''}
               onChange={(e) => {
                 const value = e.target.value === '' ? '' : Number(e.target.value);
                 setFormData(prev => ({ ...prev, estimated_completion_time: value }));
@@ -156,7 +156,7 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
               type="float"
               min="0"
               className="w-full px-4 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-              value={formData.difficulty_score ?? 1}
+              value={formData.difficulty_score ?? ''}
               onChange={(e) => {
                 const value = e.target.value === '' ? '' : parseFloat(e.target.value);
                 setFormData(prev => ({ ...prev, difficulty_score: value }));

@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.department import Department
 from backend.schemas.department import DepartmentOut
+from backend.models.position import Position
 
 
 class DepartmentService:
@@ -37,9 +38,14 @@ class DepartmentService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="部门不存在"
             )
+        # 2. 查询部门是否有对应的职位
+        result = await db.execute(select(Position).where(Position.department_id == id))
+        position = result.scalars().first()
+        if position:
+            return {"success": False, "message": "该部门有对应的职位，不能删除"}
         await db.delete(department)
         await db.flush()
-        return True
+        return {"success": True, "message": "删除成功"}
 
     #列出所有部门
     @staticmethod

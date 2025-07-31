@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
 import * as echarts from 'echarts';
-import { getContracts, updateContractStatus } from '../services/contractService';
+import { getContracts, updateContractStatus, deleteContract } from '../services/contractService';
 import { getMonthlySales, getMonthlySalesStatistics, getMonthlySalesByCycle } from '../services/statisticsService';
 import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
 
 const getTrendIndicator = (change) => {
   const isPositive = change > 0;
@@ -228,6 +229,23 @@ const SalesDashboard = () => {
       toast.error(res.error);
     }
   };
+  const handleDeleteContract = async (contractId) => {
+    if (!(await Swal.fire({
+      text: `确定要删除吗？`,
+      showCancelButton: true,
+      confirmButtonText: '确定',
+      cancelButtonText: '取消'
+    })).isConfirmed) return;
+    const res = await deleteContract(contractId);
+    if(res.success){
+      toast.success('合同删除成功');
+      getContracts(filters).then(res => {
+        setContracts(res.data.contracts);
+      });
+    }else{
+      toast.error(res.error);
+    }
+  };
   return (
     <div className="p-6 space-y-6">
       {/* KPI Cards */}
@@ -379,16 +397,26 @@ const SalesDashboard = () => {
                       </span>
                     </td>
                     <td className="p-4">
-                      {/* 修改后的按钮 */}
-                      <button
-                        className="px-3 py-1 rounded-md bg-white shadow-sm text-sm"
-                        onClick={(e) => {
-                          e.stopPropagation(); // 阻止行点击事件触发
-                          handleOpenModal(contract);
-                        }}
-                      >
-                        更改状态
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          className="px-3 py-1 rounded-md bg-indigo-500 text-white text-sm shadow-sm hover:bg-indigo-600 transition"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenModal(contract);
+                          }}
+                        >
+                          更改状态
+                        </button>
+                        <button
+                          className="px-3 py-1 rounded-md bg-red-500 text-white text-sm shadow-sm hover:bg-red-600 transition"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteContract(contract.id);
+                          }}
+                        >
+                          删除
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

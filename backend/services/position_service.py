@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from backend.models.department import Department
+from backend.models.employee import Employee
 from backend.models.position import Position
 from backend.schemas.position import PositionCreate, PositionInfo
 
@@ -37,10 +38,15 @@ class PositionService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="职位不存在"
             )
+        # 2. 查询该职位是否被员工使用
+        result = await db.execute(select(Employee).where(Employee.position_id == id))
+        employee = result.scalars().first()
+        if employee:
+            return {"success": False, "message": "该职位被员工使用，不能删除"}
         # 2. 执行删除操作
         await db.delete(position)
         await db.flush()
-        return True
+        return {"success": True, "message": "删除成功"}
 
     #列出所有职位
     @staticmethod

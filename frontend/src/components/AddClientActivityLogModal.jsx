@@ -213,11 +213,11 @@ const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
               <textarea
                 id="follow-up-content"
                 name="follow-up-content"
-                rows="4"
+                rows="3"
                 value={clientActivityLog.log_content}
                 onChange={(e) => setClientActivityLog({ ...clientActivityLog, log_content: e.target.value })}
                 placeholder="请输入跟进记录内容..."
-                className="form-textarea block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               ></textarea>
             </div>
 

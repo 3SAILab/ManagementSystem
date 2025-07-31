@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import ModalCloseButton from "./ModalCloseButton";
 import { getRemainingRequirements } from "../services/contractService";
+import { getTicketInfo } from "../services/ticketService";
 
-const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
+const EditTicketModal = ({ isOpen, onClose, onEdit, ticketId, contractId }) => {
   if (!isOpen) return null;
   const [remainingRequirements, setRemainingRequirements] = useState({
     detail_pages: 0,
@@ -20,14 +21,28 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
   });
 
   useEffect(() => {
-    const fetchRemainingRequirements = async () => {
-      const result = await getRemainingRequirements(contractId);
-      if(result.success){
-        setRemainingRequirements(result.data);
+    const fetchData = async () => {
+      const reqResult = await getRemainingRequirements(contractId);
+      let ticketData = { detail_pages: 0, video_count: 0, image_count: 0, workflow_count: 0 };
+      if (ticketId) {
+        const ticketResult = await getTicketInfo(ticketId);
+        if (ticketResult.success) {
+          ticketData = ticketResult.data;
+          setFormData(ticketResult.data);
+        }
+      }
+      if (reqResult.success) {
+        // 把本工单原有数量加回去
+        setRemainingRequirements({
+          detail_pages: reqResult.data.detail_pages + (ticketData.detail_pages || 0),
+          video_count: reqResult.data.video_count + (ticketData.video_count || 0),
+          image_count: reqResult.data.image_count + (ticketData.image_count || 0),
+          workflow_count: reqResult.data.workflow_count + (ticketData.workflow_count || 0),
+        });
       }
     };
-    fetchRemainingRequirements();
-  }, [contractId]);
+    fetchData();
+  }, [contractId, ticketId]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -35,10 +50,7 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
     video_count: 0,
     image_count: 0,
     workflow_count: 0,
-    wechatGroup: "",
-    needArt: false,
-    needRender: false,
-    needShoot: false,
+    wechat_group: "",
     notes: "",
     priority: "高", // 优先级
     platform: "国内", // 平台
@@ -107,8 +119,7 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
     if (Object.values(newErrors).some(error => error !== "")) {
       return;
     }
-
-    onAdd(formData);
+    onEdit(formData);
     onClose();
   };
 
@@ -273,49 +284,13 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
             <input
               type="text"
               id="wechat-group"
-              name="wechatGroup"
-              value={formData.wechatGroup}
+              name="wechat_group"
+              value={formData.wechat_group}
               onChange={handleInputChange}
               placeholder="请输入微信群"
               className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
             />
-          </div>
-          {/* 需求类型 */}
-          <div className="rounded-lg bg-slate-50 p-4 space-y-3">
-            <h3 className="text-sm font-medium text-slate-700">请选择需要的服务<span className="text-red-500">*</span></h3>
-            <div className="flex flex-wrap gap-4">
-              <label className="flex items-center gap-1.5 text-sm text-slate-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="needArt"
-                  checked={formData.needArt}
-                  onChange={handleInputChange}
-                  className="rounded text-indigo-600 focus:ring-indigo-500"
-                />
-                需要美工
-              </label>
-              <label className="flex items-center gap-1.5 text-sm text-slate-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="needRender"
-                  checked={formData.needRender}
-                  onChange={handleInputChange}
-                  className="rounded text-indigo-600 focus:ring-indigo-500"
-                />
-                需要渲染
-              </label>
-              <label className="flex items-center gap-1.5 text-sm text-slate-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="needShoot"
-                  checked={formData.needShoot}
-                  onChange={handleInputChange}
-                  className="rounded text-indigo-600 focus:ring-indigo-500"
-                />
-                需要拍摄
-              </label>
-            </div>
           </div>
           {/* 备注 */}
           <div className="space-y-2">
@@ -360,4 +335,4 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
   );
 };
 
-export default AddTicketModal;
+export default EditTicketModal;

@@ -128,6 +128,7 @@ async def get_clients_with_sales_name(
     current_employee: Employee = Depends(get_current_employee),
     name: str = Query(None),
     status: List[str] = Query(None),
+    sales_name: str = Query(None),
     source: List[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
@@ -135,8 +136,7 @@ async def get_clients_with_sales_name(
     """
     查询客户列表，支持名称、状态、来源筛选与分页
     """
-
-    filter_params = ClientFilter(name=name, status=status, source=source, page=page, page_size=page_size)
+    filter_params = ClientFilter(name=name, status=status, source=source,sales_name=sales_name, page=page, page_size=page_size)
     clients, total = await ClientService.get_clients_with_sales_name(db, filter_params)
 
     total_pages = (total + page_size - 1) // page_size  # 正确的分页计算

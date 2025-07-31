@@ -27,6 +27,7 @@ class ClientFilter(BaseModel):
     name: Optional[str] = None
     status: Optional[List[ClientStatus]] = None
     source: Optional[List[ClientSource]] = None
+    sales_name:Optional[str] = None
     page: int = 1
     page_size: int = 10
 

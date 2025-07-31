@@ -120,13 +120,6 @@ async def get_sales_data_statistics(
     - 线上订单数量、线下订单数量、线上销售额、线下销售额
     - 销售个人业绩、产品类目分布
     """
-    # 检查权限（只有销售主管可以查看）
-    if current_employee.position.name != "销售主管":
-        raise HTTPException(
-            status_code=403,
-            detail="权限不足，只有销售主管可以查看销售数据统计"
-        )
-        
     # 获取销售数据统计
     statistics = await StatisticsService.get_sales_data_statistics(db)
         

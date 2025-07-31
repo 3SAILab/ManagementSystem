@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from backend.services.ticket_service import TicketService
+from backend.utils.response import api_response
 
 router = APIRouter()
 # 获取所有美工任务
@@ -37,9 +38,9 @@ async def get_sub_tasks_unassigned(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    if current_employee.position.name == "美工主管":
+    if current_employee.position.name == "美工":
         return await SubTaskService.get_art_tasks_uncompleted(db)
-    elif current_employee.position.name == "渲染主管":
+    elif current_employee.position.name == "产品渲染":
         return await SubTaskService.get_render_tasks_uncompleted(db)
 
 # 分配任务
@@ -81,6 +82,7 @@ async def get_sub_task(
         "platform": res.ticket.platform,
         "wechat_group": res.ticket.wechat_group,
         "estimated_completion_time": res.estimated_completion_time,
+        "difficulty_score": res.difficulty_score,
     }
     return out
 
@@ -147,11 +149,11 @@ async def get_sub_task_detail(
     # 红色预警（美工任务状态为不是已完成且距离创建时间三天未完成，渲染任务状态为不是已完成且距离创建时间两天未完成）)
     # 获取任务类型
     # 获取预警阈值
-    yellow_threshold = res.estimated_completion_time
-    red_threshold = res.estimated_completion_time + 1
     warning = "正常"
-    if res.status == "进行中" and res.started_at:
+    if res.status == "进行中":
         elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - res.created_at).days
+        yellow_threshold = res.estimated_completion_time
+        red_threshold = res.estimated_completion_time + 1
         if elapsed_days > red_threshold:
             warning = "红色预警"
         elif elapsed_days > yellow_threshold:
@@ -280,6 +282,34 @@ async def update_progress(
     res =  await ProgressLogService.create_progress_log(db, id, notes, current_employee.id)
     return res
 
-
+# 根据工单id获取子任务
+@router.get("/sub_tasks/ticket/{ticket_id}")
+async def get_sub_tasks_by_ticket_id(
+    ticket_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    sub_tasks = await SubTaskService.get_sub_tasks_by_ticket_id(db, ticket_id)
+    sub_tasks_out = []
+    for task in sub_tasks:
+        warning = "正常"
+        if task.status == "进行中":
+            elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.created_at).days
+            yellow_threshold = task.estimated_completion_time
+            red_threshold = task.estimated_completion_time + 1
+            if elapsed_days > red_threshold:
+                warning = "红色预警"
+            elif elapsed_days > yellow_threshold:
+                warning = "黄色预警"
+        sub_tasks_out.append({
+            "id": task.id,
+            "type": task.task_type,
+            "progress": task.progress,
+            "status": task.status,
+            "charge": task.charge.name if task.charge else None,
+            "leader": task.assignee.name if task.assignee else None,
+            "warning": warning,
+        })
+    return api_response(success=True, data=sub_tasks_out)
 
 

@@ -1,73 +1,130 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getContractDetail } from '../services/contractService';
-import { addTicket } from '../services/ticketService';
+import { addTicket, getTicketsByContractId, updateTicketInfo } from '../services/ticketService';
+import { getSubTasksByTicketId } from '../services/subTaskService';
 import AddTicketModal from '../components/AddTicketModal';
-import { ChevronLeft, Plus } from 'lucide-react';
+import { ChevronLeft, Plus, Edit } from 'lucide-react';
 import { toast } from 'react-toastify';
-import ReadOnlyOrderDetailsPanel from '../components/ReadOnlyOrderDetailsPanel';
+import SubTaskTable from '../components/SubTaskTable';
+import EditTicketModal from '../components/EditTicketModal';
 
 const ContractDetailPage = () => {
-    // 创建工单模态框是否显示
-    const [createOrderModal, setCreateOrderModal] = useState(false);
-    const { id } = useParams();
-    // 合同详情数据
-    const [contractData, setContractData] = useState({
-        pendingDetails: { detailPage: 0, video: 0, image: 0, workflow: 0 },
-        completedDetails: { detailPage: 0, video: 0, image: 0, workflow: 0 },
-        yellowCount: 0,
-        redCount: 0,
-        artTasks: [],
-        renderTasks: [],
+  // 创建工单模态框是否显示
+  const [createOrderModal, setCreateOrderModal] = useState(false);
+  const { id } = useParams();
+  // 合同详情数据
+  const [contractData, setContractData] = useState({
+    pendingDetails: { detailPage: 0, video: 0, image: 0, workflow: 0 },
+    completedDetails: { detailPage: 0, video: 0, image: 0, workflow: 0 },
+    yellowCount: 0,
+    redCount: 0,
+  });
+  // 工单列表
+  const [tickets, setTickets] = useState([]);
+  // 是否显示编辑工单模态框
+  const [editTicketModal, setEditTicketModal] = useState(false);
+  // 选中的工单id
+  const [ticketId, setTicketId] = useState(null);
+  // 缓存所有工单的子任务数据
+  const [subTasks, setSubTasks] = useState({});
+  // 根据合同id刷新页面
+  const init = () => {
+    getContractDetail(id).then(res => {
+      setContractData({
+        pendingDetails: res.pending_details,
+        completedDetails: res.completed_details,
+        yellowCount: res.yellow_count,
+        redCount: res.red_count,
+        artTasks: res.art_tasks,
+        renderTasks: res.render_tasks,
+      });
+    }).catch(err => {
+      toast.error("加载合同详情失败");
     });
-    // 选中的工单
-    const [selectedTicket, setSelectedTicket] = useState(null);
-    // 根据合同id刷新页面
-    const init = () => {
-        getContractDetail(id).then(res => {
-            setContractData({
-                pendingDetails: res.pending_details,
-                completedDetails: res.completed_details,
-                yellowCount: res.yellow_count,
-                redCount: res.red_count,
-                artTasks: res.art_tasks,
-                renderTasks: res.render_tasks,
-            });
-        }).catch(err => {
-            toast.error("加载合同详情失败");
-        });
+    getTicketsByContractId(id).then(res => {
+      setTickets(res.data);
+    }).catch(err => {
+      toast.error("加载工单列表失败");
+    });
+  }
+
+  useEffect(() => {
+    init();
+  }, [id]);
+  // 选中的工单id
+  const [expandedTicketId, setExpandedTicketId] = useState(null);
+  // 👇 新增：切换展开状态并获取合同数据的函数
+  const toggleExpand = async (ticketId) => {
+    // 如果点击的是同一个客户，则收起
+    if (expandedTicketId === ticketId) {
+        setExpandedTicketId(null);
+        return;
     }
 
-    useEffect(() => {
+    // 设置为展开状态
+    setExpandedTicketId(ticketId);
+
+    // 如果这个工单的数据还没有加载过，则去获取
+    if (!subTasks[ticketId]) {
+        const res = await getSubTasksByTicketId(ticketId);
+        console.log(res);
+        if (res.success) {
+            // 将获取到的合同数据存入 state
+            setSubTasks(prev => ({
+                ...prev,
+                [ticketId]: res.data
+            }));
+        } else {
+            // 获取失败，也存入一个空数组，避免重复请求
+            setSubTasks(prev => ({
+                ...prev,
+                [ticketId]: []
+            }));
+            toast.error(res.message || '获取合同列表失败');
+        }
+    }
+  }
+  // 计算待完成和已完成的总数
+  const pendingTotal = Object.values(contractData.pendingDetails).reduce((sum, count) => sum + count, 0);
+  const completedTotal = Object.values(contractData.completedDetails).reduce((sum, count) => sum + count, 0);
+
+  // 处理工单创建
+  const handleAddTicket = async (ticketData) => {
+    try {
+      // 确保合同ID正确设置
+      const ticketWithContractId = {
+        ...ticketData,
+        contract_id: parseInt(id)
+      };
+
+      const result = await addTicket(ticketWithContractId);
+      if (result.success) {
+        // 关闭模态框
+        setCreateOrderModal(false);
         init();
-    }, [id]);
+        toast.success('创建工单成功');
+      } else {
+        toast.error('创建工单失败，请重试');
+      }
+    } catch (err) {
 
-    // 计算待完成和已完成的总数
-    const pendingTotal = Object.values(contractData.pendingDetails).reduce((sum, count) => sum + count, 0);
-    const completedTotal = Object.values(contractData.completedDetails).reduce((sum, count) => sum + count, 0);
-
-    // 处理工单创建
-    const handleAddTicket = async (ticketData) => {
-        try {
-            // 确保合同ID正确设置
-            const ticketWithContractId = {
-                ...ticketData,
-                contract_id: parseInt(id)
-            };
-            
-            const result = await addTicket(ticketWithContractId);
-            if(result.success){
-              // 关闭模态框
-              setCreateOrderModal(false);
-              init();
-              toast.success('创建工单成功');
-            }else{
-              toast.error('创建工单失败，请重试');
-            }
-        } catch (err) {
-            
-        } 
-    };
+    }
+  };
+  // 处理工单编辑
+  const handleEditTicket = async (ticketData) => {
+    try {
+      const result = await updateTicketInfo(ticketId, ticketData);
+      if (result.success) {
+        toast.success('编辑工单成功');
+        init();
+      } else {
+        toast.error('编辑工单失败，请重试');
+      }
+    } catch (err) {
+      toast.error('编辑工单失败，请重试');
+    }
+  }
   return (
     <div className="p-6 space-y-6">
       {/* header */}
@@ -85,169 +142,180 @@ const ContractDetailPage = () => {
         </Link>
         {/* 创建工单 */}
         {/* 添加客户按钮 */}
-        <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors" 
-        onClick={() => {
+        <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
+          onClick={() => {
             setCreateOrderModal(true);
           }}
         >
           <Plus className="w-4 h-4" /> 创建工单
         </button>
-        
+
       </div>
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* 待开始 */}
         <div className="bg-white p-4 shadow-md rounded-lg">
-            <div className="grid grid-cols-2 gap-4">
-                {/* 左侧：title 和 count */}
-                <div>
-                <h2 className="text-lg font-bold">待完成</h2>
-                <div className={`text-gray-500 text-4xl font-bold mt-2`}>{pendingTotal}</div>
-                </div>
-                {/* 右侧：ul 列表 */}
-                <ul className="mt-4 text-sm">
-                    <li>详情页：{contractData.pendingDetails.detailPage}</li>
-                    <li>视频：{contractData.pendingDetails.video}</li>
-                    <li>图片：{contractData.pendingDetails.image}</li>
-                    <li>工作流：{contractData.pendingDetails.workflow}</li>
-                </ul>
+          <div className="grid grid-cols-2 gap-4">
+            {/* 左侧：title 和 count */}
+            <div>
+              <h2 className="text-lg font-bold">待完成</h2>
+              <div className={`text-gray-500 text-4xl font-bold mt-2`}>{pendingTotal}</div>
             </div>
+            {/* 右侧：ul 列表 */}
+            <ul className="mt-4 text-sm">
+              <li>详情页：{contractData.pendingDetails.detailPage}</li>
+              <li>视频：{contractData.pendingDetails.video}</li>
+              <li>图片：{contractData.pendingDetails.image}</li>
+              <li>工作流：{contractData.pendingDetails.workflow}</li>
+            </ul>
+          </div>
         </div>
 
         {/* 已完成 */}
         <div className="bg-white p-4 shadow-md rounded-lg">
-            <div className="grid grid-cols-2 gap-4">
-                {/* 左侧：title 和 count */}
-                <div>
-                <h2 className="text-lg font-bold">已完成</h2>
-                <div className={`text-green-500 text-4xl font-bold mt-2`}>{completedTotal}</div>
-                </div>
-
-                {/* 右侧：ul 列表 */}
-                <ul className="mt-4 text-sm">
-                <li>详情页：{contractData.completedDetails.detailPage}</li>
-                <li>视频：{contractData.completedDetails.video}</li>
-                <li>图片：{contractData.completedDetails.image}</li>
-                <li>工作流：{contractData.completedDetails.workflow}</li>
-                </ul>
+          <div className="grid grid-cols-2 gap-4">
+            {/* 左侧：title 和 count */}
+            <div>
+              <h2 className="text-lg font-bold">已完成</h2>
+              <div className={`text-green-500 text-4xl font-bold mt-2`}>{completedTotal}</div>
             </div>
+
+            {/* 右侧：ul 列表 */}
+            <ul className="mt-4 text-sm">
+              <li>详情页：{contractData.completedDetails.detailPage}</li>
+              <li>视频：{contractData.completedDetails.video}</li>
+              <li>图片：{contractData.completedDetails.image}</li>
+              <li>工作流：{contractData.completedDetails.workflow}</li>
+            </ul>
+          </div>
         </div>
 
         {/* 黄色预警 */}
         <div className="bg-white p-4 shadow-md rounded-lg">
-            <h2 className="text-lg font-bold">黄色预警</h2>
-            <div className={`text-yellow-500 text-4xl font-bold mt-2`}>{contractData.yellowCount}</div>
+          <h2 className="text-lg font-bold">黄色预警</h2>
+          <div className={`text-yellow-500 text-4xl font-bold mt-2`}>{contractData.yellowCount}</div>
         </div>
         {/* 红色预警 */}
         <div className="bg-white p-4 shadow-md rounded-lg">
-            <h2 className="text-lg font-bold">红色预警</h2>
-            <div className={`text-red-500 text-4xl font-bold mt-2`}>{contractData.redCount}</div>
+          <h2 className="text-lg font-bold">红色预警</h2>
+          <div className={`text-red-500 text-4xl font-bold mt-2`}>{contractData.redCount}</div>
         </div>
       </div>
-      
-      {/* 任务表格区域 - 美工和渲染任务并排显示 */}
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* 美工任务表格 */}
-        <div className="flex-grow flex flex-col bg-white rounded-xl shadow-sm border overflow-visible min-h-0 w-full md:w-1/2">
-          {/* 表格头部 */}
-          <div className="bg-white">
-            <h3 className="p-4 border-b border-slate-200 text-lg font-semibold">美工任务</h3>
-            {contractData.artTasks.length === 0 ? (
-              <div className="p-4 text-center text-slate-500">
-                暂无数据
+      {/* 主内容区域 */}
+      <div className="flex-grow flex gap-6 p-0 min-h-0">
+        {/* 工单列表 */}
+        <div className="flex-grow flex flex-col bg-white rounded-xl shadow-sm border overflow-visible min-h-0">
+          {/* 表格主体 */}
+          <div className="flex-grow overflow-y-auto px-4">
+            {tickets.length <= 0 ? (
+              <div className="flex-grow flex items-center justify-center p-6">
+                <p className="text-center text-slate-500">暂无数据</p>
               </div>
             ) : (
-              <table className="w-full text-left">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="p-4 text-sm font-semibold text-slate-600">创建时间</th>
-                    <th className="p-4 text-sm font-semibold text-slate-600">工单名称</th>
-                    <th className="p-4 text-sm font-semibold text-slate-600">组长</th>
-                    <th className="p-4 text-sm font-semibold text-slate-600">负责人</th>
-                    <th className="p-4 text-sm font-semibold text-slate-600">任务进度</th>
-                    <th className="p-4 text-sm font-semibold text-slate-600">预警</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {contractData.artTasks.map((artTask) => {
-                    return (
-                      <tr key={artTask.id} 
-                          onClick={() => setSelectedTicket(artTask.id)}
-                          className={`hover:bg-slate-50 cursor-pointer`}
-                      >
-                        <td className="p-4 font-medium text-slate-800">{artTask.created_at}</td>
-                        <td className="p-4 text-slate-600">{artTask.name}</td>
-                        <td className="p-4 text-slate-600">{artTask.leader || '暂无'}</td>
-                        <td className="p-4 text-slate-600">{artTask.charge || '暂无'}</td>
-                        <td className="p-4 text-slate-600">{artTask.status}</td>
-                        <td className="p-4 text-slate-600">{artTask.warning}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-        
-        {/* 渲染任务表格 */}
-        <div className="flex-grow flex flex-col bg-white rounded-xl shadow-sm border overflow-visible min-h-0 w-full md:w-1/2">
-          {/* 表格头部 */}
-          <div className="bg-white">
-            <h3 className="p-4 border-b border-slate-200 text-lg font-semibold">渲染任务</h3>
-            {contractData.renderTasks.length === 0 ? (
-              <div className="p-4 text-center text-slate-500">
-                暂无数据
-              </div>
-            ) : (
-              <table className="w-full text-left">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="p-4 text-sm font-semibold text-slate-600">创建时间</th>
-                    <th className="p-4 text-sm font-semibold text-slate-600">工单名称</th>
-                    <th className="p-4 text-sm font-semibold text-slate-600">组长</th>
-                    <th className="p-4 text-sm font-semibold text-slate-600">负责人</th>
-                    <th className="p-4 text-sm font-semibold text-slate-600">任务进度</th>
-                    <th className="p-4 text-sm font-semibold text-slate-600">预警</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {contractData.renderTasks.map((renderTask) => {
-                    return (
-                      <tr key={renderTask.id}
-                          onClick={() => setSelectedTicket(renderTask.id)}
-                          className={`hover:bg-slate-50 cursor-pointer`}
-                      >
-                        <td className="p-4 font-medium text-slate-800">{renderTask.created_at}</td>
-                        <td className="p-4 text-slate-600">{renderTask.name}</td>
-                        <td className="p-4 text-slate-600">{renderTask.leader || '暂无'}</td>
-                        <td className="p-4 text-slate-600">{renderTask.charge || '暂无'}</td>
-                        <td className="p-4 text-slate-600">{renderTask.status}</td>
-                        <td className="p-4 text-slate-600">{renderTask.warning}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-      </div>
+              <div className="w-full max-w-full overflow-x-auto"> {/* 添加滚动条支持 */}
+                <table className="min-w-full w-full">
+                  {/* 表头 */}
+                  <thead>
+                    <tr>
+                      <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">工单名称</th>
+                      <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">创建时间</th>
+                      <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">详情页</th>
+                      <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">视频</th>
+                      <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">图片</th>
+                      <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">工作流</th>
+                      <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
+                      <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作按钮</th>
+                    </tr>
+                  </thead>
+                  {/* 表体 */}
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {tickets.map((ticket) => (
+                      <React.Fragment key={ticket.id}>
+                        {/* 👇 工单信息行 */}
+                        <tr
+                          onClick={() => {
+                            toggleExpand(ticket.id);
+                          }}
+                          className={`hover:bg-slate-50 cursor-pointer ${expandedTicketId === ticket.id ? 'bg-slate-100' : ''}`}
+                        >
+                          <td className="p-4 text-sm font-semibold text-slate-700">{ticket.name}</td>
+                          <td className="p-4 text-sm text-slate-500">
+                            {new Date(ticket.created_at).toLocaleDateString('zh-CN', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </td>
+                          <td className="p-4 text-sm text-slate-500">
+                            {ticket.detail_pages}
+                          </td>
+                          <td className="p-4 text-sm text-slate-500">
+                            {ticket.video_count}
+                          </td>
+                          <td className="p-4 text-sm text-slate-500">
+                            {ticket.image_count}
+                          </td>
+                          <td className="p-4 text-sm text-slate-500">
+                            {ticket.workflow_count}
+                          </td>
+                          <td className="p-4 text-sm text-slate-500">
+                            {ticket.status}
+                          </td>
+                          <td className="p-4 text-sm text-slate-500">
+                            <button
+                              className="text-slate-500 hover:text-slate-700"
+                              onClick={(e) => {
+                                // ❗️阻止事件冒泡到 tr 的 onClick
+                                e.stopPropagation();
+                                setEditTicketModal(true);
+                                setTicketId(ticket.id);
+                              }}
+                              title="编辑工单信息"
+                            >
+                              <Edit className="w-5 h-5" />
+                            </button>
+                          </td>
+                        </tr>
 
+                        {/* 👇 子任务列表行 (仅在展开时显示) */}
+                        {expandedTicketId === ticket.id && (
+                          <tr className="w-full">
+                            <td colSpan="7" className="p-0">
+                              <div className="w-full bg-slate-50 border-t border-slate-200 my-1 rounded-lg overflow-hidden">
+                                <div className="p-3 border-b border-slate-200 bg-slate-100">
+                                  <h4 className="text-sm font-semibold text-slate-700">合同列表</h4>
+                                </div>
+                                <SubTaskTable subTasks={subTasks[ticket.id]} />
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
       {/* 创建工单模态框 */}
-      <AddTicketModal 
-        isOpen={createOrderModal} 
-        onClose={() => setCreateOrderModal(false)} 
+      <AddTicketModal
+        isOpen={createOrderModal}
+        onClose={() => setCreateOrderModal(false)}
         onAdd={handleAddTicket}
         contractId={parseInt(id)}
       />
-      {/* 工单详情 */}
-      {selectedTicket !== null && (
-        <ReadOnlyOrderDetailsPanel
-          onClose={() => setSelectedTicket(null)}
-          orderId={selectedTicket}
-        />
-      )}
+      {/* 编辑工单模态框 */}
+      <EditTicketModal
+        isOpen={editTicketModal}
+        onClose={() => setEditTicketModal(false)}
+        onEdit={handleEditTicket}
+        ticketId={ticketId}
+        contractId={parseInt(id)}
+      />
     </div>
   );
 };

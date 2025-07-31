@@ -44,7 +44,7 @@ async def get_positions(
     return positions
 
 #删除职位
-@router.delete("/delete_position", response_model=List[PositionInfo], status_code=200)
+@router.delete("/delete_position", response_model=api_response, status_code=200)
 async def delete_position(
     id: int = Body(..., embed=True),
     db: AsyncSession = Depends(get_async_db),
@@ -55,9 +55,12 @@ async def delete_position(
         raise HTTPException(status_code=403, detail="无权限访问")
     
     #删除职位
-    await PositionService.delete_position(db, id)
-    positions = await PositionService.get_positions(db)
-    return positions
+    result = await PositionService.delete_position(db, id)
+    if result["success"]:
+        positions = await PositionService.get_positions(db)
+        return api_response(success=True, data=positions)
+    else:
+        return api_response(success=False, error=result["message"])
 
 #根据部门id获取职位信息
 @router.get("/get_positions_by_department_id", response_model=List[PositionInfo], status_code=200)

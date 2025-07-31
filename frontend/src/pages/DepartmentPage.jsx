@@ -52,11 +52,15 @@ export default function DepartmentPage() {
       cancelButtonText: '取消'
     })).isConfirmed) return;
     try {
-      await deleteDepartment(department.id);
-      setDepartments((prev) =>
-        prev.filter((dept) => dept.id !== department.id)
-      );
-      toast.success('删除部门成功！');
+      const result = await deleteDepartment(department.id);
+      if(result.success){
+        setDepartments((prev) =>
+          prev.filter((dept) => dept.id !== department.id)
+        );
+        toast.success('删除部门成功！');
+      }else{
+        toast.error(result.error);
+      }
     } catch (error) {
       toast.error('删除失败，请重试');
     }

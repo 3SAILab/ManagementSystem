@@ -72,10 +72,10 @@ export const updateClientStatus = async (clientId, status) => {
 };
 
 // 获取客户列表包括销售名称
-export const getClientsWithSalesName = async ({ name, status, source, page, page_size }) => {
+export const getClientsWithSalesName = async ({ name, status, source, sales_name, page, page_size }) => {
     try {
         const response = await api.get('/client/get_clients_with_sales_name', {
-            params: { name, status, source, page, page_size },
+            params: { name, status, source, sales_name, page, page_size },
             paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
         });
         return {success: true, data: response.data};

@@ -6,9 +6,10 @@ from backend.api.routes.employee import get_current_employee
 from backend.models.employee import Employee
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
-from backend.schemas.ticket import TicketCreate
+from backend.schemas.ticket import TicketCreate, TicketUpdate
 from backend.schemas.sub_task import SubTaskCreate
 from backend.services.progress_log_service import ProgressLogService
+from backend.utils.response import api_response
 router = APIRouter()
 
 # 创建工单
@@ -65,12 +66,36 @@ async def get_tickets(
     return {"tickets": tickets}
 
 
-# 根据合同ID获取工单
+# 根据合同ID获取工单列表
 @router.get("/tickets/contract/{contract_id}")
 async def get_tickets_by_contract(
     contract_id: int,
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    tickets = await TicketService.get_tickets_by_contract(db, contract_id)
-    return {"tickets": tickets}
+    tickets = await TicketService.get_ticket_by_contract_id(db, contract_id)
+    return api_response(success=True, data=tickets)
+
+
+# 根据工单ID获取工单信息
+@router.get("/tickets/{ticket_id}")
+async def get_ticket_info(
+    ticket_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    ticket = await TicketService.get_ticket_by_id(db, ticket_id)
+    return api_response(success=True, data=ticket)
+
+# 根据工单ID更新工单信息
+@router.put("/tickets/{ticket_id}")
+async def update_ticket_by_id(
+    ticket_id: int,
+    ticket: TicketUpdate = Body(...),
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    ticket = await TicketService.update_ticket_by_id(db, ticket_id, ticket)
+    return api_response(success=True, data=ticket)
+
+

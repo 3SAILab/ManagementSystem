@@ -143,6 +143,9 @@ class ClientService:
 
         if filter_params.name:
             filters.append(Client.name.ilike(f"%{filter_params.name}%"))
+        
+        if filter_params.sales_name:
+            filters.append(Client.sales.has(Employee.name.ilike(f"%{filter_params.sales_name}%")))
 
         if filter_params.status:
             # 将 Pydantic Enum 转为原始字符串值再过滤

@@ -33,7 +33,12 @@ export const deletePosition = async (id) => {
         '/delete_position', 
         { data: { id } }
     );
-    return { success: true, data: response.data };
+    if(response.data.success){
+      return { success: true, data: response.data.data };
+    }
+    else{
+      return { success: false, error: response.data.error };
+    }
   } catch (error) {
     return { success: false, error: error.response.data.detail };
   }

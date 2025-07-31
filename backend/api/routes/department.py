@@ -56,5 +56,8 @@ async def delete_department(
         raise HTTPException(status_code=403, detail="无权限访问")
     
     #删除部门
-    await DepartmentService.delete_department(db, id)
-    return api_response(data={"message": "部门删除成功"})
+    result = await DepartmentService.delete_department(db, id)
+    if result["success"]:
+        return api_response(success=True)
+    else:
+        return api_response(success=False, error=result["message"])

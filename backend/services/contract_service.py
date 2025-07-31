@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.contract import Contract
+from backend.models.ticket import Ticket
 from backend.schemas.contract import ContractCreate, ContractFilter
 from fastapi import HTTPException
 from datetime import datetime, timezone
@@ -7,8 +8,6 @@ from typing import List, Tuple
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import selectinload
 from backend.models.client import Client
-from backend.services import ticket_service
-from backend.services.ticket_service import TicketService
 
 from backend.utils.response import api_response
 
@@ -110,3 +109,45 @@ class ContractService:
         result = await db.execute(stmt)
         contracts = result.scalars().all()
         return contracts
+    
+    # 合同剩余需求 (工单各项需求 - 已创建工单需求各项需求之和)
+    @staticmethod
+    async def get_remaining_requirements(db: AsyncSession, contract_id: int):
+        contract = await db.get(Contract, contract_id)
+        if not contract:
+            raise HTTPException(status_code=404, detail="合同不存在")
+        # 获取已创建工单需求之和
+        created_requirements = await db.execute(select(func.sum(Ticket.detail_pages),func.sum(Ticket.video_count),func.sum(Ticket.image_count),func.sum(Ticket.workflow_count)).where(Ticket.contract_id == contract_id))
+        created_requirements = created_requirements.one()
+        # 处理 None 值的情况（当没有工单时）
+        if created_requirements is None:
+            created_requirements = (0, 0, 0, 0)
+        
+        # 计算剩余需求
+        remaining_requirements = {
+            "detail_pages": max(0, contract.detail_pages - (created_requirements[0] or 0)),
+            "video_count": max(0, contract.video_count - (created_requirements[1] or 0)),
+            "image_count": max(0, contract.image_count - (created_requirements[2] or 0)),
+            "workflow_count": max(0, contract.workflow_count - (created_requirements[3] or 0))
+        }
+        return remaining_requirements
+    
+
+
+    # 删除合同
+    @staticmethod
+    async def delete_contract(db: AsyncSession, contract_id: int):
+        contract = await db.get(Contract, contract_id)
+        if not contract:
+            raise HTTPException(status_code=404, detail="合同不存在")
+        # 查询合同下是否存在工单
+        stmt = select(Ticket).where(Ticket.contract_id == contract_id)
+        result = await db.execute(stmt)
+        tickets = result.scalars().all()
+        if tickets:
+            return api_response(success=False, error="合同下存在工单，不能删除")
+        await db.delete(contract)
+        await db.flush()
+        return api_response(success=True, data={"msg": "合同删除成功"})
+    
+

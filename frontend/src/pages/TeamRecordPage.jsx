@@ -38,6 +38,7 @@ const TeamRecordPage = () => {
         name: '',
         status: [],
         source: [],
+        sales_name: '',
         page: 1,
         page_size: 10
     });
@@ -233,27 +234,47 @@ const TeamRecordPage = () => {
                     {/* 表格头部 */}
                     <div className="p-4 border-b border-slate-200">
                         {/* 搜索框、筛选器等 */}
-                        <div className="flex justify-between items-center">
-                            {/* 搜索框 */}
-                            <div className="relative w-full max-w-xs">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Search className="w-5 h-5 text-slate-400" />
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                                {/* 搜索区域 */}
+                                <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                                    {/* 客户名称搜索框 */}
+                                    <div className="relative flex-1 min-w-0">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Search className="w-4 h-4 text-slate-400" />
+                                        </div>
+                                        <input 
+                                            type="text" 
+                                            placeholder="搜索客户名称..." 
+                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 placeholder:text-slate-400 text-sm"
+                                            value={filters.name}
+                                            onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+                                        />
+                                    </div>
+                                    {/* 销售名称搜索框 */}
+                                    <div className="relative flex-1 min-w-0">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Search className="w-4 h-4 text-slate-400" />
+                                        </div>
+                                        <input 
+                                            type="text" 
+                                            placeholder="搜索销售名称..." 
+                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 placeholder:text-slate-400 text-sm"
+                                            value={filters.sales_name}
+                                            onChange={(e) => setFilters({ ...filters, sales_name: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
-                                <input 
-                                    type="text" 
-                                    placeholder="搜索客户名称" 
-                                    className="form-input !pl-10 w-full bg-slate-50 border-slate-200"
-                                    value={filters.name}
-                                    onChange={(e) => setFilters({ ...filters, name: e.target.value })}
-                                />
-                            </div>
-                            {/* 筛选器 */}
-                            <div className="flex items-center gap-2">
-                                <FilterDropdown 
-                                    followUpStatusMap={followUpStatusMap} 
-                                    filters={filters} 
-                                    onFilterChange={(newFilters) => setFilters({...filters, ...newFilters})} 
-                                />
+                                
+                                {/* 筛选器区域 */}
+                                <div className="flex items-center gap-3">
+                                    <div className="hidden sm:block w-px h-8 bg-slate-200"></div>
+                                    <FilterDropdown 
+                                        followUpStatusMap={followUpStatusMap} 
+                                        filters={filters} 
+                                        onFilterChange={(newFilters) => setFilters({...filters, ...newFilters})} 
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -352,6 +373,7 @@ const TeamRecordPage = () => {
                                                                 setIsModalOpen(true);
                                                                 setClientId(client.id);
                                                             }}
+                                                            title="修改客户负责人"
                                                         >
                                                             <Edit className="w-5 h-5" />
                                                         </button>

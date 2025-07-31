@@ -15,3 +15,14 @@ class TicketCreate(BaseModel):
     notes: str = ''
     priority: str
     platform: str
+
+class TicketUpdate(BaseModel):
+    name: str
+    detail_pages: int
+    video_count: int
+    image_count: int
+    workflow_count: int
+    wechat_group: str
+    notes: str = ''
+    priority: str
+    platform: str

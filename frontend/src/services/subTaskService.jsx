@@ -83,3 +83,18 @@ export const getTeamTasks = async (filters) => {
       return { success: false, error: detail };
     }
 };
+
+
+//根据工单id获取子任务列表
+export const getSubTasksByTicketId = async (ticketId) => {
+  try {
+      const response = await api.get(`/sub_tasks/ticket/${ticketId}`);
+      if(response.data.success){
+        return {success: true, data: response.data.data};
+      }else{
+        return {success: false, error: response.data.error};
+      }
+  } catch (error) {
+      throw error;
+  }
+};

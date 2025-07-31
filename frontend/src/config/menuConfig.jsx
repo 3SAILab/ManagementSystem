@@ -5,7 +5,7 @@ export const menuItems = [
     access: {
       roles: ['admin', 'manager', 'employee'],
       departments: ['生产部'],
-      positions: ['美工主管', '渲染主管','美工','渲染']
+      positions: ['美工','渲染']
     },
     children: [
       { label: '工单看板', path: '/', icon: 'layout-dashboard' },
@@ -29,7 +29,7 @@ export const menuItems = [
     access: {
       roles: ['admin', 'manager', 'employee'],
       departments: ['营销管理部'],
-      positions: ['销售主管', '销售']
+      positions: ['销售']
     },
     children: [
       { label: '我的看板', path: '/sales_dashboard', icon: 'bar-chart-3' },
@@ -40,12 +40,12 @@ export const menuItems = [
     label: '销售主管',
     access: {
       roles: ['manager'],
-      positions: ['销售主管'],
+      positions: ['销售'],
       departments: ['营销管理部'],
     },
     children: [
       { label: '团队记录', path: '/team_record', icon: 'contact' },
-      { label: '销售数据', path: '/sales_data', icon: 'bar-chart-3' },  
+      { label: '销售数据', path: '/sales_data', icon: 'bar-chart-3' },
     ]
   },
   {
@@ -53,11 +53,21 @@ export const menuItems = [
     access: {
       roles: ['manager'],
       departments: ['生产部'],
-      positions: ['美工主管', '渲染主管'],
+      positions: ['美工', '产品渲染'],
     },
     children: [
       { label: '工单分配', path: '/work_assignment', icon: 'check-square' },
       { label: '团队任务监控', path: 'team_dashboard', icon: 'contact' }
     ]
-  }
+  },
+  {
+    label: '统计看板',
+    access: {
+      roles: ['owner'],
+    },
+    children: [
+      { label: '销售数据', path: '/sales_data', icon: 'bar-chart-3' },
+    ]
+  },
+
 ];

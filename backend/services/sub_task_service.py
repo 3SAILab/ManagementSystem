@@ -171,8 +171,8 @@ class SubTaskService:
         sub_task.assignee_id = assignee_id 
         sub_task.estimated_completion_time = estimated_completion_time
         sub_task.difficulty_score = difficulty_score
-        if sub_task.charge_id == None:
-            sub_task.status = '未开始' # 如果没有负责人，则任务状态为未开始
+        if sub_task.status == "未分配":
+            sub_task.status = '未开始' # 如果是未分配任务，则任务状态为未开始
         sub_task.assigned_at = datetime.now(timezone.utc)
         await db.flush()
         await db.refresh(sub_task)
@@ -299,3 +299,16 @@ class SubTaskService:
             raise HTTPException(status_code=404, detail="任务不存在或未修改任何字段")
         await db.flush()
         return updated
+    
+    # 根据工单id获取子任务
+    @staticmethod
+    async def get_sub_tasks_by_ticket_id(db: AsyncSession, ticket_id: int):
+        sub_tasks = await db.execute(
+            select(SubTask).where(SubTask.ticket_id == ticket_id)
+            .options(
+                selectinload(SubTask.charge),
+                selectinload(SubTask.assignee),
+            )
+        )
+        sub_tasks = sub_tasks.scalars().all()
+        return sub_tasks
