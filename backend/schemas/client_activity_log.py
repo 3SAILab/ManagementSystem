@@ -4,7 +4,7 @@ from typing import Optional
 
 class ClientActivityLogCreate(BaseModel):
     client_id: int
-    log_content: str
+    log_content: Optional[str] = None
     status: Optional[str] = None
     log_time: datetime
 

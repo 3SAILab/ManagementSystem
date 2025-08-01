@@ -40,7 +40,7 @@ export const menuItems = [
     label: '销售主管',
     access: {
       roles: ['manager'],
-      positions: ['销售'],
+      positions: ['销售','销售主管'],
       departments: ['营销管理部'],
     },
     children: [
@@ -53,7 +53,7 @@ export const menuItems = [
     access: {
       roles: ['manager'],
       departments: ['生产部'],
-      positions: ['美工', '产品渲染'],
+      positions: ['美工', '产品渲染','渲染主管','美工主管'],
     },
     children: [
       { label: '工单分配', path: '/work_assignment', icon: 'check-square' },

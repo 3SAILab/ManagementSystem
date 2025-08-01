@@ -200,7 +200,7 @@ class SubTaskService:
     async def get_sub_tasks_by_charge_id(db: AsyncSession, charge_id: int):
         # 已完成任务只获取本月的部分，其他的获取全部
         stmt = select(SubTask).where(SubTask.charge_id == charge_id)
-        stmt = stmt.where(or_(SubTask.completed_at >= datetime.now(timezone.utc).replace(day=1), SubTask.completed_at == None))
+        stmt = stmt.where(or_(SubTask.completed_at >= datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0), SubTask.completed_at == None))
         stmt = stmt.options(
             selectinload(SubTask.ticket)
                 .selectinload(Ticket.contract)
