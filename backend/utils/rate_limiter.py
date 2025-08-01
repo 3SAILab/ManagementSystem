@@ -8,7 +8,7 @@ class RateLimiter:
         redis_params = {
             "host": settings.REDIS_HOST,
             "port": settings.REDIS_PORT,
-            "db": settings.REDIS_DB,
+            "db": settings.VERIFY_CODE_DB,
             "decode_responses": True
         }
         

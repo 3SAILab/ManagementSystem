@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import insert
 import uvicorn
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
-
+from backend.config import settings
 from backend.api.api import api_router
 # 导入异步引擎和 Base
 from backend.db.session import Base, async_engine 
@@ -115,15 +115,12 @@ async def lifespan(app: FastAPI):
 # 2. 将 Lifespan 管理器传递给 FastAPI
 app = FastAPI(lifespan=lifespan)
 
-origins =[
-    "http://192.168.10.36:5173", #react 前端地址
-    "http://localhost:5173"
-]
+origins = settings.CORS_ORIGINS
 
 # 配置 CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 允许的来源
+    allow_origins=origins,  # 允许的来源
     allow_credentials=True,  # 允许携带凭证（如 Cookie）
     allow_methods=["*"],  # 允许所有 HTTP 方法
     allow_headers=["*"],  # 允许所有请求头

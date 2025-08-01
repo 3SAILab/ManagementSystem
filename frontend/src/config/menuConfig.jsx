@@ -14,9 +14,9 @@ export const menuItems = [
   {
     label: '人事管理',
     access: {
-      roles: ['admin', 'manager', 'employee'],
+      roles: ['admin', 'manager'],
       departments: ['人事行政部'],
-      positions: ['HRBP']
+      positions: ['人事专员']
     },
     children: [
       { label: '员工管理', path: '/employee_management', icon: 'users' },

@@ -40,7 +40,7 @@ async def get_sub_tasks_unassigned(
 ):
     if current_employee.position.name == "美工":
         return await SubTaskService.get_art_tasks_uncompleted(db)
-    elif current_employee.position.name == "产品渲染":
+    elif current_employee.position.name == "渲染":
         return await SubTaskService.get_render_tasks_uncompleted(db)
 
 # 分配任务

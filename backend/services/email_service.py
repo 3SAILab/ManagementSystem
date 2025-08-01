@@ -15,7 +15,7 @@ class EmailVerificationService:
         redis_params = {
             "host": settings.REDIS_HOST,
             "port": settings.REDIS_PORT,
-            "db": settings.REDIS_DB,
+            "db": settings.VERIFY_CODE_DB,
             "decode_responses": True
         }
         
@@ -148,7 +148,8 @@ class EmailVerificationService:
                 "success": False,
                 "message": "系统内部错误"
             }
-    
+
+
     def get_code_info(self, email: str, purpose: str = "general") -> dict:
         """获取验证码信息（调试用）"""
         try:

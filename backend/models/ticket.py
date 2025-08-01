@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, DateTime, Integer, String, Text, TIMESTAMP, ForeignKey, func
+    Boolean, Column, DateTime, Integer, String, Text, TIMESTAMP, ForeignKey, func
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -11,6 +11,7 @@ class Ticket(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False) #工单名称
     contract_id = Column(Integer, ForeignKey('contract.id'), nullable=False) #合同ID
+    need_shoot = Column(Boolean, nullable=False, default=False, server_default='false') #是否需要拍摄
     detail_pages = Column(Integer, nullable=False, default=0) #详情页数量
     video_count = Column(Integer, nullable=False, default=0) #视频数量
     image_count = Column(Integer, nullable=False, default=0) #图片数量

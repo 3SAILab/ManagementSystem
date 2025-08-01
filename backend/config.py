@@ -17,13 +17,15 @@ class Settings(BaseSettings):
     # Redis配置
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
-    REDIS_DB: int = int(os.getenv("REDIS_DB", "0"))
+    VERIFY_CODE_DB: int = int(os.getenv("VERIFY_CODE_DB", "0"))
     REDIS_PASSWORD: str = os.getenv("REDIS_PASSWORD", "")
     
     # 应用配置
     CODE_EXPIRE_MINUTES: int = int(os.getenv("CODE_EXPIRE_MINUTES", "10"))
     CODE_LENGTH: int = int(os.getenv("CODE_LENGTH", "6"))
     
+    # 前端地址
+    CORS_ORIGINS: list[str] = []
     # Pydantic V2 配置方式
     model_config = ConfigDict(
         env_file = Path(__file__).parent / '.env',         # 指定环境变量文件
