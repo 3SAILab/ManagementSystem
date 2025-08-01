@@ -16,6 +16,7 @@ class TicketService:
         new_ticket = Ticket(
             name=ticket.name,
             contract_id=ticket.contract_id,
+            need_shoot=ticket.needShoot,
             detail_pages=ticket.detail_pages,
             video_count=ticket.video_count,
             image_count=ticket.image_count,
