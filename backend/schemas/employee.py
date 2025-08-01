@@ -54,6 +54,7 @@ class EmployeeInfo(BaseModel):
     position_id: int
     manager_id: Optional[int] = None
     base_salary: float
+    total_salary: Optional[float] = None 
     work_performance_score: Optional[float] = None
     attendance_performance_score: Optional[float] = None
     is_probation: bool
@@ -115,6 +116,8 @@ class EmployeeInfo(BaseModel):
             position_id=emp.position_id,
             manager_id=emp.manager_id,
             base_salary=emp.base_salary,
+            total_salary=emp.total_salary,
+            bank_account=emp.bank_account,
             work_performance_score=emp.work_performance_score,
             attendance_performance_score=emp.attendance_performance_score,
             is_probation=emp.is_probation,
@@ -127,6 +130,7 @@ class EmployeeInfo(BaseModel):
             major=emp.major,
             graduation_date=emp.graduation_date,
             id_number=emp.id_number,
+            marital_status=emp.marital_status,
         )
 
     def to_model(self) -> Employee:
@@ -141,6 +145,8 @@ class EmployeeInfo(BaseModel):
             position_id=self.position_id,
             manager_id=self.manager_id,
             base_salary=self.base_salary,
+            total_salary=self.total_salary,
+            bank_account=self.bank_account,
             work_performance_score=self.work_performance_score,
             attendance_performance_score=self.attendance_performance_score,
             is_probation=self.is_probation,
@@ -154,7 +160,7 @@ class EmployeeInfo(BaseModel):
             graduation_date=self.graduation_date,
             id_number=self.id_number,
             nationality=self.nationality,
-
+            marital_status=self.marital_status,
         )
 
 

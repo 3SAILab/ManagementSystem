@@ -227,7 +227,8 @@ class EmployeeService:
     #修改员工工作信息
     @staticmethod
     async def update_employee_work_info(db: AsyncSession, id: int, employee: EmployeeInfo):
-        existing = await db.execute(select(Employee).where(Employee.id==id))
+        result = await db.execute(select(Employee).where(Employee.id == id))
+        existing = result.scalar()  # 获取单个对象，如果没有则返回 None
         if not existing:
             raise HTTPException(404, "员工不存在")
         await db.execute(update(Employee).where(Employee.id==id).values(**employee.model_dump(exclude_unset=True)))

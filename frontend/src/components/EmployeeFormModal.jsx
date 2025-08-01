@@ -15,7 +15,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
     emergency_contact: { name: '', phone: '' },
     hire_date: '', status: '', department_id: '', position_id: '', role: '', manager_id: '',
     is_probation: false, education: '', university: '', major: '', graduation_date: '',
-    base_salary: '', performance_salary: '', bank_account: '', work_performance_score: 0, attendance_performance_score: 0
+    base_salary: '', total_salary: '', bank_account: '', work_performance_score: 0, attendance_performance_score: 0
   };
   // 根据模态打开/关闭和 id 初始化或重置表单
   useEffect(() => {
@@ -25,17 +25,15 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
         if (id) {
           const data = await getEmployeeById(id);
           if (data.success) {
-            console.log("当前员工数据", data);
             setEmployee(data.data);
             // 编辑时预加载部门、职位、上级
             const posOpts = await getPositionOptions(data.data.department_id, data.data.position_id);
-            console.log("syncForm职位选项", posOpts);
             setPositionOptions(Array.isArray(posOpts) ? posOpts : []);
             const mgrOpts = await getManagerOptions(data.data.department_id);
-            console.log("syncForm上级选项", mgrOpts);
             setManagerOptions(Array.isArray(mgrOpts) ? mgrOpts : []);
           } else {
-            console.error("获取员工数据失败", data.error);
+            toast.error("获取员工数据失败");
+            console.error("获取员工数据失败");
           }
         } else {
           setEmployee(initialEmployeeState);
@@ -86,7 +84,16 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
   // 输入框改变处理
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
+
+    // 关键：对于文本输入，如果值为空字符串，则设为 null
+    let newValue;
+    if (type === 'checkbox') {
+      newValue = checked;
+    } else {
+      // 所有文本输入，清空即为 null
+      newValue = value === '' ? null : value;
+    }
+
     setEmployee((prev) => ({
       ...prev,
       [name]: newValue
@@ -210,7 +217,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <input
                   type="text"
                   name="name"
-                  value={employee.name || ''}
+                  value={employee.name ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   required
@@ -222,7 +229,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">性别</label>
                 <select
                   name="gender"
-                  value={employee.gender || ''}
+                  value={employee.gender ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
@@ -238,7 +245,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <input
                   type="date"
                   name="birth_date"
-                  value={employee.birth_date || ''}
+                  value={employee.birth_date ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -249,7 +256,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">婚姻状况</label>
                 <select
                   name="marital_status"
-                  value={employee.marital_status || ''}
+                  value={employee.marital_status ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
@@ -267,7 +274,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <input
                   type="text"
                   name="id_number"
-                  value={employee.id_number || ''}
+                  value={employee.id_number ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -280,7 +287,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <input
                   type="tel"
                   name="phone"
-                  value={employee.phone || ''}
+                  value={employee.phone ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -295,7 +302,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <input
                   type="email"
                   name="email"
-                  value={employee.email || ''}
+                  value={employee.email ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   required
@@ -308,16 +315,16 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">家庭住址</label>
                 <AddressSelector
                   value={[
-                    employee.address?.province || '',
-                    employee.address?.city || '',
-                    employee.address?.district || ''
+                    employee.address?.province ?? '',
+                    employee.address?.city ?? '',
+                    employee.address?.district ?? ''
                   ]}
                   onChange={handleAddressSelectorChange}
                 />
                 <input
                   type="text"
                   name="street_address"
-                  value={employee.address?.street || ''}
+                  value={employee.address?.street ?? ''}
                   onChange={handleAddressChange('street')}
                   placeholder="详细街道、楼牌号等"
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -330,7 +337,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <input
                   type="text"
                   name="emergency_contact_name"
-                  value={employee.emergency_contact?.name || ''}
+                  value={employee.emergency_contact?.name ?? ''}
                   onChange={handleEmergencyContactChange('name')}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -340,7 +347,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <input
                   type="text"
                   name="emergency_contact_phone"
-                  value={employee.emergency_contact?.phone || ''}
+                  value={employee.emergency_contact?.phone ?? ''}
                   onChange={handleEmergencyContactChange('phone')}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -361,7 +368,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <input
                   type="date"
                   name="hire_date"
-                  value={employee.hire_date || ''}
+                  value={employee.hire_date ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   required
@@ -375,7 +382,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 </label>
                 <select
                   name="status"
-                  value={employee.status || ''}
+                  value={employee.status ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
@@ -393,7 +400,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 </label>
                 <select
                   name="department_id"
-                  value={employee.department_id || ''}
+                  value={employee.department_id ?? ''}
                   onChange={handleDepartmentChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   required
@@ -414,7 +421,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 </label>
                 <select
                   name="position_id"
-                  value={employee.position_id || ''}
+                  value={employee.position_id ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   required
@@ -435,7 +442,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 </label>
                 <select
                   name="role"
-                  value={employee.role || ''}
+                  value={employee.role ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   required
@@ -453,7 +460,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">上级领导</label>
                 <select
                   name="manager_id"
-                  value={employee.manager_id || ''}
+                  value={employee.manager_id ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
@@ -494,7 +501,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <input
                   type="text"
                   name="education"
-                  value={employee.education || ''}
+                  value={employee.education ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -504,7 +511,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <input
                   type="text"
                   name="university"
-                  value={employee.university || ''}
+                  value={employee.university ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -514,7 +521,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <input
                   type="text"
                   name="major"
-                  value={employee.major || ''}
+                  value={employee.major ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -524,7 +531,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <input
                   type="date"
                   name="graduation_date"
-                  value={employee.graduation_date || ''}
+                  value={employee.graduation_date ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -544,7 +551,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                   type="number"
                   step="0.01"
                   name="base_salary"
-                  value={employee.base_salary || ''}
+                  value={employee.base_salary ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   required
@@ -555,8 +562,8 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <input
                   type="number"
                   step="0.01"
-                  name="performance_salary"
-                  value={employee.performance_salary || ''}
+                  name="total_salary"
+                  value={employee.total_salary ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -566,7 +573,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                 <input
                   type="text"
                   name="bank_account"
-                  value={employee.bank_account || ''}
+                  value={employee.bank_account ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -577,7 +584,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                   type="number"
                   step="0.01"
                   name="work_performance_score"
-                  value={employee.work_performance_score || ''}
+                  value={employee.work_performance_score ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -588,7 +595,7 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
                   type="number"
                   step="0.01"
                   name="attendance_performance_score"
-                  value={employee.attendance_performance_score || ''}
+                  value={employee.attendance_performance_score ?? ''}
                   onChange={handleInputChange}
                   className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />

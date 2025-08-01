@@ -114,6 +114,7 @@ export const addEmployee = async (employee) => {
 
 //修改员工工作信息
 export const updateEmployeeWorkInfo = async (id, employee) => {
+  console.log(employee)
   try {
     const response = await api.put(`/employee/work-info/${id}`, employee);
     return { success: true, data: response.data };

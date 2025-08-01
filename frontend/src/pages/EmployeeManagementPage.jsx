@@ -57,15 +57,16 @@ export default function EmployeeManagementPage() {
     // 将表单数据转换为后端标准格式
     const payload = {
       name: employee.name,
-      gender: employee.gender===''?null:employee.gender,
+      gender: employee.gender,
       email: employee.email,
-      phone: employee.phone || undefined,
-      birth_date: employee.birth_date || undefined,
+      phone: employee.phone,
+      birth_date: employee.birth_date,
       hire_date: employee.hire_date,
       department_id: Number(employee.department_id),
       position_id: Number(employee.position_id),
-      manager_id: employee.manager_id ? Number(employee.manager_id) : undefined,
+      manager_id: employee.manager_id ? Number(employee.manager_id) : null,
       base_salary: Number(employee.base_salary),
+      total_salary: Number(employee.total_salary),
       work_performance_score: Number(employee.work_performance_score),
       attendance_performance_score: Number(employee.attendance_performance_score),
       is_probation: employee.is_probation,
@@ -76,10 +77,10 @@ export default function EmployeeManagementPage() {
       education: employee.education,
       university: employee.university,
       major: employee.major,
-      graduation_date: employee.graduation_date || undefined,
-      id_number: employee.id_number || undefined,
-      marital_status: employee.marital_status || undefined,
-      bank_account: employee.bank_account || undefined,
+      graduation_date: employee.graduation_date,
+      id_number: employee.id_number,
+      marital_status: employee.marital_status,
+      bank_account: employee.bank_account,
     };
 
 
