@@ -204,10 +204,10 @@ class StatisticsService:
         # 获取本月平均成交周期
         if sales_id:
             result = await db.execute(
-                select(Client.created_at, func.min(Contract.created_at).label("first_contract"))
+                select(Client.created_at, func.min(Contract.transaction_time).label("first_contract"))
                 .join(Contract, Contract.client_id == Client.id)
                 .where(and_(
-                    Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
                     Contract.contract_type == "首单",
                     Contract.sales_id == sales_id
                 ))
@@ -215,10 +215,10 @@ class StatisticsService:
             )
         else:
             result = await db.execute(
-                select(Client.created_at, func.min(Contract.created_at).label("first_contract"))
+                select(Client.created_at, func.min(Contract.transaction_time).label("first_contract"))
                 .join(Contract, Contract.client_id == Client.id)
                 .where(and_(
-                    Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
                     Contract.contract_type == "首单"
                 ))
                 .group_by(Client.id, Client.created_at)
@@ -226,7 +226,7 @@ class StatisticsService:
         records = result.all()
         if records:
             current_cycles = [
-                (first_contract - created_at).days for created_at, first_contract in records
+                (first_contract - transaction_time).days for transaction_time, first_contract in records
             ]
             current_avg = sum(current_cycles) / len(current_cycles)
         else:
@@ -235,10 +235,10 @@ class StatisticsService:
         # 获取上月平均成交周期
         if sales_id:
             result = await db.execute(
-                select(Client.created_at, func.min(Contract.created_at).label("first_contract"))
+                select(Client.created_at, func.min(Contract.transaction_time).label("first_contract"))
                 .join(Contract, Contract.client_id == Client.id)
                 .where(and_(
-                    Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                    Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
                     Contract.contract_type == "首单",
                     Contract.sales_id == sales_id
                 ))
@@ -246,10 +246,10 @@ class StatisticsService:
             )
         else:
             result = await db.execute(
-                select(Client.created_at, func.min(Contract.created_at).label("first_contract"))
+                select(Client.created_at, func.min(Contract.transaction_time).label("first_contract"))
                 .join(Contract, Contract.client_id == Client.id)
                 .where(and_(
-                    Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                    Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
                     Contract.contract_type == "首单"
                 ))
                 .group_by(Client.id, Client.created_at)
@@ -257,7 +257,7 @@ class StatisticsService:
         records = result.all()
         if records:
             last_cycles = [
-                (first_contract - created_at).days for created_at, first_contract in records
+                (first_contract - transaction_time).days for transaction_time, first_contract in records
             ]
             last_avg = sum(last_cycles) / len(last_cycles)
         else:
@@ -279,7 +279,7 @@ class StatisticsService:
         # 统计坏单
         bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount)).where(
             and_(
-                Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
                 Contract.sales_id == employee_id,
                 Contract.status == "坏单"
             )
@@ -288,7 +288,7 @@ class StatisticsService:
         # 统计正常单
         result = await db.execute(select(func.sum(Contract.total_amount)).where(
             and_(
-                Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
                 Contract.sales_id == employee_id,
                 Contract.status != "坏单"
             )
@@ -299,7 +299,7 @@ class StatisticsService:
         # 统计坏单
         bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount)).where(
             and_(
-                Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
                 Contract.sales_id == employee_id,
                 Contract.status == "坏单"
             )
@@ -308,7 +308,7 @@ class StatisticsService:
         # 统计正常单
         result = await db.execute(select(func.sum(Contract.total_amount)).where(
             and_(
-                Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
                 Contract.sales_id == employee_id,
                 Contract.status != "坏单"
             )
@@ -328,7 +328,7 @@ class StatisticsService:
         # 统计坏单
         bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount * Contract.commission_rate / 100)).where(
             and_(
-                Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
                 Contract.sales_id == employee_id,
                 Contract.status == "坏单"
             )
@@ -337,7 +337,7 @@ class StatisticsService:
         # 统计正常单
         result = await db.execute(select(func.sum(Contract.total_amount * Contract.commission_rate / 100)).where(
             and_(
-                Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
                 Contract.sales_id == employee_id,
                 Contract.status != "坏单"
             )
@@ -351,7 +351,7 @@ class StatisticsService:
         # 统计坏单
         bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount * Contract.commission_rate / 100)).where(
             and_(
-                Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
                 Contract.sales_id == employee_id,
                 Contract.status == "坏单"
             )
@@ -360,7 +360,7 @@ class StatisticsService:
         # 统计正常单
         result = await db.execute(select(func.sum(Contract.total_amount * Contract.commission_rate / 100)).where(
             and_(
-                Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
                 Contract.sales_id == employee_id,
                 Contract.status != "坏单"
             )
@@ -382,7 +382,7 @@ class StatisticsService:
         # 获取当前月份的订单数
         result = await db.execute(select(func.count(Contract.id)).where(
             and_(
-                Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
                 Contract.sales_id == employee_id
             )
         ))
@@ -390,7 +390,7 @@ class StatisticsService:
         # 获取上个月的订单数
         result = await db.execute(select(func.count(Contract.id)).where(
             and_(
-                Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
                 Contract.sales_id == employee_id
             )
         ))
@@ -407,7 +407,7 @@ class StatisticsService:
         # 获取当前月份的待结算订单数
         result = await db.execute(select(func.count(Contract.id)).where(
             and_(
-                Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
                 Contract.sales_id == employee_id,
                 Contract.status == "待结算"
             )
@@ -416,7 +416,7 @@ class StatisticsService:
         # 获取上个月的待结算订单数
         result = await db.execute(select(func.count(Contract.id)).where(
             and_(
-                Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
                 Contract.sales_id == employee_id,
                 Contract.status == "待结算"
             )
@@ -439,7 +439,7 @@ class StatisticsService:
             # 统计坏单
             bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount*Contract.commission_rate/100)).where(
                 and_(
-                    Contract.created_at.between(start_date, end_date),
+                    Contract.transaction_time.between(start_date, end_date),
                     Contract.sales_id == employee_id,
                     Contract.status == "坏单"
                 )
@@ -448,7 +448,7 @@ class StatisticsService:
             # 统计正常单
             result = await db.execute(select(func.sum(Contract.total_amount*Contract.commission_rate/100)).where(
                 and_(
-                    Contract.created_at.between(start_date, end_date),
+                    Contract.transaction_time.between(start_date, end_date),
                     Contract.sales_id == employee_id,
                     Contract.status != "坏单"
                 )
@@ -521,7 +521,7 @@ class StatisticsService:
                 select(func.sum(Contract.paid_amount * Contract.commission_rate / 100))
                 .where(
                     and_(
-                        Contract.created_at.between(start, end),
+                        Contract.transaction_time.between(start, end),
                         Contract.sales_id == employee_id,
                         Contract.status == "坏单"
                     )
@@ -535,7 +535,7 @@ class StatisticsService:
                     func.count(Contract.id))  # 同时统计订单数
                 .where(
                     and_(
-                        Contract.created_at.between(start, end),
+                        Contract.transaction_time.between(start, end),
                         Contract.sales_id == employee_id,
                         Contract.status != "坏单"
                     )
@@ -572,7 +572,7 @@ class StatisticsService:
             selectinload(Contract.sales),
             selectinload(Contract.client)
         ).where(
-            Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date)
+            Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date)
         )
         result = await db.execute(contracts_query)
         contracts = result.scalars().all()
@@ -639,8 +639,10 @@ class StatisticsService:
             sales_name = contract.sales.name if contract.sales else "未知"
             if sales_name not in sales_performance:
                 sales_performance[sales_name] = {"sales": 0, "count": 0}
+                sales_performance[sales_name]["id"] = contract.sales_id
             sales_performance[sales_name]["sales"] += sales_amount
             sales_performance[sales_name]["count"] += 1
+            sales_performance[sales_name]["id"] = contract.sales_id
             
             # 产品类目统计
             category = contract.client.product_type if contract.client.product_type else "其他"

@@ -105,10 +105,11 @@ const ContractDetailPage = () => {
         init();
         toast.success('创建工单成功');
       } else {
-        toast.error('创建工单失败，请重试');
+        toast.error(result.error);
       }
     } catch (err) {
-
+      console.error(err);
+      toast.error('创建工单失败，请重试');
     }
   };
   // 处理工单编辑

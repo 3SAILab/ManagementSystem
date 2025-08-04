@@ -94,7 +94,7 @@ const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
       video_count: parseInt(contract.videos),
       image_count: parseInt(contract.images),
       workflow_count: parseInt(contract.workflows),
-      notes: contract.notes
+      transaction_time: contract.transactionTime
     };
     const response = await addContract(payload);
     await handleSaveLog();

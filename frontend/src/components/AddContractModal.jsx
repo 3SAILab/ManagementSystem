@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ModalCloseButton from "./ModalCloseButton";
 
 const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
@@ -11,6 +11,7 @@ const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
     videos: 0,
     images: 0,
     workflows: 0,
+    transactionTime: "",
   });
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -28,6 +29,16 @@ const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
     onAdd(formData);
     onClose();
   };
+
+  useEffect(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    setFormData((prev) => ({ ...prev, transactionTime: `${year}-${month}-${day}T${hours}:${minutes}` }));
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
@@ -166,7 +177,21 @@ const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
               />
             </div>
           </div>
-
+          <hr className="my-6" />
+          {/* 成交时间 */}
+          <div className="space-y-2">
+              <label htmlFor="transaction-time" className="block text-sm font-medium text-slate-700">
+                成交时间
+              </label>
+              <input
+                type="datetime-local"
+                id="transaction-time"
+                name="transactionTime"
+                value={formData.transactionTime}
+                onChange={(e) => setFormData({ ...formData, transactionTime: e.target.value })}
+                className="form-input block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
+              />
+          </div>
           {/* 提交按钮 */}
           <div className="mt-6 flex justify-end gap-3">
             <button

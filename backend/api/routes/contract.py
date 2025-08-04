@@ -56,7 +56,7 @@ async def get_contracts(
             total_amount=contract.total_amount,
             paid_amount=contract.paid_amount,
             commission_rate=contract.commission_rate,
-            created_at=contract.created_at,
+            transaction_time=contract.transaction_time,
             status=contract.status
         ) 
         for contract in contracts
@@ -89,7 +89,7 @@ async def get_contracts_by_client_id(
             total_amount=contract.total_amount,
             paid_amount=contract.paid_amount,
             commission_rate=contract.commission_rate,
-            created_at=contract.created_at,
+            transaction_time=contract.transaction_time,
             status=contract.status
         ) 
         for contract in contracts

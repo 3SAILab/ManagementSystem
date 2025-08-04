@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import ModalCloseButton from "./ModalCloseButton";
 import { getRemainingRequirements } from "../services/contractService";
+import { toast } from "react-toastify";
 
 const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
-  if (!isOpen) return null;
   const [remainingRequirements, setRemainingRequirements] = useState({
     detail_pages: 0,
     video_count: 0,
@@ -107,14 +107,18 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
     if (Object.values(newErrors).some(error => error !== "")) {
       return;
     }
-
+    // 需求之和不能为空
+    if (formData.detail_pages + formData.image_count + formData.video_count + formData.workflow_count <= 0) {
+      toast.error('需求不能为空');
+      return;
+    }
     onAdd(formData);
     onClose();
   };
 
   // 检查是否有任何错误
   const hasErrors = Object.values(errors).some(error => error !== "");
-
+  if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 transform transition-all animate-scale-in">

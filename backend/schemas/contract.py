@@ -29,6 +29,7 @@ class ContractCreate(BaseModel):
     video_count: int
     image_count: int
     workflow_count: int
+    transaction_time: datetime
 
 
 # 合同列表
@@ -39,7 +40,7 @@ class ContractList(BaseModel):
     total_amount: float
     paid_amount: float
     commission_rate: float
-    created_at: datetime
+    transaction_time: datetime
     status: str
 # 合同过滤
 class ContractFilter(BaseModel):

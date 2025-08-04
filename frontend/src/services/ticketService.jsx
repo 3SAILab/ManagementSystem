@@ -4,7 +4,11 @@ import api from "./api";
 export const addTicket = async (ticket) => {
     try {
         const response = await api.post('/tickets', ticket);
-        return {success: true, data: response.data};
+        if (response.data.success){
+            return {success: true, data: response.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
     } catch (error) {
         throw error;
     }

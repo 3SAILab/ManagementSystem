@@ -1,4 +1,4 @@
-const OrderCard = ({ subTaskId, ticketName, progress, warning, clientName, estimatedCompletionTime, chargeName = null, onClick, performanceSalary = null }) => {
+const OrderCard = ({ subTaskId, ticketName, progress, warning, clientName, estimatedCompletionTime, chargeName = null, performanceSalary = null, onClick }) => {
   return (
     <div
       key={subTaskId}

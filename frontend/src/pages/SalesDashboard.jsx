@@ -79,12 +79,10 @@ const SalesDashboard = () => {
       try {
         if (currentView === '月度') {
           const res = await getMonthlySalesStatistics();
-          console.log("res.data", res.data);
           setChartData(res.data || []);
           setChartLabels(['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']);
         } else if (currentView === '周期') {
           const res = await getMonthlySalesByCycle();
-          console.log("res.data", res.data);
           setSalesByCycle(res.data || []);
           setChartData(res.data.map(cycle => cycle.total_amount));
           setChartLabels(res.data.map(cycle => `${cycle.cycle} 周期`));
@@ -383,7 +381,7 @@ const SalesDashboard = () => {
                   >
                     <td className="p-4 font-medium text-slate-800">{contract.client_name || '未知客户'}</td>
                     <td className="p-4 text-slate-600">¥{contract.total_amount.toLocaleString()}</td>
-                    <td className="p-4 text-slate-600">{new Date(contract.created_at).toLocaleDateString()}</td>
+                    <td className="p-4 text-slate-600">{new Date(contract.transaction_time).toLocaleDateString()}</td>
                     <td className="p-4 text-slate-600">¥{contract.paid_amount.toLocaleString()}</td>
                     <td className="p-4 text-slate-600">¥{commission.toLocaleString()}</td>
                     <td className="p-4">

@@ -145,18 +145,21 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
                 const value = e.target.value === '' ? '' : Number(e.target.value);
                 setFormData(prev => ({ ...prev, estimated_completion_time: value }));
               }}
+              required
             />
           </div>
           {/* 难度系数 */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              难度系数<span className="text-red-500">*</span>
+              系数<span className="text-red-500">*</span>
             </label>
             <input
-              type="float"
+              type="number"
+              step="0.1"
               min="0"
               className="w-full px-4 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
               value={formData.difficulty_score ?? ''}
+              required
               onChange={(e) => {
                 const value = e.target.value === '' ? '' : parseFloat(e.target.value);
                 setFormData(prev => ({ ...prev, difficulty_score: value }));
@@ -195,19 +198,30 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
             className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow transition"
             onClick={
               () => {
-                //如果输入的不是大于0的数字不合法，提示
-                if (formData.estimated_completion_time === '') {
+                // 验证预计所需时间
+                if (formData.estimated_completion_time === '' || formData.estimated_completion_time === null) {
                   toast.error('预计所需时间不能为空');
                   return;
                 } else if (formData.estimated_completion_time <= 0) {
                   toast.error('预计所需时间必须大于0');
                   return;
                 }
-                // 负责人不能为空
+                
+                // 验证难度系数
+                if (formData.difficulty_score === '' || formData.difficulty_score === null) {
+                  toast.error('系数不能为空');
+                  return;
+                } else if (formData.difficulty_score <= 0) {
+                  toast.error('系数必须大于0');
+                  return;
+                }
+                
+                // 验证负责人
                 if (!formData.charge_id) {
                   toast.error('负责人不能为空');
                   return;
                 }
+                
                 onSave(formData)
                 onClose()
               }

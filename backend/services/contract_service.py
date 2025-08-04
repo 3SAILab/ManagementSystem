@@ -28,6 +28,7 @@ class ContractService:
             video_count=contract.video_count,
             image_count=contract.image_count,
             workflow_count=contract.workflow_count,
+            transaction_time=contract.transaction_time,
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc)
         )

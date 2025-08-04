@@ -121,6 +121,7 @@ async def get_personal_tasks(
         elif task.status == "已完成":
             warning = "已完成"
         beijing_time = task.created_at.astimezone(ZoneInfo("Asia/Shanghai"))
+        performanceSalary = settings.ART_PERFORMANCE_SALARY*task.difficulty_score/16 if task.task_type == "美工" else None
         sub_tasks_out.append({
             "name": task.ticket.name,
             "progress": task.progress,
@@ -130,7 +131,7 @@ async def get_personal_tasks(
             "sub_task_id": task.id,
             "estimated_completion_time": task.estimated_completion_time,
             "sales_name": task.ticket.contract.sales.name if task.ticket.contract.sales else None,
-            "performance_salary": settings.ART_PERFORMANCE_SALARY*task.difficulty_score/16 if task.task_type == "美工" else None,
+            "performanceSalary": performanceSalary,
         })
     return {
         "sub_tasks": sub_tasks_out,

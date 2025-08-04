@@ -16,7 +16,6 @@ export const login = async (email, password) => {
           withCredentials: true // 确保发送和接收Cookie
         }
       );
-      console.log(response.data);
       if (response.data.success === false) {
         throw new Error('登录失败，请检查账号或密码');
       }

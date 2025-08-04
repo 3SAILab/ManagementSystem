@@ -19,9 +19,14 @@ async def create_ticket(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
+    # 需求之和不能<=0
+    sum = ticket.detail_pages + ticket.video_count + ticket.image_count + ticket.workflow_count
+    if sum <= 0 :
+        return api_response(success=False,error="工单需求不能为空！")
     # 创建工单
     new_ticket = await TicketService.create_ticket(db, ticket, current_employee)
     flag = True
+
     # 如果需要美工，则需要创建美工任务
     if ticket.needArt:
         art_res = await SubTaskService.create_task(db, SubTaskCreate(

@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as echarts from 'echarts'; // 核心库
 import { getSalesData } from '../services/statisticsService';
+import { useNavigate } from 'react-router-dom';
 
 // ECharts 颜色主题
 const chartColors = [
@@ -27,7 +28,7 @@ export default function SalesDataPages() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const navigate = useNavigate();
   const [metrics, setMetrics] = useState({
     totalSales: 0,
     totalDeposit: 0,
@@ -77,16 +78,10 @@ export default function SalesDataPages() {
     '线上': { sales: data.online_sales || 0, count: data.online_orders || 0 },
     '线下': { sales: data.offline_sales || 0, count: data.offline_orders || 0 }
   } : {};
-
+  // 销售人员业绩以及id
   const salesStats = data ? data.sales_performance || {} : {};
   const categoryStats = data ? data.category_stats || {} : {};
 
-  // 图表配置
-  const commonOptions = {
-    responsive: true,
-    animation: true,
-    grid: { top: 10, left: 10, right: 10, bottom: 20 }
-  };
 
   // 初始化图表
   useEffect(() => {
@@ -236,10 +231,23 @@ export default function SalesDataPages() {
                 { offset: 1, color: '#60a5fa' }
               ])
             },
-            data: sortedSalespeople.map(name => salesStats[name].sales)
+            data: sortedSalespeople.map(name => ({
+              value: salesStats[name].sales,    // ECharts 用来渲染的值
+              itemId: salesStats[name].id       // 我们自定义的元数据，用于跳转
+            }))
           }
         ]
       });
+
+      // 添加点击事件监听
+    chartInstances.current.chart3.on('click', function(event) {
+      // event 参数包含点击的详细信息
+      const clickedData = event.data; // 被点击的数据对象
+      const salespersonId = clickedData.itemId; // 销售人员ID
+
+      // 跳转到销售个人页面
+      navigate(`/my_tasks/${salespersonId}`);
+    });
     }
 
     // 初始化第四个图表（产品类目分布）

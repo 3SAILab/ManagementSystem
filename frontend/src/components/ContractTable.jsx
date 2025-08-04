@@ -85,7 +85,7 @@ const ContractTable = ({ contracts = [] }) => {
                 className="hover:bg-slate-50 cursor-pointer"
               >
                 <td className="p-4 text-slate-600">{formatCurrency(contract.total_amount)}</td>
-                <td className="p-4 text-slate-600">{formatDate(contract.created_at)}</td>
+                <td className="p-4 text-slate-600">{formatDate(contract.transaction_time)}</td>
                 <td className="p-4 text-slate-600">{formatCurrency(contract.paid_amount)}</td>
                 <td className="p-4 text-slate-600">{formatCurrency(commission)}</td>
                 <td className="p-4">

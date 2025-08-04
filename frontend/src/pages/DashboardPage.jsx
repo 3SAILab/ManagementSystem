@@ -18,6 +18,7 @@ const DashboardPage = () => {
     getPersonalTasks().then((res) => {
       if(res.success){
         setOrders(res.data.sub_tasks);
+        console.log("res.data.sub_tasks", res.data.sub_tasks);
         setYellowAlerts(res.data.yellow_count);
         setRedAlerts(res.data.red_count);
       }else{
@@ -80,6 +81,7 @@ const DashboardPage = () => {
                     warning={order.warning}
                     clientName={order.client_name}
                     estimatedCompletionTime={order.estimated_completion_time}
+                    performanceSalary={order.performanceSalary}
                     onClick={() => handleSelectOrder(order.sub_task_id)}
                   />
                 ))
@@ -105,6 +107,7 @@ const DashboardPage = () => {
                     warning={order.warning}
                     clientName={order.client_name}
                     estimatedCompletionTime={order.estimated_completion_time}
+                    performanceSalary={order.performanceSalary}
                     onClick={() => handleSelectOrder(order.sub_task_id)}
                   />
                 ))
@@ -130,6 +133,7 @@ const DashboardPage = () => {
                     warning={order.warning}
                     clientName={order.client_name}
                     estimatedCompletionTime={order.estimated_completion_time}
+                    performanceSalary={order.performanceSalary}
                     onClick={() => handleSelectOrder(order.sub_task_id)}
                   />
                 ))
