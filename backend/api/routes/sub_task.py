@@ -1,3 +1,4 @@
+from backend.config import settings
 from typing import Optional
 from fastapi import APIRouter, Body, Query
 from backend.schemas.sub_task import SubTaskFilter
@@ -129,6 +130,7 @@ async def get_personal_tasks(
             "sub_task_id": task.id,
             "estimated_completion_time": task.estimated_completion_time,
             "sales_name": task.ticket.contract.sales.name if task.ticket.contract.sales else None,
+            "performance_salary": settings.ART_PERFORMANCE_SALARY*task.difficulty_score/16 if task.task_type == "美工" else None,
         })
     return {
         "sub_tasks": sub_tasks_out,

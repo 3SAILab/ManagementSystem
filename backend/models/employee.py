@@ -38,7 +38,7 @@ class Employee(Base):
     base_salary = Column(Numeric(12, 2), nullable=False) #基本工资
     work_performance_score = Column(Numeric(10, 2)) #工作绩效工资
     attendance_performance_score = Column(Numeric(10, 2)) #出勤绩效工资
-    total_salary = Column(Numeric(12, 2)) #总工资
+    total_salary = Column(Numeric(12, 2)) #总工资  绩效工资
 
     is_probation = Column(Boolean, nullable=False) #是否试用期
     password_hash = Column(String(255), nullable=False) #密码

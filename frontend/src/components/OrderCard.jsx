@@ -1,4 +1,4 @@
-const OrderCard = ({ subTaskId, ticketName, progress, warning, clientName, estimatedCompletionTime, chargeName = null, onClick }) => {
+const OrderCard = ({ subTaskId, ticketName, progress, warning, clientName, estimatedCompletionTime, chargeName = null, onClick, performanceSalary = null }) => {
   return (
     <div
       key={subTaskId}
@@ -11,6 +11,12 @@ const OrderCard = ({ subTaskId, ticketName, progress, warning, clientName, estim
         <h4 className="font-bold text-slate-800 pr-2 truncate">
           {ticketName}
         </h4>
+        {/** 该工单绩效薪资(当不为空时显示) */}
+        {performanceSalary && (
+          <span className="text-xs px-2 py-1 rounded-full capitalize bg-indigo-100 text-indigo-700">
+            {performanceSalary}
+          </span>
+        )}
         <span
           className={`text-xs px-2 py-1 rounded-full capitalize ${
             warning === '红色预警'

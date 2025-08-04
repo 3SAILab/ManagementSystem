@@ -4,6 +4,11 @@ from pydantic import ConfigDict
 from pathlib import Path
 
 class Settings(BaseSettings):
+
+    # 美工绩效薪资
+    ART_PERFORMANCE_SALARY: float = float(os.getenv("ART_PERFORMANCE_SALARY", "0"))
+    # 渲染绩效薪资
+    RENDER_PERFORMANCE_SALARY: float = float(os.getenv("RENDER_PERFORMANCE_SALARY", "0"))
     # 数据库配置
     DATABASE_URL: str = os.getenv("DATABASE_URL", "")
 

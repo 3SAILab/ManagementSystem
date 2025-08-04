@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => { // 👈 2. 使用函数形式，并�
       host: host,
       port: port,
       open: serverOpen,
+      strictPort: true,  // 如果端口被占用，直接报错而不是换端口
     }
   }
 })

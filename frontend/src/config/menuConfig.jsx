@@ -27,7 +27,7 @@ export const menuItems = [
   {
     label: '销售',
     access: {
-      roles: ['admin', 'manager', 'employee'],
+      roles: ['owner', 'admin', 'manager', 'employee'],
       departments: ['营销管理部'],
       positions: ['销售']
     },
@@ -40,12 +40,23 @@ export const menuItems = [
     label: '销售主管',
     access: {
       roles: ['manager'],
-      positions: ['销售','销售主管'],
+      positions: ['销售'],
       departments: ['营销管理部'],
     },
     children: [
       { label: '团队记录', path: '/team_record', icon: 'contact' },
       { label: '销售数据', path: '/sales_data', icon: 'bar-chart-3' },
+    ]
+  },
+  {
+    label: '销售经理',
+    access: {
+      roles: ['owner'],
+      positions: ['销售'],
+      departments: ['营销管理部'],
+    },
+    children: [
+      { label: '团队记录', path: '/team_record', icon: 'contact' },
     ]
   },
   {

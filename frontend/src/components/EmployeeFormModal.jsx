@@ -191,7 +191,55 @@ export default function EmployeeFormModal({ isOpen, id = null, onClose, onSave }
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(employee); // 提交保存逻辑
+    
+    // 数据清理：将空字符串转换为null，确保必填字段有值
+    const cleanedEmployee = { ...employee };
+    
+    // 处理可选字段：空字符串转为null
+    const optionalFields = [
+      'gender', 'phone', 'birth_date', 'id_number', 
+      'marital_status', 'bank_account', 'education', 'university', 
+      'major', 'graduation_date', 'manager_id', 'total_salary',
+      'work_performance_score', 'attendance_performance_score'
+    ];
+    
+    optionalFields.forEach(field => {
+      if (cleanedEmployee[field] === '') {
+        cleanedEmployee[field] = null;
+      }
+    });
+    
+    // 处理地址对象
+    if (cleanedEmployee.address) {
+      Object.keys(cleanedEmployee.address).forEach(key => {
+        if (cleanedEmployee.address[key] === '') {
+          cleanedEmployee.address[key] = null;
+        }
+      });
+    }
+    
+    // 处理紧急联系人对象
+    if (cleanedEmployee.emergency_contact) {
+      Object.keys(cleanedEmployee.emergency_contact).forEach(key => {
+        if (cleanedEmployee.emergency_contact[key] === '') {
+          cleanedEmployee.emergency_contact[key] = null;
+        }
+      });
+    }
+    
+    // 验证必填字段
+    const requiredFields = ['name', 'email', 'hire_date', 'department_id', 'position_id', 'role', 'status', 'base_salary'];
+    const missingFields = requiredFields.filter(field => {
+      const value = cleanedEmployee[field];
+      return !value || value === '';
+    });
+    
+    if (missingFields.length > 0) {
+      toast.error(`请填写必填字段: ${missingFields.join(', ')}`);
+      return;
+    }
+    
+    onSave(cleanedEmployee);
   };
   if (!isOpen) return null;
   return (
