@@ -37,7 +37,7 @@ export const menuItems = [
     ]
   },
   {
-    label: '销售主管',
+    label: '销售组长',
     access: {
       roles: ['manager'],
       positions: ['销售'],
@@ -49,7 +49,7 @@ export const menuItems = [
     ]
   },
   {
-    label: '销售经理',
+    label: '销售总负责人',
     access: {
       roles: ['owner'],
       positions: ['销售'],
@@ -60,16 +60,28 @@ export const menuItems = [
     ]
   },
   {
-    label: '工单分配',
+    label: '美工主管',
     access: {
       roles: ['manager'],
       departments: ['生产部'],
-      positions: ['美工', '渲染','渲染主管','美工主管'],
+      positions: ['美工'],
     },
     children: [
       { label: '工单分配', path: '/work_assignment', icon: 'check-square' },
       { label: '团队任务监控', path: 'team_dashboard', icon: 'contact' },
       { label: '美工数据', path: '/art_data', icon: 'bar-chart-3' },
+    ]
+  },
+  {
+    label: '渲染主管',
+    access: {
+      roles: ['manager'],
+      departments: ['生产部'],
+      positions: ['渲染'],
+    },
+    children: [
+      { label: '工单分配', path: '/work_assignment', icon: 'check-square' },
+      { label: '团队任务监控', path: 'team_dashboard', icon: 'contact' },
     ]
   },
   {

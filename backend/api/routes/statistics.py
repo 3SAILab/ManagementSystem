@@ -189,3 +189,13 @@ async def get_monthly_coefficient_statistics(
     monthly_coefficient_statistics = await StatisticsService.get_monthly_coefficient_statistics(db)
     return api_response(success=True, data=monthly_coefficient_statistics)
 
+# 美工本月平均每单完成时间
+@router.get("/statistics/monthly-average-completion-time-statistics")
+async def get_monthly_average_completion_time_statistics(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    # 获取统计数据
+    monthly_average_completion_time = await StatisticsService.get_monthly_average_completion_time_statistics(db)
+    return api_response(success=True, data=monthly_average_completion_time)
+

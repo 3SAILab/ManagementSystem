@@ -668,7 +668,7 @@ class StatisticsService:
             "category_stats": category_stats
         }
 
-
+    # 美工本月系数统计
     @staticmethod
     async def get_monthly_coefficient_statistics(db: AsyncSession):
         # 查询每个美工员工的 difficulty_score 总和
@@ -683,7 +683,8 @@ class StatisticsService:
                 and_(
                     SubTask.started_at.between(StatisticsService.start_date, StatisticsService.end_date),
                     SubTask.difficulty_score.is_not(None),
-                    SubTask.task_type == "美工"
+                    SubTask.task_type == "美工",
+                    SubTask.status == "已完成"
                 )
             )
             .group_by(SubTask.charge_id, Employee.name)  # 按员工分组
@@ -720,8 +721,38 @@ class StatisticsService:
         else:
             return 8 + 4 + ((total_score - 8) * 1.2 -4) * 1.3/1.2
 
-
-
+    # 美工本月平均每单完成时间
+    @staticmethod
+    async def get_monthly_average_completion_time_statistics(db: AsyncSession):
+        # 查询每个美工员工的平均每单完成时间
+        result = await db.execute(
+            select(
+                SubTask.charge_id,
+                Employee.name,
+                func.avg(SubTask.completed_at - SubTask.started_at).label("average_completion_time")
+            )
+            .join(Employee, SubTask.charge_id == Employee.id)
+            .where(
+                and_(
+                    SubTask.started_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    SubTask.task_type == "美工",
+                    SubTask.status == "已完成"
+                )
+            )
+            .group_by(SubTask.charge_id, Employee.name)
+        )
+        rows = result.fetchall()
+        statistics = []
+        for row in rows:
+            charge_id, name, average_completion_time = row
+            # 转换为小时，保留两位小数
+            average_completion_time = average_completion_time.total_seconds() / 3600
+            statistics.append({
+                "id": charge_id,
+                "name": name,
+                "average_completion_time": round(float(average_completion_time), 2)
+            })
+        return statistics
 
 
 

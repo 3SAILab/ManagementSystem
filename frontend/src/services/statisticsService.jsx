@@ -141,4 +141,18 @@ export const getMonthlyCoefficientStatistics = async () => {
     }
 };
 
+// 本月美工平均每单完成时间
+export const getMonthlyAverageCompletionTimeStatistics = async () => {
+    try {
+        const response = await api.get('/statistics/monthly-average-completion-time-statistics');
+        if (response.data.success) {
+            return {success: true, data: response.data.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
 
