@@ -18,7 +18,6 @@ const DashboardPage = () => {
     getPersonalTasks().then((res) => {
       if(res.success){
         setOrders(res.data.sub_tasks);
-        console.log("res.data.sub_tasks", res.data.sub_tasks);
         setYellowAlerts(res.data.yellow_count);
         setRedAlerts(res.data.red_count);
       }else{

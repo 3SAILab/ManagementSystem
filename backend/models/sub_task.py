@@ -9,7 +9,7 @@ class SubTask(Base):
     __tablename__ = 'sub_task'
 
     id = Column(Integer, primary_key=True)
-    ticket_id = Column(Integer, ForeignKey('ticket.id'), nullable=False)
+    ticket_id = Column(Integer, ForeignKey('ticket.id', ondelete='CASCADE'), nullable=False)
     task_type = Column(String(100), nullable=False)  # 美工、渲染
     status = Column(String(100), nullable=False)  # 未分配、未开始、修改中、已完工
     progress = Column(Integer, nullable=False) # 进度(0-100)
@@ -30,6 +30,6 @@ class SubTask(Base):
 
     # 关联工单表
     ticket = relationship("Ticket", back_populates="sub_tasks")
-    # 关联进度日志表
-    progress_logs = relationship("ProgressLog", back_populates="sub_task")
+    # 关联进度日志表(子任务删除，进度日志全部删除)
+    progress_logs = relationship("ProgressLog", back_populates="sub_task", cascade="all, delete-orphan")
 

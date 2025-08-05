@@ -14,7 +14,7 @@ const OrderCard = ({ subTaskId, ticketName, progress, warning, clientName, estim
         {/** 该工单绩效薪资(当不为空时显示) */}
         {performanceSalary && (
           <span className="text-xs px-2 py-1 rounded-full capitalize bg-indigo-100 text-indigo-700">
-            {performanceSalary}
+            {performanceSalary}元
           </span>
         )}
         <span

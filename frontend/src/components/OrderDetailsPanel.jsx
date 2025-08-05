@@ -85,7 +85,6 @@ const OrderDetailsPanel = ({ orderId, onClose, onRefresh }) => {
 
   // 提交更新
   const handleSubmitUpdate = async (progressLog) => {
-    console.log('进度更新提交:', progressLog);
     progressLog.progress = pendingProgress;
     const res = await updateSubTaskProgress(progressLog);
     if (res.success) {

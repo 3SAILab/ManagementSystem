@@ -128,3 +128,64 @@ async def get_sales_data_statistics(
         "data": statistics,
         "message": "获取销售数据统计成功"
     }
+
+# 只读销售看板 - 获取指定销售人员的本月销售统计数据
+@router.get("/statistics/readonly-monthly-sales/{employee_id}")
+async def get_readonly_monthly_sales(
+    employee_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    """只读模式获取指定销售人员的本月销售统计数据"""
+    # 获取统计数据
+    monthly_sales, monthly_sales_change = await StatisticsService.get_monthly_sales(db, employee_id)
+    monthly_commission, monthly_commission_change = await StatisticsService.get_monthly_commission(db, employee_id)
+    monthly_order_count, monthly_order_count_change = await StatisticsService.get_monthly_order_count(db, employee_id)
+    monthly_pending_order_count, monthly_pending_order_count_change = await StatisticsService.get_monthly_pending_order_count(db, employee_id)
+
+    data = {
+        "monthlySales": round(monthly_sales, 2),
+        "monthlySalesChange": round(monthly_sales_change, 2),
+        "monthlyCommission": round(monthly_commission, 2),
+        "monthlyCommissionChange": round(monthly_commission_change, 2),
+        "monthlyOrderCount": round(monthly_order_count, 2),
+        "monthlyOrderCountChange": round(monthly_order_count_change, 2),
+        "monthlyPendingOrderCount": round(monthly_pending_order_count, 2),
+        "monthlyPendingOrderCountChange": round(monthly_pending_order_count_change, 2)
+    }
+    return api_response(success=True, data=data)
+
+# 只读销售看板 - 获取指定销售人员的本月各周期销售统计数据
+@router.get("/statistics/readonly-monthly-sales-by-cycle/{employee_id}")
+async def get_readonly_monthly_sales_by_cycle(
+    employee_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    """只读模式获取指定销售人员的本月各周期销售统计数据"""
+    # 获取统计数据
+    monthly_sales_by_cycle = await StatisticsService.get_monthly_sales_by_cycle(db, employee_id)
+    return api_response(success=True, data=monthly_sales_by_cycle)
+
+# 只读销售看板 - 获取指定销售人员的月度销售统计数据
+@router.get("/statistics/readonly-monthly-sales-statistics/{employee_id}")
+async def get_readonly_monthly_sales_statistics(
+    employee_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    """只读模式获取指定销售人员的月度销售统计数据"""
+    # 获取统计数据
+    monthly_sales_statistics = await StatisticsService.get_monthly_sales_statistics(db, employee_id)
+    return api_response(success=True, data=monthly_sales_statistics)
+
+# 美工本月系数统计
+@router.get("/statistics/monthly-coefficient-statistics")
+async def get_monthly_coefficient_statistics(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    # 获取统计数据
+    monthly_coefficient_statistics = await StatisticsService.get_monthly_coefficient_statistics(db)
+    return api_response(success=True, data=monthly_coefficient_statistics)
+

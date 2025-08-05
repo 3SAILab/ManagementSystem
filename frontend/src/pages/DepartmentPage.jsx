@@ -45,12 +45,14 @@ export default function DepartmentPage() {
 
   // 删除部门
   const handleDelete = async (department) => {
-    if (!(await Swal.fire({
-      text: `确定要删除 "${department.name}" 吗？`,
+    const res = await Swal.fire({
+      text: `确定要删除吗？`,
+      icon: 'warning',
       showCancelButton: true,
       confirmButtonText: '确定',
       cancelButtonText: '取消'
-    })).isConfirmed) return;
+    });
+    if (!res.isConfirmed) return;
     try {
       const result = await deleteDepartment(department.id);
       if(result.success){

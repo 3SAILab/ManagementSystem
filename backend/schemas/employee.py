@@ -13,6 +13,7 @@ class Token(BaseModel):
 
 # 员工权限信息
 class EmployeePermission(BaseModel):
+    id: int
     name: str
     department_name: str
     position_name: str
@@ -24,6 +25,7 @@ class EmployeePermission(BaseModel):
     @classmethod
     def from_model(cls, emp: Employee) -> 'EmployeePermission':
         return cls(
+            id=emp.id,
             name=emp.name,
             department_name=emp.department.name,
             position_name=emp.position.name,
@@ -33,6 +35,7 @@ class EmployeePermission(BaseModel):
 
     def to_model(self) -> Employee:
         return Employee(
+            id=self.id,
             name=self.name,
             department_name=self.department_name,
             position_name=self.position_name,

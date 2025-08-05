@@ -8,7 +8,7 @@ class ProgressLog(Base):
 
     id = Column(Integer, primary_key=True)
     employee_id = Column(Integer, ForeignKey('employee.id'), nullable=False) #对应员工
-    sub_task_id = Column(Integer, ForeignKey('sub_task.id'), nullable=False)
+    sub_task_id = Column(Integer, ForeignKey('sub_task.id', ondelete='CASCADE'), nullable=False)
     notes = Column(Text, nullable=True)    #进度说明
     log_time = Column(DateTime(timezone=True), server_default=func.now()) #记录时间
 

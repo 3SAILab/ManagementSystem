@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getContractDetail } from '../services/contractService';
-import { addTicket, getTicketsByContractId, updateTicketInfo, deleteTicket } from '../services/ticketService';
+import { getTicketsByContractId } from '../services/ticketService';
 import { getSubTasksByTicketId } from '../services/subTaskService';
-import AddTicketModal from '../components/AddTicketModal';
-import { ChevronLeft, Plus, Edit, Trash } from 'lucide-react';
-import Swal from 'sweetalert2';
+import { ChevronLeft } from 'lucide-react';
 import { toast } from 'react-toastify';
 import SubTaskTable from '../components/SubTaskTable';
-import EditTicketModal from '../components/EditTicketModal';
 
-const ContractDetailPage = () => {
-  // 创建工单模态框是否显示
-  const [createOrderModal, setCreateOrderModal] = useState(false);
+const ReadOnlyContractDetail = () => {
+  const navigate = useNavigate();
   const { id } = useParams();
   // 合同详情数据
   const [contractData, setContractData] = useState({
@@ -23,10 +19,6 @@ const ContractDetailPage = () => {
   });
   // 工单列表
   const [tickets, setTickets] = useState([]);
-  // 是否显示编辑工单模态框
-  const [editTicketModal, setEditTicketModal] = useState(false);
-  // 选中的工单id
-  const [ticketId, setTicketId] = useState(null);
   // 缓存所有工单的子任务数据
   const [subTasks, setSubTasks] = useState({});
   // 根据合同id刷新页面
@@ -90,88 +82,21 @@ const ContractDetailPage = () => {
   const pendingTotal = Object.values(contractData.pendingDetails).reduce((sum, count) => sum + count, 0);
   const completedTotal = Object.values(contractData.completedDetails).reduce((sum, count) => sum + count, 0);
 
-  // 处理工单创建
-  const handleAddTicket = async (ticketData) => {
-    try {
-      // 确保合同ID正确设置
-      const ticketWithContractId = {
-        ...ticketData,
-        contract_id: parseInt(id)
-      };
-
-      const result = await addTicket(ticketWithContractId);
-      if (result.success) {
-        // 关闭模态框
-        setCreateOrderModal(false);
-        init();
-        toast.success('创建工单成功');
-      } else {
-        toast.error(result.error);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error('创建工单失败，请重试');
-    }
-  };
-  // 处理工单编辑
-  const handleEditTicket = async (ticketData) => {
-    try {
-      const result = await updateTicketInfo(ticketId, ticketData);
-      if (result.success) {
-        toast.success('编辑工单成功');
-        init();
-      } else {
-        toast.error('编辑工单失败，请重试');
-      }
-    } catch (err) {
-      toast.error('编辑工单失败，请重试');
-    }
-  }
-  // 处理工单删除
-  const handleDeleteTicket = async (ticketId) => {
-    const result = await Swal.fire({
-      text: `确定要删除吗？`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: '确定',
-      cancelButtonText: '取消'
-    });
-    if (!result.isConfirmed) return;
-  
-    const res = await deleteTicket(ticketId);
-    if (res.success) {
-      toast.success('删除工单成功');
-      init();
-      setExpandedTicketId(null);
-    } else {
-      toast.error('删除工单失败，请重试');
-    }
-  };
   return (
     <div className="p-6 space-y-6">
       {/* header */}
       <div className="p-4 flex justify-between items-center gap-4">
         {/* 返回按钮 */}
-        <Link
-          to="/sales_dashboard"
+        <button
+          onClick={() => navigate(-1)}
           className="flex items-center text-gray-500 hover:text-gray-700 group text-lg"
         >
           {/* 使用 lucide-react 的 ChevronLeft 图标 */}
           <ChevronLeft
             className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform duration-200"
           />
-          <span className="text-lg font-medium">返回销售看板</span>
-        </Link>
-        {/* 创建工单 */}
-        {/* 添加客户按钮 */}
-        <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
-          onClick={() => {
-            setCreateOrderModal(true);
-          }}
-        >
-          <Plus className="w-4 h-4" /> 创建工单
+          <span className="text-lg font-medium">返回</span>
         </button>
-
       </div>
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -246,7 +171,6 @@ const ContractDetailPage = () => {
                       <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">图片</th>
                       <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">工作流</th>
                       <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
-                      <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作按钮</th>
                     </tr>
                   </thead>
                   {/* 表体 */}
@@ -285,33 +209,6 @@ const ContractDetailPage = () => {
                           <td className="p-4 text-sm text-slate-500">
                             {ticket.status}
                           </td>
-                          <td className="p-4 text-sm text-slate-500">
-                            <button
-                              type="button"
-                              className="text-slate-500 hover:text-slate-700"
-                              onClick={(e) => {
-                                // ❗️阻止事件冒泡到 tr 的 onClick
-                                e.stopPropagation();
-                                setEditTicketModal(true);
-                                setTicketId(ticket.id);
-                              }}
-                              title="编辑工单信息"
-                            >
-                              <Edit className="w-5 h-5" />
-                            </button>
-                            <button
-                              type="button"
-                              className="text-slate-500 hover:text-slate-700"
-                              onClick={(e) => {
-                                // ❗️阻止事件冒泡到 tr 的 onClick
-                                e.stopPropagation();
-                                handleDeleteTicket(ticket.id);
-                              }}
-                              title="删除工单"
-                            >
-                              <Trash className="w-5 h-5" />
-                            </button>
-                          </td>
                         </tr>
 
                         {/* 👇 子任务列表行 (仅在展开时显示) */}
@@ -336,23 +233,9 @@ const ContractDetailPage = () => {
           </div>
         </div>
       </div>
-      {/* 创建工单模态框 */}
-      <AddTicketModal
-        isOpen={createOrderModal}
-        onClose={() => setCreateOrderModal(false)}
-        onAdd={handleAddTicket}
-        contractId={parseInt(id)}
-      />
-      {/* 编辑工单模态框 */}
-      <EditTicketModal
-        isOpen={editTicketModal}
-        onClose={() => setEditTicketModal(false)}
-        onEdit={handleEditTicket}
-        ticketId={ticketId}
-        contractId={parseInt(id)}
-      />
+
     </div>
   );
 };
 
-export default ContractDetailPage;
+export default ReadOnlyContractDetail

@@ -1,4 +1,3 @@
-import { toast } from 'react-toastify';
 import api from './api';
 
 // 获取客户活动日志统计数据
@@ -85,3 +84,61 @@ export const getSalesData = async () => {
         return { success: false, error: error.message };
     }
 }
+
+// 只读销售看板 - 获取指定销售人员的本月销售统计数据
+export const getReadonlyMonthlySales = async (employeeId) => {
+    try {
+        const response = await api.get(`/statistics/readonly-monthly-sales/${employeeId}`);
+        if (response.data.success) {
+            return {success: true, data: response.data.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// 只读销售看板 - 获取指定销售人员的本月各周期销售统计数据
+export const getReadonlyMonthlySalesByCycle = async (employeeId) => {
+    try {
+        const response = await api.get(`/statistics/readonly-monthly-sales-by-cycle/${employeeId}`);
+        if (response.data.success) {
+            return {success: true, data: response.data.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// 只读销售看板 - 获取指定销售人员的月度销售统计数据
+export const getReadonlyMonthlySalesStatistics = async (employeeId) => {
+    try {
+        const response = await api.get(`/statistics/readonly-monthly-sales-statistics/${employeeId}`);
+        if (response.data.success) {
+            return {success: true, data: response.data.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// 美工本月系数统计
+export const getMonthlyCoefficientStatistics = async () => {
+    try {
+        const response = await api.get('/statistics/monthly-coefficient-statistics');
+        if (response.data.success) {
+            return {success: true, data: response.data.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+

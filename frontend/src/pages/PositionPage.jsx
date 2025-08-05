@@ -44,12 +44,14 @@ const PositionPage = () => {
 
   const handleDelete = async (id) => {
     try {
-      if (!(await Swal.fire({
-        text: `确定要删除该职位吗？`,
+      const res = await Swal.fire({
+        text: `确定要删除吗？`,
+        icon: 'warning',
         showCancelButton: true,
         confirmButtonText: '确定',
         cancelButtonText: '取消'
-      })).isConfirmed) return;
+      });
+      if (!res.isConfirmed) return;
       const result = await deletePosition(id);
       if (result.success) {
         setPositions(result.data);

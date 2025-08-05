@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
+import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ArrowLeft } from 'lucide-react';
 import * as echarts from 'echarts';
-import { getContracts, updateContractStatus, deleteContract } from '../services/contractService';
-import { getMonthlySales, getMonthlySalesStatistics, getMonthlySalesByCycle } from '../services/statisticsService';
+import { getReadonlyContracts } from '../services/contractService';
+import { getReadonlyMonthlySales, getReadonlyMonthlySalesStatistics, getReadonlyMonthlySalesByCycle } from '../services/statisticsService';
 import Pagination from '../components/Pagination';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import Swal from 'sweetalert2';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const getTrendIndicator = (change) => {
   const isPositive = change > 0;
@@ -41,8 +39,9 @@ const typeBadgeClass = (type) => {
   }
 };
 
-const SalesDashboard = () => {
+const ReadOnlySalesDashboard = () => {
   const navigate = useNavigate();
+  const { id,name } = useParams();
   // 统计数据
   const [statistics, setStatistics] = useState({
     monthlySales: 0,
@@ -73,29 +72,7 @@ const SalesDashboard = () => {
   const [salesByCycle, setSalesByCycle] = useState([]);
   // 图表标签
   const [chartLabels, setChartLabels] = useState([]);
-  // 获取图表数据
-  useEffect(() => {
-    const fetchChartData = async () => {
-      try {
-        if (currentView === '月度') {
-          const res = await getMonthlySalesStatistics();
-          setChartData(res.data || []);
-          setChartLabels(['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']);
-        } else if (currentView === '周期') {
-          const res = await getMonthlySalesByCycle();
-          setSalesByCycle(res.data || []);
-          setChartData(res.data.map(cycle => cycle.total_amount));
-          setChartLabels(res.data.map(cycle => `${cycle.cycle} 周期`));
-        }
-      } catch (error) {
-        console.error('获取图表数据失败:', error);
-        setChartData([]);
-        setChartLabels([]);
-      }
-    };
 
-    fetchChartData();
-  }, [currentView]);
 
   // 初始化图表
   useEffect(() => {
@@ -182,72 +159,79 @@ const SalesDashboard = () => {
   const [contracts, setContracts] = useState([]);
   // 总条数
   const [total, setTotal] = useState(0);
-  // 获取合同
+  // 加载状态
+  const [loadingStates, setLoadingStates] = useState({
+    contracts: false,
+    statistics: false,
+    salesByCycle: false
+  });
+
+
+  // 并行获取所有数据
   useEffect(() => {
-    getContracts(filters).then(res => {
-      setContracts(res.data.contracts);
-      setTotal(res.data.total);
-    });
-  }, [filters]);
-  // 获取员工本月销售统计数据
-  useEffect(() => {
-    getMonthlySales().then(res => {
-      setStatistics(res.data);
-    });
-  }, []);
-  // 获取员工本月各周期销售统计数据
-  useEffect(() => {
-    getMonthlySalesByCycle().then(res => {
-      setSalesByCycle(res.data);
-    });
-  }, []);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingContract, setEditingContract] = useState(null);
-  const [newStatus, setNewStatus] = useState('');
-  const handleOpenModal = (contract) => {
-    setEditingContract(contract);
-    setNewStatus(contract.status);
-    setIsModalOpen(true);
-  };
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingContract(null);
-    setNewStatus('');
-  };
-  const handleConfirmStatusChange = async () => {
-    const res = await updateContractStatus(editingContract.id, newStatus);
-    if(res.success){
-      toast.success('合同状态更新成功');
-      // 更新合同列表
-      getContracts(filters).then(res => {
-        setContracts(res.data.contracts);
-      });
-      handleCloseModal();
-    }else{
-      toast.error(res.error);
-    }
-  };
-  const handleDeleteContract = async (contractId) => {
-    const result = await Swal.fire({
-      text: `确定要删除吗？`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: '确定',
-      cancelButtonText: '取消'
-    });
-    if (!result.isConfirmed) return;
-    const res = await deleteContract(contractId);
-    if(res.success){
-      toast.success('合同删除成功');
-      getContracts(filters).then(res => {
-        setContracts(res.data.contracts);
-      });
-    }else{
-      toast.error(res.error);
-    }
-  };
+    const fetchAllData = async () => {
+      try {
+        // 并行请求多个接口
+        const [contractsRes, statisticsRes, salesByCycleRes, chartDataRes] = await Promise.all([
+          getReadonlyContracts(id, filters),
+          getReadonlyMonthlySales(id),
+          getReadonlyMonthlySalesByCycle(id),
+          currentView === '月度' ? getReadonlyMonthlySalesStatistics(id) : getReadonlyMonthlySalesByCycle(id)
+        ]);
+        
+        // 分别处理结果
+        if (contractsRes.success) {
+          setContracts(contractsRes.data.contracts);
+          setTotal(contractsRes.data.total);
+        }
+        
+        if (statisticsRes.success) {
+          setStatistics(statisticsRes.data);
+        }
+        
+        if (salesByCycleRes.success) {
+          setSalesByCycle(salesByCycleRes.data);
+        }
+
+        // 处理图表数据
+        if (chartDataRes.success) {
+          if (currentView === '月度') {
+            setChartData(chartDataRes.data || []);
+            setChartLabels(['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']);
+          } else if (currentView === '周期') {
+            setChartData(chartDataRes.data.map(cycle => cycle.total_amount));
+            setChartLabels(chartDataRes.data.map(cycle => `${cycle.cycle} 周期`));
+          }
+        }
+      } catch (error) {
+        console.error('获取数据失败:', error);
+      }
+    };
+
+    fetchAllData();
+  }, [filters, id, currentView]);
+
   return (
     <div className="p-6 space-y-6">
+             {/* 页面标题区域 */}
+       <div className="bg-white p-6 rounded-xl shadow-sm border">
+         <div className="flex items-center justify-between">
+           <div className="flex items-center space-x-4">
+             <button
+               onClick={() => navigate(-1)}
+               className="flex items-center justify-center w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all duration-200 text-slate-600"
+             >
+               <ArrowLeft size={20} />
+             </button>
+             <div>
+               <h1 className="text-3xl font-bold text-slate-800">
+                 <span className="text-indigo-600">{name}</span> 的销售看板
+               </h1>
+               <p className="text-slate-500 text-sm mt-1">查看销售数据和业绩表现</p>
+             </div>
+           </div>
+         </div>
+       </div>
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center gap-4">
@@ -255,9 +239,11 @@ const SalesDashboard = () => {
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-500">本月销售额</p>
-              {getTrendIndicator(statistics.monthlySalesChange || 0)}
+              {statistics.monthlySalesChange !== undefined && getTrendIndicator(statistics.monthlySalesChange || 0)}
             </div>
-            <p className="text-3xl font-bold text-slate-800">¥{statistics.monthlySales || 0}</p>
+            <p className="text-3xl font-bold text-slate-800">
+              {statistics.monthlySales !== undefined ? `¥${statistics.monthlySales || 0}` : '加载中...'}
+            </p>
           </div>
         </div>
 
@@ -266,9 +252,11 @@ const SalesDashboard = () => {
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-500">本月提点</p>
-              {getTrendIndicator(statistics.monthlyCommissionChange || 0)}
+              {statistics.monthlyCommissionChange !== undefined && getTrendIndicator(statistics.monthlyCommissionChange || 0)}
             </div>
-            <p className="text-3xl font-bold text-slate-800">¥{statistics.monthlyCommission || 0}</p>
+            <p className="text-3xl font-bold text-slate-800">
+              {statistics.monthlyCommission !== undefined ? `¥${statistics.monthlyCommission || 0}` : '加载中...'}
+            </p>
           </div>
         </div>
 
@@ -277,9 +265,11 @@ const SalesDashboard = () => {
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-500">本月订单数</p>
-              {getTrendIndicator(statistics.monthlyOrderCountChange || 0)}
+              {statistics.monthlyOrderCountChange !== undefined && getTrendIndicator(statistics.monthlyOrderCountChange || 0)}
             </div>
-            <p className="text-3xl font-bold text-slate-800">{statistics.monthlyOrderCount || 0}</p>
+            <p className="text-3xl font-bold text-slate-800">
+              {statistics.monthlyOrderCount !== undefined ? (statistics.monthlyOrderCount || 0) : '加载中...'}
+            </p>
           </div>
         </div>
 
@@ -288,9 +278,11 @@ const SalesDashboard = () => {
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-500">待结算订单</p>
-              {getTrendIndicator(statistics.monthlyPendingOrderCountChange || 0)}
+              {statistics.monthlyPendingOrderCountChange !== undefined && getTrendIndicator(statistics.monthlyPendingOrderCountChange || 0)}
             </div>
-            <p className="text-3xl font-bold text-yellow-500">{statistics.monthlyPendingOrderCount || 0}</p>
+            <p className="text-3xl font-bold text-yellow-500">
+              {statistics.monthlyPendingOrderCount !== undefined ? (statistics.monthlyPendingOrderCount || 0) : '加载中...'}
+            </p>
           </div>
         </div>
       </div>
@@ -355,7 +347,14 @@ const SalesDashboard = () => {
           <h3 className="p-4 border-b border-slate-200 text-lg font-semibold">合同尾款跟踪</h3>
           {contracts.length === 0 ? (
             <div className="p-4 text-center text-slate-500">
-              暂无数据
+              {loadingStates.contracts ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
+                  加载中...
+                </div>
+              ) : (
+                '暂无数据'
+              )}
             </div>
           ) : (
           <table className="w-full text-left">
@@ -368,7 +367,6 @@ const SalesDashboard = () => {
                 <th className="p-4 text-sm font-semibold text-slate-600">提点</th>
                 <th className="p-4 text-sm font-semibold text-slate-600">类型</th>
                 <th className="p-4 text-sm font-semibold text-slate-600">状态</th>
-                <th className="p-4 text-sm font-semibold text-slate-600">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -378,7 +376,7 @@ const SalesDashboard = () => {
                 const commission = contract.status === '坏单' ? Math.round(contract.paid_amount * contract.commission_rate / 100 * 100) / 100 : Math.round(contract.total_amount * contract.commission_rate / 100 * 100) / 100;
                 return (
                   <tr key={contract.id} 
-                  onClick={() => navigate(`/contract_detail/${contract.id}`)}
+                  onClick={() => navigate(`/readonly_contract_detail/${contract.id}`)}
                   className={`hover:bg-slate-50 cursor-pointer`}
                   >
                     <td className="p-4 font-medium text-slate-800">{contract.client_name || '未知客户'}</td>
@@ -395,28 +393,6 @@ const SalesDashboard = () => {
                       <span className={`inline-block px-2 py-1 text-xs rounded-full ${statusBadgeClass(contract.status)}`}>
                         {contract.status}
                       </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex gap-2">
-                        <button
-                          className="px-3 py-1 rounded-md bg-indigo-500 text-white text-sm shadow-sm hover:bg-indigo-600 transition"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenModal(contract);
-                          }}
-                        >
-                          更改状态
-                        </button>
-                        <button
-                          className="px-3 py-1 rounded-md bg-red-500 text-white text-sm shadow-sm hover:bg-red-600 transition"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteContract(contract.id);
-                          }}
-                        >
-                          删除
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 );
@@ -442,47 +418,9 @@ const SalesDashboard = () => {
 
 
       </div>
-      {/* **新增模态框** */}
-      {isModalOpen && editingContract && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-96">
-            <h3 className="text-lg font-semibold mb-4">更改订单状态</h3>
-            <p className="mb-2 text-slate-600">客户: {editingContract.client_name || '未知客户'}</p>
-            <p className="mb-4 text-slate-600">合同金额: ¥{editingContract.total_amount.toLocaleString()}</p>
-            
-            <label htmlFor="status-select" className="block text-sm font-medium text-slate-700 mb-1">
-              选择新状态:
-            </label>
-            <select
-              id="status-select"
-              value={newStatus}
-              onChange={(e) => setNewStatus(e.target.value)}
-              className="w-full p-2 border border-slate-300 rounded-md mb-6"
-            >
-              <option value="待结算">待结算</option>
-              <option value="已结算">已结算</option>
-              <option value="坏单">坏单</option>
-            </select>
 
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={handleCloseModal}
-                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleConfirmStatusChange}
-                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-              >
-                确定
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-export default SalesDashboard;
+export default ReadOnlySalesDashboard;

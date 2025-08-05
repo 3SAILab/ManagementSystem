@@ -15,12 +15,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
     activity_name: "",
     product_type: "",
     scale: "",
-    address: {
-      province: "",
-      city: "",
-      district: "",
-      street: "",
-    },
+    address: null,
   });
 
   const [errors, setErrors] = useState({});
@@ -57,12 +52,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
         activity_name: "",
         product_type: "",
         scale: "",
-        address: {
-          province: "",
-          city: "",
-          district: "",
-          street: "",
-        },
+        address: null,
       });
     }
   }, [id]); // 依赖 id 变化触发
@@ -96,11 +86,6 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const { province, city } = formData.address;
-    if (!province || !city) {
-      setErrors(prev => ({ ...prev, address: "请选择完整的省份和城市" }));
-      return;
-    }
     // 添加 E.164 格式前缀
     onSave(formData);
     onClose();
@@ -117,12 +102,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
       activity_name: "",
       product_type: "",
       scale: "",
-      address: {
-        province: "",
-        city: "",
-        district: "",
-        street: "",
-      },
+      address: null,
     });
     onClose();
   };
@@ -275,7 +255,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
             {/* 地址信息 */}
             <div className="md:col-span-6">
               <label htmlFor="address" className="block text-sm font-medium text-slate-700">
-                  地址 <span className="text-red-500">*</span>
+                  地址
               </label>
               <AddressSelector
                   id="address"
@@ -286,10 +266,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
                   ]}
                   onChange={handleAddressSelectorChange}
               />
-              {/* 错误提示 */}
-              {errors.address && (
-                <p className="mt-1 text-sm text-red-600">{errors.address}</p>
-              )}
+              
               <label className="block text-sm font-medium text-slate-700 mb-1.5">详细地址</label>
               <input
                 type="text"

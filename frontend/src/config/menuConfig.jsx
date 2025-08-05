@@ -68,7 +68,8 @@ export const menuItems = [
     },
     children: [
       { label: '工单分配', path: '/work_assignment', icon: 'check-square' },
-      { label: '团队任务监控', path: 'team_dashboard', icon: 'contact' }
+      { label: '团队任务监控', path: 'team_dashboard', icon: 'contact' },
+      { label: '美工数据', path: '/art_data', icon: 'bar-chart-3' },
     ]
   },
   {
@@ -78,6 +79,7 @@ export const menuItems = [
     },
     children: [
       { label: '销售数据', path: '/sales_data', icon: 'bar-chart-3' },
+      { label: '美工数据', path: '/art_data', icon: 'bar-chart-3' },
     ]
   },
 

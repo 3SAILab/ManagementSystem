@@ -17,6 +17,9 @@ import WorkAssignmentPage from '../pages/WorkAssignmentPage'
 import ResetPassword from '../pages/ResetPassword'
 import TeamDashboardPage from '../pages/TeamDashboard';
 import SalesDataPages from '../pages/SalesDataPages'
+import ReadOnlySalesDashboard from '../pages/ReadOnlySalesDashboard'
+import ReadOnlyContractDetail from '../pages/ReadOnlyContractDetail'
+import ArtDataPage from '../pages/ArtDataPage'
 
 const router = createBrowserRouter([
   {
@@ -44,22 +47,22 @@ const router = createBrowserRouter([
             handle: { title: '工单看板' },
           },
           {
-            path: 'my_tasks',
+            path: 'readonly_contract_detail/:id',
             element: (
-              <PrivateRoute currentPath='my_tasks'>
-                <MyTasksPage />
+              <PrivateRoute currentPath='readonly_contract_detail'>
+                <ReadOnlyContractDetail />
               </PrivateRoute>
             ),
-            handle: { title: '我的任务' },
+            handle: { title: '合同详情' },
           },
           {
-            path: 'daily_report',
+            path: 'readonly_sales_dashboard/:id/:name',
             element: (
-              <PrivateRoute currentPath='daily_report'>
-                <DailyReportPage />
+              <PrivateRoute currentPath='readonly_sales_dashboard'>
+                <ReadOnlySalesDashboard />
               </PrivateRoute>
             ),
-            handle: { title: '写日报' },
+            handle: { title: `销售看板` },
           },
           {
             path: 'employee_management',
@@ -151,6 +154,15 @@ const router = createBrowserRouter([
             ),
             handle: { title: '销售数据' }
           },
+          {
+            path: 'art_data',
+            element: (
+              <PrivateRoute currentPath='art_data'>
+                <ArtDataPage />
+              </PrivateRoute>
+            ),
+            handle: { title: '美工数据' }
+          }
         ],
       },
     ],

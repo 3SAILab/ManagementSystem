@@ -38,7 +38,7 @@ class ClientCreate(BaseModel):
     name: str
     contact_name: str
     contact_phone: str
-    address: dict
+    address: Optional[dict] = None
     online_source: Optional[str] = None
     activity_name: Optional[str] = None
     source: ClientSource

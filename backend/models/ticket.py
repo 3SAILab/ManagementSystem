@@ -23,8 +23,8 @@ class Ticket(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False) #创建时间
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) #更新时间
 
-    # 关联子任务
-    sub_tasks = relationship("SubTask", back_populates="ticket")
+    # 关联子任务(工单删除时，子任务也删除)
+    sub_tasks = relationship("SubTask", back_populates="ticket", cascade="all, delete-orphan")
     
     # 关联合同
     contract = relationship("Contract", back_populates="tickets")

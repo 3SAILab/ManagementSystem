@@ -104,3 +104,16 @@ async def update_ticket_by_id(
     return api_response(success=True, data=ticket)
 
 
+# 根据工单ID删除工单
+@router.delete("/tickets/{ticket_id}")
+async def delete_ticket_by_id(
+    ticket_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    result = await TicketService.delete_ticket_by_id(db, ticket_id)
+    if(result):
+        return api_response(success=True, data=None)
+    else:
+        return api_response(success=False, error="工单不存在")
+

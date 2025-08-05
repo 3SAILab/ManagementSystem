@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import * as echarts from 'echarts'; // 核心库
 import { getSalesData } from '../services/statisticsService';
 import { useNavigate } from 'react-router-dom';
+import { useEmployeePermissionStore } from '../store/employee';
 
 // ECharts 颜色主题
 const chartColors = [
@@ -29,6 +30,7 @@ export default function SalesDataPages() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { employee: userInfo } = useEmployeePermissionStore();
   const [metrics, setMetrics] = useState({
     totalSales: 0,
     totalDeposit: 0,
@@ -233,21 +235,27 @@ export default function SalesDataPages() {
             },
             data: sortedSalespeople.map(name => ({
               value: salesStats[name].sales,    // ECharts 用来渲染的值
-              itemId: salesStats[name].id       // 我们自定义的元数据，用于跳转
+              itemId: salesStats[name].id,       // 我们自定义的元数据，用于跳转
+              name: name
             }))
           }
         ]
       });
 
       // 添加点击事件监听
-    chartInstances.current.chart3.on('click', function(event) {
-      // event 参数包含点击的详细信息
-      const clickedData = event.data; // 被点击的数据对象
-      const salespersonId = clickedData.itemId; // 销售人员ID
-
-      // 跳转到销售个人页面
-      navigate(`/my_tasks/${salespersonId}`);
-    });
+      chartInstances.current.chart3.on('click', function(event) {
+        // event 参数包含点击的详细信息
+        const clickedData = event.data; // 被点击的数据对象
+        const salespersonId = clickedData.itemId; // 销售人员ID
+        const salespersonName = clickedData.name; // 销售人员姓名
+        // 跳转到销售个人看板页面（只读版本）
+        // 如果是本人，则跳转到正常版本
+        if (salespersonId === userInfo.id) {
+          navigate(`/sales_dashboard`);
+        } else {
+          navigate(`/readonly_sales_dashboard/${salespersonId}/${salespersonName}`);
+        }
+      });
     }
 
     // 初始化第四个图表（产品类目分布）

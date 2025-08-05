@@ -4,7 +4,11 @@ from backend.models.client import Client
 from sqlalchemy import select, func, and_, or_
 from datetime import date, datetime, timedelta, timezone
 from backend.models.contract import Contract
+from sqlalchemy.orm import selectinload
 from typing import List, Dict
+
+from backend.models.employee import Employee
+from backend.models.sub_task import SubTask
 
 class StatisticsService:
 
@@ -665,7 +669,56 @@ class StatisticsService:
         }
 
 
-
+    @staticmethod
+    async def get_monthly_coefficient_statistics(db: AsyncSession):
+        # 查询每个美工员工的 difficulty_score 总和
+        result = await db.execute(
+            select(
+                SubTask.charge_id,
+                Employee.name,
+                func.sum(SubTask.difficulty_score).label("total_score")
+            )
+            .join(Employee, SubTask.charge_id == Employee.id)  # 关联员工表
+            .where(
+                and_(
+                    SubTask.started_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    SubTask.difficulty_score.is_not(None),
+                    SubTask.task_type == "美工"
+                )
+            )
+            .group_by(SubTask.charge_id, Employee.name)  # 按员工分组
+            .order_by(func.sum(SubTask.difficulty_score).desc())  # 可选：按总分降序
+        )
+        
+        # 处理查询结果
+        rows = result.fetchall()
+        statistics = []
+        
+        for row in rows:
+            charge_id, name, total_score = row
+            if total_score and total_score > 0:
+                # 计算系数
+                coefficient = float(total_score)
+                coefficient = StatisticsService.calculate_coefficient(coefficient)
+                # 四舍五入保留三位小数
+                statistics.append({
+                    "id": charge_id,
+                    "name": name,
+                    "coefficient": round(coefficient, 3),
+                    "total_score": round(float(total_score), 3)
+                })
+        
+        return statistics
+    
+    # 系数计算
+    @staticmethod
+    def calculate_coefficient(total_score: float) -> float:
+        if total_score <= 8:
+            return total_score
+        if (total_score - 8) * 1.2 <= 4:
+            return 8 + (total_score - 8) * 1.2
+        else:
+            return 8 + 4 + ((total_score - 8) * 1.2 -4) * 1.3/1.2
 
 
 

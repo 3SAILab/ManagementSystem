@@ -76,3 +76,18 @@ export const updateTicketInfo = async (ticketId, ticket) => {
         throw error;
     }
 };
+
+//根据工单id删除工单
+export const deleteTicket = async (ticketId) => {
+    try {
+        const response = await api.delete(`/tickets/${ticketId}`);
+        if(response.data.success){
+            return {success: true, data: response.data.data};
+        }else{
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        throw error;
+    }
+};
+

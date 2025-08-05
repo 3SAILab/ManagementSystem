@@ -122,6 +122,8 @@ async def get_personal_tasks(
             warning = "已完成"
         beijing_time = task.created_at.astimezone(ZoneInfo("Asia/Shanghai"))
         performanceSalary = settings.ART_PERFORMANCE_SALARY*task.difficulty_score/16 if task.task_type == "美工" else None
+        # 保留两位小数
+        performanceSalary = round(performanceSalary, 2)
         sub_tasks_out.append({
             "name": task.ticket.name,
             "progress": task.progress,

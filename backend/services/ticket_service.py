@@ -130,4 +130,15 @@ class TicketService:
         await db.refresh(ticket)
         return ticket
 
+    # 根据工单id删除工单
+    @staticmethod
+    async def delete_ticket_by_id(db: AsyncSession, ticket_id: int):
+        result = await db.execute(select(Ticket).where(Ticket.id == ticket_id))
+        ticket = result.scalar_one_or_none()
+        if not ticket:
+            return False
+        await db.delete(ticket)
+        await db.flush()
+        return True
+
 

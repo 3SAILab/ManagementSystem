@@ -85,3 +85,26 @@ export const deleteContract = async (id) => {
     }
 }
 
+// 只读销售看板 - 获取指定销售人员的合同列表
+export const getReadonlyContracts = async (employeeId, filters = {}) => {
+    try {
+        const params = new URLSearchParams();
+        
+        // 添加过滤参数
+        if (filters.name) params.append('name', filters.name);
+        if (filters.status && filters.status.length > 0) {
+            filters.status.forEach(status => params.append('status', status));
+        }
+        if (filters.contract_type && filters.contract_type.length > 0) {
+            filters.contract_type.forEach(type => params.append('contract_type', type));
+        }
+        if (filters.page) params.append('page', filters.page);
+        if (filters.page_size) params.append('page_size', filters.page_size);
+        
+        const response = await api.get(`/contracts/readonly/${employeeId}?${params.toString()}`);
+        return {success: true, data: response.data};
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
