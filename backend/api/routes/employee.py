@@ -151,7 +151,8 @@ async def update_employee_work_info(
     if current_employee.department.name != "人事行政部":
         raise HTTPException(status_code=403, detail="无权限访问")
     #修改员工信息
-    return await EmployeeService.update_employee_work_info(db, id, employee)
+    result = await EmployeeService.update_employee_work_info(db, id, employee)
+    return EmployeeInfo.from_model(result) 
 
 #获取组内成员以及工作负载
 @router.get("/group/members/with_task_count")
