@@ -16,6 +16,12 @@ class ContractService:
     # 添加合同
     @staticmethod
     async def add_contract(db: AsyncSession, contract: ContractCreate, sales_id: int):
+        # 查询客户是否存在
+        stmt = select(Client).where(Client.id == contract.client_id).with_for_update()
+        result = await db.execute(stmt)
+        client = result.scalar_one()
+        if not client:
+            raise HTTPException(status_code=404, detail="客户不存在")
         contract = Contract(
             client_id=contract.client_id,
             sales_id=sales_id,
@@ -29,6 +35,7 @@ class ContractService:
             image_count=contract.image_count,
             workflow_count=contract.workflow_count,
             transaction_time=contract.transaction_time,
+            is_recharged=contract.is_recharged,
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc)
         )

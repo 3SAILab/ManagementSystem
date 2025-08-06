@@ -57,7 +57,8 @@ async def get_contracts(
             paid_amount=contract.paid_amount,
             commission_rate=contract.commission_rate,
             transaction_time=contract.transaction_time,
-            status=contract.status
+            status=contract.status,
+            is_recharged=contract.is_recharged
         ) 
         for contract in contracts
     ]
@@ -90,7 +91,8 @@ async def get_contracts_by_client_id(
             paid_amount=contract.paid_amount,
             commission_rate=contract.commission_rate,
             transaction_time=contract.transaction_time,
-            status=contract.status
+            status=contract.status,
+            is_recharged=contract.is_recharged
         ) 
         for contract in contracts
     ]
@@ -251,7 +253,8 @@ async def get_readonly_contracts(
             paid_amount=contract.paid_amount,
             commission_rate=contract.commission_rate,
             transaction_time=contract.transaction_time,
-            status=contract.status
+            status=contract.status,
+            is_recharged=contract.is_recharged
         ) 
         for contract in contracts
     ]

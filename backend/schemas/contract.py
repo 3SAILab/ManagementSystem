@@ -30,7 +30,7 @@ class ContractCreate(BaseModel):
     image_count: int
     workflow_count: int
     transaction_time: datetime
-
+    is_recharged: bool
 
 # 合同列表
 class ContractList(BaseModel):
@@ -42,6 +42,7 @@ class ContractList(BaseModel):
     commission_rate: float
     transaction_time: datetime
     status: str
+    is_recharged: bool
 # 合同过滤
 class ContractFilter(BaseModel):
     name: Optional[str] = None
