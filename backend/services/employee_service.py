@@ -233,7 +233,8 @@ class EmployeeService:
             raise HTTPException(404, "员工不存在")
         await db.execute(update(Employee).where(Employee.id==id).values(**employee.model_dump(exclude_unset=True)))
         await db.flush()
-        return employee
+        await db.refresh(existing)
+        return existing
        
     #获取组内成员以及工作负载
     @staticmethod

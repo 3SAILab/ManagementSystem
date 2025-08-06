@@ -191,6 +191,8 @@ async def get_group_members(
     current_employee: Employee = Depends(get_current_employee)
 ):
     #判断当前用户身份
+    if current_employee.role == EmployeeRole.owner:
+        pass
     #获取组内成员列表
     employees = await EmployeeService.get_group_members(db, current_employee.id)
     return employees

@@ -100,6 +100,10 @@ async def update_ticket_by_id(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
+    # 需求之和不能<=0
+    sum = ticket.detail_pages + ticket.video_count + ticket.image_count + ticket.workflow_count
+    if sum <= 0 :
+        return api_response(success=False,error="工单需求不能为空！")
     ticket = await TicketService.update_ticket_by_id(db, ticket_id, ticket)
     return api_response(success=True, data=ticket)
 

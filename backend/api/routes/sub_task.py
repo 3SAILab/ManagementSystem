@@ -222,6 +222,8 @@ async def get_team_tasks(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
+    #权限验证
+    
     # 获取任务列表
     filter_params = SubTaskFilter(task_name=task_name, charge_name=charge_name, page=page, page_size=page_size)
     sub_tasks,total = await SubTaskService.get_team_sub_tasks(db, current_employee.id, filter_params)
