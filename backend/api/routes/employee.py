@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Literal, Optional
-from backend.models.employee import Employee
+from backend.models.employee import Employee, EmployeeRole
 from backend.services.employee_service import EmployeeService
 from backend.utils.response import api_response
 from ...db.session import get_async_db
