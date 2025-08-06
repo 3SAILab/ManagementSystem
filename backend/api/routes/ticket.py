@@ -58,7 +58,7 @@ async def create_ticket(
             await ProgressLogService.create_progress_log(db, render_res.id, notes, current_employee.id)
             flag = False
 
-    return {"message": "工单创建成功", "ticket": new_ticket}
+    return api_response(success=True, data=new_ticket)
         
 
 # 获取所有工单

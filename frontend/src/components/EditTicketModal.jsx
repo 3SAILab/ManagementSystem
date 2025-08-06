@@ -120,7 +120,7 @@ const EditTicketModal = ({ isOpen, onClose, onEdit, ticketId, contractId }) => {
       return;
     }
     onEdit(formData);
-    onClose();
+    handleClose();
   };
 
   // 检查是否有任何错误

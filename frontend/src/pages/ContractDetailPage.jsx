@@ -69,7 +69,6 @@ const ContractDetailPage = () => {
     // 如果这个工单的数据还没有加载过，则去获取
     if (!subTasks[ticketId]) {
         const res = await getSubTasksByTicketId(ticketId);
-        console.log(res);
         if (res.success) {
             // 将获取到的合同数据存入 state
             setSubTasks(prev => ({
@@ -102,9 +101,8 @@ const ContractDetailPage = () => {
       const result = await addTicket(ticketWithContractId);
       if (result.success) {
         // 关闭模态框
-        setCreateOrderModal(false);
-        init();
         toast.success('创建工单成功');
+        init();
       } else {
         toast.error(result.error);
       }

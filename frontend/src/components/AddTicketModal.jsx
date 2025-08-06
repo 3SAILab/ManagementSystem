@@ -27,7 +27,7 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
       }
     };
     fetchRemainingRequirements();
-  }, [contractId]);
+  },[isOpen, contractId]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -113,7 +113,22 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
       return;
     }
     onAdd(formData);
-    onClose();
+    setFormData({
+      name: "",
+      detail_pages: 0,
+      video_count: 0,
+      image_count: 0,
+      workflow_count: 0,
+      wechatGroup: "",
+      needArt: false,
+      needRender: false,
+      needShoot: false,
+      notes: "",
+      priority: "高", // 优先级
+      platform: "国内", // 平台
+      contract_id: contractId || 0, // 合同ID
+    })
+    handleClose();
   };
 
   // 检查是否有任何错误
