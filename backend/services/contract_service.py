@@ -94,11 +94,17 @@ class ContractService:
     # 更新合同状态
     @staticmethod
     async def update_contract_status(db: AsyncSession, contract_id: int, status: str):
-        contract = await db.get(Contract, contract_id)
+        # 使用 with_for_update() 锁定合同行
+        result = await db.execute(
+            select(Contract).where(Contract.id == contract_id).with_for_update()
+        )
+        contract = result.scalars().first()
         if not contract:
             raise HTTPException(status_code=404, detail="合同不存在")
+        
         contract.status = status
         contract.updated_at = datetime.now(timezone.utc)
+        
         await db.flush()
         return api_response(success=True, data={"msg": "合同状态更新成功"})
 

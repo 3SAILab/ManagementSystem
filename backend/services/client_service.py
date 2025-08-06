@@ -104,7 +104,7 @@ class ClientService:
     @staticmethod
     async def update_client_status(db: AsyncSession, id: int, status: ClientStatus):
         # 检查客户是否存在
-        result = await db.execute(select(Client).where(Client.id == id))
+        result = await db.execute(select(Client).where(Client.id == id).with_for_update())
         client = result.scalars().first()
         if not client:
             raise HTTPException(status_code=404, detail="客户不存在")
@@ -117,21 +117,23 @@ class ClientService:
     # 修改客户信息
     @staticmethod
     async def update_client(db: AsyncSession, id: int, client: ClientCreate):
-        existing = await db.execute(select(Client).where(Client.id == id))
-        if not existing:
-            raise HTTPException(404, "客户不存在")
-        
-        # 将Pydantic模型转换为字典，确保枚举值被正确处理
+        # 将Pydantic模型转换为字典
         client_data = client.model_dump(mode="json")
         
-        # 更新客户信息
-        await db.execute(update(Client).where(Client.id == id).values(**client_data))
-        await db.flush()
-        
-        # 获取更新后的客户信息
-        result = await db.execute(select(Client).where(Client.id == id))
+        # 在一条语句中完成：更新并返回更新后的记录
+        stmt = (
+            update(Client)
+            .where(Client.id == id)
+            .values(**client_data)
+            .returning(Client)
+        )
+        result = await db.execute(stmt)
         updated_client = result.scalars().first()
         
+        if not updated_client:
+            raise HTTPException(404, "客户不存在")
+            
+        await db.flush()
         return updated_client
 
     # 获取客户列表包括销售名称
@@ -180,7 +182,7 @@ class ClientService:
     @staticmethod
     async def update_client_sales(db: AsyncSession, id: int, sales_id: int):
         # 检查客户是否存在
-        result = await db.execute(select(Client).where(Client.id == id))
+        result = await db.execute(select(Client).where(Client.id == id).with_for_update())
         client = result.scalars().first()
         if not client:
             raise HTTPException(status_code=404, detail="客户不存在")

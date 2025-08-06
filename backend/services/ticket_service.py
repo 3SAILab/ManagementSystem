@@ -111,7 +111,7 @@ class TicketService:
     # 根据工单id更新工单信息
     @staticmethod
     async def update_ticket_by_id(db: AsyncSession, ticket_id: int, ticket_update: TicketUpdate):
-        result = await db.execute(select(Ticket).where(Ticket.id == ticket_id))
+        result = await db.execute(select(Ticket).where(Ticket.id == ticket_id).with_for_update())
         ticket = result.scalar_one_or_none()
         if not ticket:
             # 可选：抛出异常

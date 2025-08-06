@@ -65,7 +65,7 @@ class EmployeeService:
     @staticmethod
     async def reset_password(db: AsyncSession, email: str, new_password: str):
         # 正确获取查询结果
-        result = await db.execute(select(Employee).where(Employee.email == email))
+        result = await db.execute(select(Employee).where(Employee.email == email).with_for_update())
         employee = result.scalar_one_or_none()  # 获取单个结果或 None
         
         if not employee:
@@ -227,7 +227,7 @@ class EmployeeService:
     #修改员工工作信息
     @staticmethod
     async def update_employee_work_info(db: AsyncSession, id: int, employee: EmployeeInfo):
-        result = await db.execute(select(Employee).where(Employee.id == id))
+        result = await db.execute(select(Employee).where(Employee.id == id).with_for_update())
         existing = result.scalar()  # 获取单个对象，如果没有则返回 None
         if not existing:
             raise HTTPException(404, "员工不存在")

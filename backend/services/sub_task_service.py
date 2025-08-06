@@ -165,7 +165,7 @@ class SubTaskService:
     # 分配任务(设置任务分配人id和任务负责人id)
     @staticmethod
     async def assign_sub_task(db: AsyncSession, id: int, charge_id: int, assignee_id: int, estimated_completion_time: int, difficulty_score: float):
-        sub_task = await db.execute(select(SubTask).where(SubTask.id == id))
+        sub_task = await db.execute(select(SubTask).where(SubTask.id == id).with_for_update())
         sub_task = sub_task.scalars().first()
         sub_task.charge_id = charge_id
         sub_task.assignee_id = assignee_id 
@@ -276,29 +276,37 @@ class SubTaskService:
     # 更新任务状态
     @staticmethod
     async def update_status(db: AsyncSession, id: int, progress: int, old_status: str, status: str):
+        # 使用 SELECT FOR UPDATE 锁定行
+        result = await db.execute(
+            select(SubTask).where(SubTask.id == id).with_for_update()
+        )
+        task = result.scalar_one_or_none()
+        if not task:
+            raise HTTPException(status_code=404, detail="任务不存在")
+
+        # 现在 old_status 是锁定的行的当前状态，非常安全
         now = datetime.now(timezone.utc)
         values = {"status": status, "progress": progress}
-        if old_status == "未开始":
+
+        # 使用 task.status 而不是传入的 old_status，更安全
+        if task.status == "未开始" and status != "未开始":
             values["started_at"] = now
-        if old_status == "已完成" and status != "已完成":
+        if task.status == "已完成" and status != "已完成":
             values["completed_at"] = None
         if status == "已完成":
             values["completed_at"] = now
         if status == "未开始":
             values["started_at"] = None
             values["completed_at"] = None
+
         stmt = (
             update(SubTask)
             .where(SubTask.id == id)
             .values(**values)
-            .returning(SubTask)
         )
-        result = await db.execute(stmt)
-        updated = result.scalar_one_or_none()
-        if not updated:
-            raise HTTPException(status_code=404, detail="任务不存在或未修改任何字段")
+        await db.execute(stmt)
         await db.flush()
-        return updated
+        return task # 返回锁定的 task 对象
     
     # 根据工单id获取子任务
     @staticmethod
