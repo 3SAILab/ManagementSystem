@@ -432,7 +432,7 @@ class StatisticsService:
         else:
             return current_month_pending_order_count, 0
         
-    # 获取员工今年各月度销售统计数据
+    # 获取员工今年各月度提点统计数据
     @staticmethod
     async def get_monthly_sales_statistics(db: AsyncSession, employee_id: int):
         monthly_sales_statistics = []
@@ -464,14 +464,14 @@ class StatisticsService:
             monthly_sales_statistics.append(monthly_sales)
         return monthly_sales_statistics
 
-    # 获取员工本月各周期销售统计数据
+    # 获取员工本月各周期提点统计数据
     """
     把一个月分为六个周期，前五个周期都是五天，把剩余的天全都归于最后一个周期
     """
     @staticmethod
     async def get_monthly_sales_by_cycle(db: AsyncSession, employee_id: int) -> List[Dict]:
         """
-        获取员工本月在六个销售周期内的销售统计数据
+        获取员工本月在六个提点周期内的提点统计数据
         - 前五个周期：各5天
         - 第六个周期：剩余所有天
         - 坏单：只统计 paid_amount * commission_rate
@@ -755,5 +755,135 @@ class StatisticsService:
         return statistics
 
 
+    # 获取员工今年各月度销售额统计数据
+    @staticmethod
+    async def get_monthly_sales_amount_statistics(db: AsyncSession, employee_id: int):
+        monthly_sales_amount_statistics = []
+        # 获取员工今年各月度销售额统计数据(其中坏单只统计预付金额其余正常统计)
+        for month in range(1, 13):
+            start_date = datetime(StatisticsService.current_date.year, month, 1)
+            end_date = start_date + timedelta(days=31)
+            # 统计坏单
+            bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount)).where(
+                and_(
+                    Contract.transaction_time.between(start_date, end_date),
+                    Contract.sales_id == employee_id,
+                    Contract.status == "坏单"
+                )
+            ))
+            bad_contract_sales = bad_contract_result.scalar_one_or_none() or 0
+            # 统计正常单
+            result = await db.execute(select(func.sum(Contract.total_amount)).where(
+                and_(
+                    Contract.transaction_time.between(start_date, end_date),
+                    Contract.sales_id == employee_id,
+                    Contract.status != "坏单"
+                )
+            ))
+            monthly_sales = result.scalar_one_or_none() or 0
+            monthly_sales += bad_contract_sales
+            # 格式化为两位小数
+            monthly_sales = round(float(monthly_sales), 2)
+            monthly_sales_amount_statistics.append(monthly_sales)
+        return monthly_sales_amount_statistics
+
+    # 获取员工本月各周期销售额统计数据
+    """
+    把一个月分为六个周期，前五个周期都是五天，把剩余的天全都归于最后一个周期
+    """
+    @staticmethod
+    async def get_monthly_sales_amount_by_cycle(db: AsyncSession, employee_id: int) -> List[Dict]:
+        """
+        获取员工本月在六个销售额周期内的销售额统计数据
+        - 前五个周期：各5天
+        - 第六个周期：剩余所有天
+        - 坏单：只统计 paid_amount
+        - 正常单：统计 total_amount
+        返回格式：
+        [
+            {"cycle": 1, "start": "2025-04-01", "end": "2025-04-05", "total_amount": 12500.0, "order_count": 3},
+            ...
+        ]
+        """
+        today = date.today()
+        year, month = today.year, today.month
+
+        # 获取本月天数
+        _, num_days = calendar.monthrange(year, month)
+
+        # 构建6个周期的起止日期
+        cycles = []
+        start_day = 1
+
+        for i in range(1, 7):
+            if i <= 5:
+                end_day = start_day + 4
+            else:
+                end_day = num_days  # 最后一个周期包含剩余所有天
+
+            if start_day > num_days:
+                break
+
+            end_day = min(end_day, num_days)
+            start_date = date(year, month, start_day)
+            end_date = date(year, month, end_day)
+
+            cycles.append({
+                "cycle": i,
+                "start": start_date,
+                "end": end_date
+            })
+
+            start_day = end_day + 1
+
+        # 存储每个周期的结果
+        sales_by_cycle = []
+
+        for cycle in cycles:
+            start = datetime.combine(cycle["start"], datetime.min.time())  # 转为 datetime
+            end = datetime.combine(cycle["end"], datetime.max.time())       # 包含当天最后一秒
+
+            # 查询坏单：只统计预付金额
+            bad_contract_result = await db.execute(
+                select(func.sum(Contract.paid_amount))
+                .where(
+                    and_(
+                        Contract.transaction_time.between(start, end),
+                        Contract.sales_id == employee_id,
+                        Contract.status == "坏单"
+                    )
+                )
+            )
+            bad_sales = bad_contract_result.scalar_one_or_none() or 0
+
+            # 查询正常单：统计总金额
+            normal_contract_result = await db.execute(
+                select(func.sum(Contract.total_amount),
+                    func.count(Contract.id))  # 同时统计订单数
+                .where(
+                    and_(
+                        Contract.transaction_time.between(start, end),
+                        Contract.sales_id == employee_id,
+                        Contract.status != "坏单"
+                    )
+                )
+            )
+            row = normal_contract_result.fetchone()
+            normal_sales = row[0] if row[0] is not None else 0
+            order_count = row[1] if row[1] is not None else 0
+
+            # 合计销售额（坏单 + 正常单）
+            total_amount = bad_sales + normal_sales
+            total_amount = round(float(total_amount), 2)  # 保留两位小数
+
+            sales_by_cycle.append({
+                "cycle": cycle["cycle"],
+                "start": cycle["start"].isoformat(),
+                "end": cycle["end"].isoformat(),
+                "total_amount": total_amount,
+                "order_count": order_count
+            })
+
+        return sales_by_cycle
 
 

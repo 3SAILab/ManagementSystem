@@ -155,4 +155,59 @@ export const getMonthlyAverageCompletionTimeStatistics = async () => {
     }
 };
 
+// 获取员工本月各周期销售额统计数据
+export const getMonthlySalesAmountByCycle = async () => {
+    try {
+        const response = await api.get('/statistics/monthly-sales-amount-by-cycle');
+        if (response.data.success) {
+            return {success: true, data: response.data.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
 
+
+// 获取员工月度销售额统计数据
+export const getMonthlySalesAmountStatistics = async () => {
+    try {
+        const response = await api.get('/statistics/monthly-sales-amount-statistics');
+        if (response.data.success) {
+            return {success: true, data: response.data.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// 只读销售看板 - 获取指定销售人员的本月各周期销售额统计数据
+export const getReadonlyMonthlySalesAmountByCycle = async (employeeId) => {
+    try {
+        const response = await api.get(`/statistics/readonly-monthly-sales-amount-by-cycle/${employeeId}`);
+        if (response.data.success) {
+            return {success: true, data: response.data.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// 只读销售看板 - 获取指定销售人员的月度销售额统计数据
+export const getReadonlyMonthlySalesAmountStatistics = async (employeeId) => {
+    try {
+        const response = await api.get(`/statistics/readonly-monthly-sales-amount-statistics/${employeeId}`);
+        if (response.data.success) {
+            return {success: true, data: response.data.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};

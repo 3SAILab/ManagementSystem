@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
 import * as echarts from 'echarts';
 import { getContracts, updateContractStatus, deleteContract } from '../services/contractService';
-import { getMonthlySales, getMonthlySalesStatistics, getMonthlySalesByCycle } from '../services/statisticsService';
+import { getMonthlySales, getMonthlySalesStatistics, getMonthlySalesByCycle, getMonthlySalesAmountStatistics, getMonthlySalesAmountByCycle } from '../services/statisticsService';
 import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -26,6 +26,14 @@ const statusBadgeClass = (status) => {
       return 'bg-green-100 text-green-800';
     case '待结算':
       return 'bg-yellow-100 text-yellow-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+const rechargeBadgeClass = (is_recharged) => {
+  switch (is_recharged) {
+    case true:
+      return 'bg-green-100 text-green-800';
     default:
       return 'bg-gray-100 text-gray-800';
   }
@@ -63,43 +71,49 @@ const SalesDashboard = () => {
     page_size: 10
 });
 
-  const chartRef = useRef(null);
-  const chartInstance = useRef(null);
-  // 当前视图
-  const [currentView, setCurrentView] = useState('月度');
-  // 图表数据状态
-  const [chartData, setChartData] = useState([]);
-  // 各周期销售统计数据
-  const [salesByCycle, setSalesByCycle] = useState([]);
-  // 图表标签
-  const [chartLabels, setChartLabels] = useState([]);
-  // 获取图表数据
+  const commissionChartRef = useRef(null);
+  const commissionChartInstance = useRef(null);
+  const salesAmountChartRef = useRef(null);
+  const salesAmountChartInstance = useRef(null);
+  // 提点图表当前视图
+  const [currentCommissionView, setCurrentCommissionView] = useState('月度');
+  // 提点图表数据状态
+  const [commissionChartData, setCommissionChartData] = useState([]);
+  // 提点图表标签
+  const [commissionChartLabels, setCommissionChartLabels] = useState([]);
+  // 销售额图表当前视图
+  const [currentSalesAmountView, setCurrentSalesAmountView] = useState('月度');
+  // 销售额图表数据状态
+  const [salesAmountChartData, setSalesAmountChartData] = useState([]);
+  // 销售额图表标签
+  const [salesAmountChartLabels, setSalesAmountChartLabels] = useState([]);
+  // 获取提点图表数据
   useEffect(() => {
-    const fetchChartData = async () => {
+    const fetchCommissionChartData = async () => {
       try {
-        if (currentView === '月度') {
+        if (currentCommissionView === '月度') {
           const res = await getMonthlySalesStatistics();
-          setChartData(res.data || []);
-          setChartLabels(['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']);
-        } else if (currentView === '周期') {
+          setCommissionChartData(res.data || []);
+          setCommissionChartLabels(['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']);
+        } else if (currentCommissionView === '周期') {
           const res = await getMonthlySalesByCycle();
-          setSalesByCycle(res.data || []);
-          setChartData(res.data.map(cycle => cycle.total_amount));
-          setChartLabels(res.data.map(cycle => `${cycle.cycle} 周期`));
+          setCommissionChartData(res.data.map(cycle => cycle.total_amount));
+          setCommissionChartLabels(res.data.map(cycle => `${cycle.cycle} 周期`));
         }
       } catch (error) {
         console.error('获取图表数据失败:', error);
-        setChartData([]);
-        setChartLabels([]);
+        setCommissionChartData([]);
+        setCommissionChartLabels([]);
       }
     };
 
-    fetchChartData();
-  }, [currentView]);
+    fetchCommissionChartData();
+  }, [currentCommissionView]);
 
-  // 初始化图表
+
+  // 初始化提点图表
   useEffect(() => {
-    if (!chartRef.current || chartData.length === 0) return;
+    if (!commissionChartRef.current || commissionChartData.length === 0) return;
 
     const option = {
       tooltip: {
@@ -112,7 +126,7 @@ const SalesDashboard = () => {
         },
       },
       legend: {
-        data: ['收入'],
+        data: ['提点'],
         top: 10,
         left: 'center',
       },
@@ -125,7 +139,7 @@ const SalesDashboard = () => {
       xAxis: {
         type: 'category',
         boundaryGap: false,
-        data: chartLabels,
+        data: commissionChartLabels,
       },
       yAxis: {
         type: 'value',
@@ -135,7 +149,7 @@ const SalesDashboard = () => {
       },
       series: [
         {
-          name: '收入',
+          name: '提点',
           type: 'line',
           smooth: true,
           symbol: 'circle', // 数据点为圆形
@@ -146,23 +160,23 @@ const SalesDashboard = () => {
           lineStyle: {
             width: 2,
           },
-          data: chartData,
+          data: commissionChartData,
         },
       ],
     };
 
     // 初始化图表实例
-    if (!chartInstance.current) {
-      chartInstance.current = echarts.init(chartRef.current);
+    if (!commissionChartInstance.current) {
+      commissionChartInstance.current = echarts.init(commissionChartRef.current);
     }
 
     // 设置图表配置
-    chartInstance.current.setOption(option, true);
+    commissionChartInstance.current.setOption(option, true);
 
     // 自适应屏幕变化
     const handleResize = () => {
-      if (chartInstance.current) {
-        chartInstance.current.resize();
+      if (commissionChartInstance.current) {
+        commissionChartInstance.current.resize();
       }
     };
 
@@ -171,13 +185,108 @@ const SalesDashboard = () => {
     // 清理函数
     return () => {
       window.removeEventListener('resize', handleResize);
-      if (chartInstance.current) {
-        chartInstance.current.dispose();
-        chartInstance.current = null;
+      if (commissionChartInstance.current) {
+        commissionChartInstance.current.dispose();
+        commissionChartInstance.current = null;
       }
     };
-  }, [chartData]); // 依赖于图表数据变化
+  }, [commissionChartData]); // 依赖于提点图表数据变化
 
+  // 获取销售额图表数据
+  useEffect(() => {
+    const fetchSalesAmountChartData = async () => {
+      try {
+        if (currentSalesAmountView === '月度') {
+          const res = await getMonthlySalesAmountStatistics();
+          setSalesAmountChartData(res.data || []);
+          setSalesAmountChartLabels(['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']);
+        } else if (currentSalesAmountView === '周期') {
+          const res = await getMonthlySalesAmountByCycle();
+          setSalesAmountChartData(res.data.map(cycle => cycle.total_amount));
+          setSalesAmountChartLabels(res.data.map(cycle => `${cycle.cycle} 周期`));
+        }
+      } catch (error) {
+        console.error('获取图表数据失败:', error);
+        setSalesAmountChartData([]);
+        setSalesAmountChartLabels([]);
+      }
+    };
+
+    fetchSalesAmountChartData();
+  }, [currentSalesAmountView]);
+
+  // 初始化销售额图表
+
+  useEffect(() => {
+    if (!salesAmountChartRef.current || salesAmountChartData.length === 0) return;
+
+    const option = {
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'cross',
+          label: {
+            backgroundColor: '#6a7985',
+          },
+        },
+      },
+      legend: {
+        data: ['销售额'],
+        top: 10,
+        left: 'center',
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true,
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: salesAmountChartLabels,
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: {
+          formatter: '{value} 元',
+        },
+      },
+      series: [
+        {
+          name: '销售额',
+          type: 'line',
+          smooth: true,
+          symbol: 'circle', // 数据点为圆形
+          symbolSize: 6, // 数据点大小
+          itemStyle: {
+            color: '#6366F1', // indigo-500
+          },
+          lineStyle: {
+            width: 2,
+          },
+          data: salesAmountChartData,
+        },
+      ],
+    };
+
+    // 初始化图表实例
+    if (!salesAmountChartInstance.current) {
+      salesAmountChartInstance.current = echarts.init(salesAmountChartRef.current);
+    }
+
+    // 设置图表配置
+    salesAmountChartInstance.current.setOption(option, true);
+
+    // 自适应屏幕变化
+    const handleResize = () => {
+      if (salesAmountChartInstance.current) {
+        salesAmountChartInstance.current.resize();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+  }, [salesAmountChartData]); // 依赖于销售额图表数据变化
   // 合同列表
   const [contracts, setContracts] = useState([]);
   // 总条数
@@ -193,12 +302,6 @@ const SalesDashboard = () => {
   useEffect(() => {
     getMonthlySales().then(res => {
       setStatistics(res.data);
-    });
-  }, []);
-  // 获取员工本月各周期销售统计数据
-  useEffect(() => {
-    getMonthlySalesByCycle().then(res => {
-      setSalesByCycle(res.data);
     });
   }, []);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -295,22 +398,22 @@ const SalesDashboard = () => {
         </div>
       </div>
 
-      {/* 收入图表 + 来源详情 */}
+      {/* 提点图表 + 销售额图表 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 收入图表 */}
+        {/* 提点图表 */}
         <div className="bg-white p-5 rounded-xl shadow-sm border">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-800">收入</h3>
+            <h3 className="text-lg font-semibold text-slate-800">提点</h3>
             <div className="flex bg-slate-100 rounded-lg p-1 text-sm">
               <button
-                onClick={() => setCurrentView('月度')}
-                className={`px-3 py-1 rounded-md bg-white shadow-sm ${currentView === '月度' ? 'font-bold' : ''}`}
+                onClick={() => setCurrentCommissionView('月度')}
+                className={`px-3 py-1 rounded-md bg-white shadow-sm ${currentCommissionView === '月度' ? 'font-bold' : ''}`}
               >
                 月度
               </button>
               <button
-                onClick={() => setCurrentView('周期')}
-                className={`px-3 py-1 rounded-md bg-white shadow-sm ${currentView === '周期' ? 'font-bold' : ''}`}
+                onClick={() => setCurrentCommissionView('周期')}
+                className={`px-3 py-1 rounded-md bg-white shadow-sm ${currentCommissionView === '周期' ? 'font-bold' : ''}`}
               >
                 周期
               </button>
@@ -331,20 +434,61 @@ const SalesDashboard = () => {
           </div>
 
           <div className="h-64 mb-4">
-          <div ref={chartRef} style={{ width: '100%', height: '256px' }}></div>
+          <div ref={commissionChartRef} style={{ width: '100%', height: '256px' }}></div>
           </div>
 
           <div className="flex gap-8 text-sm">
             <div className="flex items-center">
               <span className="w-3 h-3 rounded-full bg-indigo-500 mr-2"></span>
-              <span>收入</span>
+              <span>提点</span>
               <span className="ml-2 font-medium">¥{ statistics.monthlyCommission }</span>
             </div>
           </div>
         </div>
-
+        {/* 销售额图表 */}
         <div className="bg-white p-5 rounded-xl shadow-sm border">
-          来源详情
+        <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-800">销售额</h3>
+            <div className="flex bg-slate-100 rounded-lg p-1 text-sm">
+              <button
+                onClick={() => setCurrentSalesAmountView('月度')}
+                className={`px-3 py-1 rounded-md bg-white shadow-sm ${currentSalesAmountView === '月度' ? 'font-bold' : ''}`}
+              >
+                月度
+              </button>
+              <button
+                onClick={() => setCurrentSalesAmountView('周期')}
+                className={`px-3 py-1 rounded-md bg-white shadow-sm ${currentSalesAmountView === '周期' ? 'font-bold' : ''}`}
+              >
+                周期
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center mb-5">
+            <h2 className="text-2xl font-bold">¥{statistics.monthlySales || 0}</h2>
+            <span className="text-green-500 flex items-center text-sm ml-2">
+              <span className="w-4 h-4 mr-1">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 8l-6 6h12z" />
+                </svg>
+              </span>
+              {getTrendIndicator(statistics.monthlySalesChange || 0)}
+            </span>
+            <span className="text-slate-500 text-sm ml-2">同比上期</span>
+          </div>
+
+          <div className="h-64 mb-4">
+            <div ref={salesAmountChartRef} style={{ width: '100%', height: '256px' }}></div>
+          </div>
+
+          <div className="flex gap-8 text-sm">
+            <div className="flex items-center">
+              <span className="w-3 h-3 rounded-full bg-indigo-500 mr-2"></span>
+              <span>销售额</span>
+              <span className="ml-2 font-medium">¥{ statistics.monthlySales || 0 }</span>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -368,6 +512,7 @@ const SalesDashboard = () => {
                 <th className="p-4 text-sm font-semibold text-slate-600">提点</th>
                 <th className="p-4 text-sm font-semibold text-slate-600">类型</th>
                 <th className="p-4 text-sm font-semibold text-slate-600">状态</th>
+                <th className="p-4 text-sm font-semibold text-slate-600">是否充值</th>
                 <th className="p-4 text-sm font-semibold text-slate-600">操作</th>
               </tr>
             </thead>
@@ -394,6 +539,11 @@ const SalesDashboard = () => {
                     <td className="p-4">
                       <span className={`inline-block px-2 py-1 text-xs rounded-full ${statusBadgeClass(contract.status)}`}>
                         {contract.status}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${rechargeBadgeClass(contract.is_recharged)}`}>
+                        {contract.is_recharged ? '是' : '否'}
                       </span>
                     </td>
                     <td className="p-4">

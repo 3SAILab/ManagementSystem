@@ -59,7 +59,7 @@ async def get_monthly_sales(
     }
     return api_response(success=True, data=data)
 
-# 获取员工本月各周期销售统计数据
+# 获取员工本月各周期提点统计数据
 @router.get("/statistics/monthly-sales-by-cycle")
 async def get_monthly_sales_by_cycle(
     db: AsyncSession = Depends(get_async_db),
@@ -69,7 +69,7 @@ async def get_monthly_sales_by_cycle(
     monthly_sales_by_cycle = await StatisticsService.get_monthly_sales_by_cycle(db, current_employee.id)
     return api_response(success=True, data=monthly_sales_by_cycle)
 
-# 获取月度销售统计数据
+# 获取员工月度提点统计数据
 @router.get("/statistics/monthly-sales-statistics")
 async def get_monthly_sales_statistics(
     db: AsyncSession = Depends(get_async_db),
@@ -155,26 +155,26 @@ async def get_readonly_monthly_sales(
     }
     return api_response(success=True, data=data)
 
-# 只读销售看板 - 获取指定销售人员的本月各周期销售统计数据
+# 只读销售看板 - 获取指定销售人员的本月各周期提点统计数据
 @router.get("/statistics/readonly-monthly-sales-by-cycle/{employee_id}")
-async def get_readonly_monthly_sales_by_cycle(
+async def get_readonly_monthly_commission_by_cycle(
     employee_id: int,
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ) -> Dict[str, Any]:
-    """只读模式获取指定销售人员的本月各周期销售统计数据"""
+    """只读模式获取指定销售人员的本月各周期提点统计数据"""
     # 获取统计数据
     monthly_sales_by_cycle = await StatisticsService.get_monthly_sales_by_cycle(db, employee_id)
     return api_response(success=True, data=monthly_sales_by_cycle)
 
-# 只读销售看板 - 获取指定销售人员的月度销售统计数据
+# 只读销售看板 - 获取指定销售人员的月度提点统计数据
 @router.get("/statistics/readonly-monthly-sales-statistics/{employee_id}")
-async def get_readonly_monthly_sales_statistics(
+async def get_readonly_monthly_commission_statistics(
     employee_id: int,
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ) -> Dict[str, Any]:
-    """只读模式获取指定销售人员的月度销售统计数据"""
+    """只读模式获取指定销售人员的月度提点统计数据"""
     # 获取统计数据
     monthly_sales_statistics = await StatisticsService.get_monthly_sales_statistics(db, employee_id)
     return api_response(success=True, data=monthly_sales_statistics)
@@ -198,4 +198,51 @@ async def get_monthly_average_completion_time_statistics(
     # 获取统计数据
     monthly_average_completion_time = await StatisticsService.get_monthly_average_completion_time_statistics(db)
     return api_response(success=True, data=monthly_average_completion_time)
+
+# 获取员工本月各周期销售额统计数据
+@router.get("/statistics/monthly-sales-amount-by-cycle")
+async def get_monthly_sales_amount_by_cycle(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    # 获取统计数据
+    monthly_sales_amount_by_cycle = await StatisticsService.get_monthly_sales_amount_by_cycle(db, current_employee.id)
+    return api_response(success=True, data=monthly_sales_amount_by_cycle)
+
+# 获取员工月度销售额统计数据
+@router.get("/statistics/monthly-sales-amount-statistics")
+async def get_monthly_sales_amount_statistics(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    # 获取统计数据
+    monthly_sales_amount_statistics = await StatisticsService.get_monthly_sales_amount_statistics(db, current_employee.id)
+    return api_response(success=True, data=monthly_sales_amount_statistics)
+
+# 只读销售看板 - 获取指定销售人员的本月各周期销售额统计数据
+@router.get("/statistics/readonly-monthly-sales-amount-by-cycle/{employee_id}")
+async def get_readonly_monthly_sales_amount_by_cycle(
+    employee_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    """只读模式获取指定销售人员的本月各周期销售额统计数据"""
+    # 获取统计数据
+    monthly_sales_amount_by_cycle = await StatisticsService.get_monthly_sales_amount_by_cycle(db, employee_id)
+    return api_response(success=True, data=monthly_sales_amount_by_cycle)
+
+# 只读销售看板 - 获取指定销售人员的月度销售额统计数据
+@router.get("/statistics/readonly-monthly-sales-amount-statistics/{employee_id}")
+async def get_readonly_monthly_sales_amount_statistics(
+    employee_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    """只读模式获取指定销售人员的月度销售额统计数据"""
+    # 获取统计数据
+    monthly_sales_amount_statistics = await StatisticsService.get_monthly_sales_amount_statistics(db, employee_id)
+    return api_response(success=True, data=monthly_sales_amount_statistics)
+
+
+
 

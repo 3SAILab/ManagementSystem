@@ -97,7 +97,6 @@ const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
       transaction_time: contract.transactionTime,
       is_recharged: contract.isRecharged
     };
-    console.log(payload);
     const response = await addContract(payload);
     await handleSaveLog();
     if (response.success) {
