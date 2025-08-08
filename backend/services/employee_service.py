@@ -14,10 +14,11 @@ from backend.models.employee import EmployeeStatus
 from backend.models.position import Position
 from backend.schemas.employee import EmployeeInfo, EmployeeListInfo
 from backend.models.sub_task import SubTask
+from backend.config import settings
 # JWT相关配置
-SECRET_KEY = "your-secret-key"  # 在生产环境中应该使用环境变量
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60*24  # 二十四小时
+SECRET_KEY = settings.JWT_SECRET_KEY
+ALGORITHM = settings.JWT_ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
 
 class EmployeeService:
     #验证密码

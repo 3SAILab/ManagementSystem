@@ -4,6 +4,10 @@ from pydantic import ConfigDict
 from pathlib import Path
 
 class Settings(BaseSettings):
+    # JWT配置
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")
+    JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
     # 美工绩效薪资
     ART_PERFORMANCE_SALARY: float = float(os.getenv("ART_PERFORMANCE_SALARY", "0"))

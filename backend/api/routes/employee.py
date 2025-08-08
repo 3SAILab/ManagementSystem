@@ -9,7 +9,7 @@ from ...schemas.employee import EmployeePermission, Token, EmployeeInfo, Employe
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi import Query
 import logging
-
+from backend.config import settings
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -64,12 +64,12 @@ async def login(
     
     # 设置HttpOnly Cookie
     response.set_cookie(
-        key="access_token",
+        key=f"access_token",
         value=f"Bearer {token}",
         httponly=True,
         secure=False,  # 生产环境应设为True，使用HTTPS
         samesite="lax",
-        max_age=60*60*24,  # 24小时，与token过期时间一致
+        max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES*60,  # 24小时，与token过期时间一致
         path="/"
     )
     
@@ -176,7 +176,7 @@ async def logout(response: Response):
     """
     logger.info("用户登出，清除Cookie")
     response.delete_cookie(
-        key="access_token",
+        key=f"access_token",
         path="/",
         httponly=True,
         secure=False,  # 生产环境应设为True
