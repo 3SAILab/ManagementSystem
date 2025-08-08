@@ -102,7 +102,6 @@ export const menuItems = [
       roles: ['owner'],
     },
     children: [
-      { label: '团队任务监控', path: 'team_dashboard', icon: 'contact' },
       { label: '销售数据', path: '/sales_data', icon: 'bar-chart-3' },
       { label: '美工数据', path: '/art_data', icon: 'bar-chart-3' },
     ]
