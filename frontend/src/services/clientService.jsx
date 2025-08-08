@@ -94,4 +94,38 @@ export const updateClientSales = async (clientId, salesId, notes) =>{
     }
 }
 
+// 获取线上客户列表
+export const getOnlineClients = async ({ name, status, source, page, page_size }) => {
+    try {
+        const response = await api.get('/client/get_online_clients', {
+            params: { name, status, source, page, page_size },
+            paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
+        });
+        return {success: true, data: response.data};
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+// 新增线上客户
+export const addOnlineClient = async (client) => {
+    try {
+        const payload = {
+            name: client.name,
+            contact_name: client.contact_name,
+            contact_phone: client.contact_phone,
+            source: "线上",
+            online_source: client.online_source,
+            activity_name: client.activity_name,
+            product_type: client.product_type,
+            scale: client.scale,
+            address: client.address,
+        }
+        const response = await api.post('/client/add_online_client', {sales_id: client.sales_id, client: payload});
+        return {success: true, data: response.data};
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
 

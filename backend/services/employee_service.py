@@ -8,8 +8,10 @@ import bcrypt
 from jose import JWTError, jwt
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from backend.models.department import Department
 from backend.models.employee import Employee
 from backend.models.employee import EmployeeStatus
+from backend.models.position import Position
 from backend.schemas.employee import EmployeeInfo, EmployeeListInfo
 from backend.models.sub_task import SubTask
 # JWT相关配置
@@ -255,8 +257,8 @@ class EmployeeService:
                     ),
                     Employee.status != EmployeeStatus.inactive
                 )
-                
             )
+            .order_by(Employee.id)
             .group_by(Employee.id, Employee.name)
         )
         result = await db.execute(stmt)
@@ -271,8 +273,21 @@ class EmployeeService:
     @staticmethod
     async def get_group_members(db: AsyncSession, employee_id: int):
         # 获取组内成员
-        stmt = select(Employee).where(and_(or_( Employee.id == employee_id, Employee.manager_id == employee_id), Employee.status != EmployeeStatus.inactive ))
+        stmt = select(Employee).where(and_(or_( Employee.id == employee_id, Employee.manager_id == employee_id), Employee.status != EmployeeStatus.inactive )).order_by(Employee.id)
         result = await db.execute(stmt)
         emps = result.scalars().all()
         return emps
 
+    # 获取对应职位、部门、级别的员工列表(id,name)
+    @staticmethod
+    async def get_employee_list_by_filter(db: AsyncSession, position_name: str = None, department_name: str = None, level: str = None):
+        stmt = select(Employee.id, Employee.name)
+        if position_name:
+            stmt = stmt.where(Employee.position.has(Position.name == position_name))
+        if department_name:
+            stmt = stmt.where(Employee.department.has(Department.name == department_name))
+        if level:
+            stmt = stmt.where(Employee.role == level)
+        result = await db.execute(stmt)
+        rows = result.all()
+        return [{"id": id, "name": name} for id, name in rows]

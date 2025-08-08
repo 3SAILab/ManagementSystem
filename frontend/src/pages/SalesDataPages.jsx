@@ -248,6 +248,10 @@ export default function SalesDataPages() {
         const clickedData = event.data; // 被点击的数据对象
         const salespersonId = clickedData.itemId; // 销售人员ID
         const salespersonName = clickedData.name; // 销售人员姓名
+        // 运营人员无操作权限
+        if(userInfo.position_name === '运营'){
+          return;
+        }
         // 跳转到销售个人看板页面（只读版本）
         // 如果是本人，则跳转到正常版本
         if (salespersonId === userInfo.id) {

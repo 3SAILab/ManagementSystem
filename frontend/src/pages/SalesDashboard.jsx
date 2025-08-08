@@ -59,8 +59,7 @@ const SalesDashboard = () => {
     monthlyCommissionChange: 0,
     monthlyOrderCount: 0,
     monthlyOrderCountChange: 0,
-    monthlyPendingOrderCount: 0,
-    monthlyPendingOrderCountChange: 0,
+    pendingOrderCount: 0,
   });
   // 过滤条件
   const [filters, setFilters] = useState({
@@ -87,6 +86,13 @@ const SalesDashboard = () => {
   const [salesAmountChartData, setSalesAmountChartData] = useState([]);
   // 销售额图表标签
   const [salesAmountChartLabels, setSalesAmountChartLabels] = useState([]);
+  // 加载状态
+  const [loadingStates, setLoadingStates] = useState({
+    contracts: false,
+    statistics: false,
+    commissionChart: false,
+    salesAmountChart: false
+  });
   // 获取提点图表数据
   useEffect(() => {
     const fetchCommissionChartData = async () => {
@@ -109,8 +115,6 @@ const SalesDashboard = () => {
 
     fetchCommissionChartData();
   }, [currentCommissionView]);
-
-
   // 初始化提点图表
   useEffect(() => {
     if (!commissionChartRef.current || commissionChartData.length === 0) return;
@@ -191,7 +195,6 @@ const SalesDashboard = () => {
       }
     };
   }, [commissionChartData]); // 依赖于提点图表数据变化
-
   // 获取销售额图表数据
   useEffect(() => {
     const fetchSalesAmountChartData = async () => {
@@ -214,9 +217,7 @@ const SalesDashboard = () => {
 
     fetchSalesAmountChartData();
   }, [currentSalesAmountView]);
-
   // 初始化销售额图表
-
   useEffect(() => {
     if (!salesAmountChartRef.current || salesAmountChartData.length === 0) return;
 
@@ -291,19 +292,44 @@ const SalesDashboard = () => {
   const [contracts, setContracts] = useState([]);
   // 总条数
   const [total, setTotal] = useState(0);
-  // 获取合同
+  // 刷新状态
+  const [refresh, setRefresh] = useState(false);
+  // 并行获取所有数据
   useEffect(() => {
-    getContracts(filters).then(res => {
-      setContracts(res.data.contracts);
-      setTotal(res.data.total);
-    });
-  }, [filters]);
-  // 获取员工本月销售统计数据
-  useEffect(() => {
-    getMonthlySales().then(res => {
-      setStatistics(res.data);
-    });
-  }, []);
+    const fetchAllData = async () => {
+      try {
+        setLoadingStates(prev => ({ 
+          ...prev, 
+          contracts: true, 
+          statistics: true
+        }));
+        
+        // 只获取合同列表和统计数据
+        const [contractsRes, statisticsRes] = await Promise.all([
+          getContracts(filters),
+          getMonthlySales()
+        ]);
+
+        // 分别处理结果
+        if (contractsRes.success) {
+          setContracts(contractsRes.data.contracts);
+          setTotal(contractsRes.data.total);
+        }
+        if (statisticsRes.success) {
+          setStatistics(statisticsRes.data);
+        }
+      } catch (error) {
+        console.error('获取数据失败:', error);
+      } finally {
+        setLoadingStates(prev => ({ 
+          ...prev, 
+          contracts: false, 
+          statistics: false
+        }));
+      }
+    };
+    fetchAllData();
+  }, [filters,refresh]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingContract, setEditingContract] = useState(null);
   const [newStatus, setNewStatus] = useState('');
@@ -329,6 +355,7 @@ const SalesDashboard = () => {
     }else{
       toast.error(res.error);
     }
+    setRefresh(!refresh);
   };
   const handleDeleteContract = async (contractId) => {
     const result = await Swal.fire({
@@ -358,42 +385,46 @@ const SalesDashboard = () => {
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-500">本月销售额</p>
-              {getTrendIndicator(statistics.monthlySalesChange || 0)}
+              {statistics.monthlySalesChange !== undefined && getTrendIndicator(statistics.monthlySalesChange || 0)}
             </div>
-            <p className="text-3xl font-bold text-slate-800">¥{statistics.monthlySales || 0}</p>
+            <p className="text-3xl font-bold text-slate-800">
+              {statistics.monthlySales !== undefined ? `¥${statistics.monthlySales || 0}` : '加载中...'}
+            </p>
           </div>
         </div>
-
         <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center gap-4">
           <div className="p-3 bg-green-100 rounded-lg"><PiggyBank className="w-7 h-7 text-green-600" /></div>
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-500">本月提点</p>
-              {getTrendIndicator(statistics.monthlyCommissionChange || 0)}
+              {statistics.monthlyCommissionChange !== undefined && getTrendIndicator(statistics.monthlyCommissionChange || 0)}
             </div>
-            <p className="text-3xl font-bold text-slate-800">¥{statistics.monthlyCommission || 0}</p>
+            <p className="text-3xl font-bold text-slate-800">
+              {statistics.monthlyCommission !== undefined ? `¥${statistics.monthlyCommission || 0}` : '加载中...'}
+            </p>
           </div>
         </div>
-
         <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center gap-4">
           <div className="p-3 bg-blue-100 rounded-lg"><Package className="w-7 h-7 text-blue-600" /></div>
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-500">本月订单数</p>
-              {getTrendIndicator(statistics.monthlyOrderCountChange || 0)}
+              {statistics.monthlyOrderCountChange !== undefined && getTrendIndicator(statistics.monthlyOrderCountChange || 0)}
             </div>
-            <p className="text-3xl font-bold text-slate-800">{statistics.monthlyOrderCount || 0}</p>
+            <p className="text-3xl font-bold text-slate-800">
+              {statistics.monthlyOrderCount !== undefined ? (statistics.monthlyOrderCount || 0) : '加载中...'}
+            </p>
           </div>
         </div>
-
         <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center gap-4">
           <div className="p-3 bg-yellow-100 rounded-lg"><Receipt className="w-7 h-7 text-yellow-600" /></div>
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-500">待结算订单</p>
-              {getTrendIndicator(statistics.monthlyPendingOrderCountChange || 0)}
             </div>
-            <p className="text-3xl font-bold text-yellow-500">{statistics.monthlyPendingOrderCount || 0}</p>
+            <p className="text-3xl font-bold text-yellow-500">
+              {statistics.pendingOrderCount !== undefined ? (statistics.pendingOrderCount || 0) : '加载中...'}
+            </p>
           </div>
         </div>
       </div>
@@ -419,7 +450,6 @@ const SalesDashboard = () => {
               </button>
             </div>
           </div>
-
           <div className="flex items-center mb-5">
             <h2 className="text-2xl font-bold">¥{statistics.monthlyCommission || 0}</h2>
             <span className="text-green-500 flex items-center text-sm ml-2">
@@ -432,22 +462,28 @@ const SalesDashboard = () => {
             </span>
             <span className="text-slate-500 text-sm ml-2">同比上期</span>
           </div>
-
           <div className="h-64 mb-4">
-          <div ref={commissionChartRef} style={{ width: '100%', height: '256px' }}></div>
+            {loadingStates.commissionChart ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-2"></div>
+                <span className="text-slate-500">加载图表中...</span>
+              </div>
+            ) : (
+              <div ref={commissionChartRef} style={{ width: '100%', height: '256px' }}></div>
+            )}
           </div>
-
           <div className="flex gap-8 text-sm">
             <div className="flex items-center">
               <span className="w-3 h-3 rounded-full bg-indigo-500 mr-2"></span>
               <span>提点</span>
-              <span className="ml-2 font-medium">¥{ statistics.monthlyCommission }</span>
+              <span className="ml-2 font-medium">¥{statistics.monthlyCommission}</span>
             </div>
           </div>
         </div>
+
         {/* 销售额图表 */}
         <div className="bg-white p-5 rounded-xl shadow-sm border">
-        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-slate-800">销售额</h3>
             <div className="flex bg-slate-100 rounded-lg p-1 text-sm">
               <button
@@ -464,7 +500,6 @@ const SalesDashboard = () => {
               </button>
             </div>
           </div>
-
           <div className="flex items-center mb-5">
             <h2 className="text-2xl font-bold">¥{statistics.monthlySales || 0}</h2>
             <span className="text-green-500 flex items-center text-sm ml-2">
@@ -477,16 +512,21 @@ const SalesDashboard = () => {
             </span>
             <span className="text-slate-500 text-sm ml-2">同比上期</span>
           </div>
-
           <div className="h-64 mb-4">
-            <div ref={salesAmountChartRef} style={{ width: '100%', height: '256px' }}></div>
+            {loadingStates.salesAmountChart ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-2"></div>
+                <span className="text-slate-500">加载图表中...</span>
+              </div>
+            ) : (
+              <div ref={salesAmountChartRef} style={{ width: '100%', height: '256px' }}></div>
+            )}
           </div>
-
           <div className="flex gap-8 text-sm">
             <div className="flex items-center">
               <span className="w-3 h-3 rounded-full bg-indigo-500 mr-2"></span>
               <span>销售额</span>
-              <span className="ml-2 font-medium">¥{ statistics.monthlySales || 0 }</span>
+              <span className="ml-2 font-medium">¥{statistics.monthlySales || 0}</span>
             </div>
           </div>
         </div>

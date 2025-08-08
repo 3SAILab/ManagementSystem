@@ -44,13 +44,13 @@ class ClientCreate(BaseModel):
     source: ClientSource
     product_type: str
     scale: ClientScale
-    status: ClientStatus = "刚开始跟进"
+    status: ClientStatus = ClientStatus.刚开始跟进
 
 
 class ClientOut(BaseModel):
     id: int = Field(...)
     name: str
-    source: ClientSource
+    source: Optional[ClientSource] = None
     status: ClientStatus
     product_type: str
     scale: ClientScale

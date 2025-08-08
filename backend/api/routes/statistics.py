@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.employee import Employee
@@ -16,10 +17,16 @@ async def get_client_activity_log_statistics(
     current_employee: Employee = Depends(get_current_employee)
 ) -> Dict[str, Any]:
     # 获取统计数据
-    monthly_client_count, monthly_client_count_change = await StatisticsService.get_monthly_client_count(db)
-    monthly_transaction_volume, monthly_transaction_volume_change = await StatisticsService.get_monthly_transaction_volume(db)
-    monthly_conversion_rate, monthly_conversion_rate_change = await StatisticsService.get_monthly_client_conversion_rate(db)
-    average_cycle, average_cycle_change = await StatisticsService.get_average_transaction_cycle(db)
+    result = await asyncio.gather(
+        StatisticsService.get_monthly_client_count(db),
+        StatisticsService.get_monthly_transaction_volume(db),
+        StatisticsService.get_monthly_client_conversion_rate(db),
+        StatisticsService.get_average_transaction_cycle(db)
+    )
+    monthly_client_count, monthly_client_count_change = result[0]
+    monthly_transaction_volume, monthly_transaction_volume_change = result[1]
+    monthly_conversion_rate, monthly_conversion_rate_change = result[2]
+    average_cycle, average_cycle_change = result[3]
 
     # 构造 JSON 数据结构,只保留小数点后两位
     data = {
@@ -45,7 +52,7 @@ async def get_monthly_sales(
     monthly_sales, monthly_sales_change = await StatisticsService.get_monthly_sales(db, current_employee.id)
     monthly_commission, monthly_commission_change = await StatisticsService.get_monthly_commission(db, current_employee.id)
     monthly_order_count, monthly_order_count_change = await StatisticsService.get_monthly_order_count(db, current_employee.id)
-    monthly_pending_order_count, monthly_pending_order_count_change = await StatisticsService.get_monthly_pending_order_count(db, current_employee.id)
+    pending_order_count = await StatisticsService.get_pending_order_count(db, current_employee.id)
 
     data = {
         "monthlySales": round(monthly_sales, 2),
@@ -54,8 +61,7 @@ async def get_monthly_sales(
         "monthlyCommissionChange": round(monthly_commission_change, 2),
         "monthlyOrderCount": round(monthly_order_count, 2),
         "monthlyOrderCountChange": round(monthly_order_count_change, 2),
-        "monthlyPendingOrderCount": round(monthly_pending_order_count, 2),
-        "monthlyPendingOrderCountChange": round(monthly_pending_order_count_change, 2)
+        "pendingOrderCount": round(pending_order_count, 2),
     }
     return api_response(success=True, data=data)
 
@@ -141,7 +147,7 @@ async def get_readonly_monthly_sales(
     monthly_sales, monthly_sales_change = await StatisticsService.get_monthly_sales(db, employee_id)
     monthly_commission, monthly_commission_change = await StatisticsService.get_monthly_commission(db, employee_id)
     monthly_order_count, monthly_order_count_change = await StatisticsService.get_monthly_order_count(db, employee_id)
-    monthly_pending_order_count, monthly_pending_order_count_change = await StatisticsService.get_monthly_pending_order_count(db, employee_id)
+    pending_order_count = await StatisticsService.get_pending_order_count(db, employee_id)
 
     data = {
         "monthlySales": round(monthly_sales, 2),
@@ -150,8 +156,7 @@ async def get_readonly_monthly_sales(
         "monthlyCommissionChange": round(monthly_commission_change, 2),
         "monthlyOrderCount": round(monthly_order_count, 2),
         "monthlyOrderCountChange": round(monthly_order_count_change, 2),
-        "monthlyPendingOrderCount": round(monthly_pending_order_count, 2),
-        "monthlyPendingOrderCountChange": round(monthly_pending_order_count_change, 2)
+        "pendingOrderCount": round(pending_order_count, 2),
     }
     return api_response(success=True, data=data)
 
@@ -244,5 +249,36 @@ async def get_readonly_monthly_sales_amount_statistics(
     return api_response(success=True, data=monthly_sales_amount_statistics)
 
 
+# 运营看板 - 获取线上客户数据统计
+@router.get("/statistics/online-client-data-statistics")
+async def get_online_client_data_statistics(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    # 获取统计数据
+    result = await asyncio.gather(
+        StatisticsService.get_monthly_client_count(db, source="线上"),
+        StatisticsService.get_monthly_transaction_volume(db, source="线上"),
+        StatisticsService.get_monthly_client_conversion_rate(db, source="线上"),
+        StatisticsService.get_average_transaction_cycle(db, source="线上")
+    )
+    monthly_client_count, monthly_client_count_change = result[0]
+    monthly_transaction_volume, monthly_transaction_volume_change = result[1]
+    monthly_conversion_rate, monthly_conversion_rate_change = result[2]
+    average_cycle, average_cycle_change = result[3]
 
+
+    # 构造 JSON 数据结构,只保留小数点后两位
+    data = {
+        "monthlyClientCount": round(monthly_client_count, 2),
+        "monthlyClientCountChange": round(monthly_client_count_change, 2),
+        "monthlyTransactionVolume": round(monthly_transaction_volume, 2),
+        "monthlyTransactionVolumeChange": round(monthly_transaction_volume_change, 2),
+        "monthlyTransactionConversionRate": round(monthly_conversion_rate, 2),
+        "monthlyTransactionConversionRateChange": round(monthly_conversion_rate_change, 2),
+        "averageTransactionCycle": round(average_cycle, 2),
+        "averageTransactionCycleChange": round(average_cycle_change, 2)
+    }
+
+    return api_response(success=True, data=data)
 

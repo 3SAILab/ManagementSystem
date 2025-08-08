@@ -1,3 +1,4 @@
+import asyncio
 from backend.config import settings
 from typing import Optional
 from fastapi import APIRouter, Body, Query
@@ -87,7 +88,7 @@ async def get_sub_task(
     }
     return out
 
-# 个人工单页面信息初始化
+# 个人工单页面信息初始化(已完成任务只获取本月的部分，其他的获取全部)
 @router.get("/personal_tasks")
 async def get_personal_tasks(
     db: AsyncSession = Depends(get_async_db),
@@ -106,16 +107,15 @@ async def get_personal_tasks(
 
         if task.status == "进行中":
             elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.started_at).days
-
             # 黄色预警条件
             yellow_threshold = task.estimated_completion_time
             red_threshold = task.estimated_completion_time + 1
 
             if yellow_threshold is not None:
-                if elapsed_days > red_threshold:
+                if elapsed_days >= red_threshold:
                     warning = "红色预警"
                     red_count += 1
-                elif elapsed_days > yellow_threshold:
+                elif elapsed_days >= yellow_threshold:
                     warning = "黄色预警"
                     yellow_count += 1
         elif task.status == "已完成":
@@ -162,9 +162,9 @@ async def get_sub_task_detail(
         elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - res.started_at).days
         yellow_threshold = res.estimated_completion_time
         red_threshold = res.estimated_completion_time + 1
-        if elapsed_days > red_threshold:
+        if elapsed_days >= red_threshold:
             warning = "红色预警"
-        elif elapsed_days > yellow_threshold:
+        elif elapsed_days >= yellow_threshold:
             warning = "黄色预警"
     out = { 
         "id": res.id,
@@ -227,12 +227,7 @@ async def get_team_tasks(
     # 获取任务列表
     filter_params = SubTaskFilter(task_name=task_name, charge_name=charge_name, page=page, page_size=page_size)
     sub_tasks,total = await SubTaskService.get_team_sub_tasks(db, current_employee.id, filter_params)
-    # 黄色预警（美工任务状态为已完成以外的状态且距离创建时间两天未完成，渲染任务状态为已完成以外的状态且距离创建时间一天未完成）
-    # 红色预警（美工任务状态为已完成以外的状态且距离创建时间三天未完成，渲染任务状态为已完成以外的状态且距离创建时间两天未完成）
-    yellow_count = 0
-    red_count = 0
     sub_tasks_out = []  # 存储带警告信息的任务（可选输出）
-
     for task in sub_tasks:
         warning = "正常"
 
@@ -244,12 +239,10 @@ async def get_team_tasks(
             red_threshold = task.estimated_completion_time + 1
 
             if yellow_threshold is not None:
-                if elapsed_days > red_threshold:
+                if elapsed_days >= red_threshold:
                     warning = "红色预警"
-                    red_count += 1
-                elif elapsed_days > yellow_threshold:
+                elif elapsed_days >= yellow_threshold:
                     warning = "黄色预警"
-                    yellow_count += 1
         elif task.status == "已完成":
             warning = "已完成"
         sub_tasks_out.append({
@@ -263,11 +256,26 @@ async def get_team_tasks(
             "estimated_completion_time": task.estimated_completion_time,
             "sales_name": task.ticket.contract.sales.name if task.ticket.contract.sales else None,
         })
+    if current_employee.position.name == "渲染":
+        task_type = "渲染"
+    else:
+        task_type = "美工"
+    # 获取任务状态数量(并行请求)，已完成的只统计本月(从一号00:00:00到当前时间)
+    yellow_count, red_count, completed_count, in_progress_count = await asyncio.gather(
+        SubTaskService.get_sub_tasks_count(db, task_type=task_type, warning_status=["黄色预警"]),
+        SubTaskService.get_sub_tasks_count(db, task_type=task_type, warning_status=["红色预警"]),
+        SubTaskService.get_sub_tasks_count(db, task_type=task_type, status=["已完成"], start_time=datetime.now(ZoneInfo("Asia/Shanghai")).replace(day=1, hour=0, minute=0, second=0)),
+        SubTaskService.get_sub_tasks_count(db, task_type=task_type, status=["进行中"])
+    )
     return {
         "sub_tasks": sub_tasks_out,
-        "yellow_count": yellow_count,
-        "red_count": red_count,
-        "total": total
+        "total": total,
+        "task_status": {
+            "yellow_count": yellow_count,
+            "red_count": red_count,
+            "completed_count": completed_count,
+            "in_progress_count": in_progress_count,
+        }
     }
 
 # 更新任务进度
@@ -307,9 +315,9 @@ async def get_sub_tasks_by_ticket_id(
             elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.started_at).days
             yellow_threshold = task.estimated_completion_time
             red_threshold = task.estimated_completion_time + 1
-            if elapsed_days > red_threshold:
+            if elapsed_days >= red_threshold:
                 warning = "红色预警"
-            elif elapsed_days > yellow_threshold:
+            elif elapsed_days >= yellow_threshold:
                 warning = "黄色预警"
         sub_tasks_out.append({
             "id": task.id,

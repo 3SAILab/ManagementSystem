@@ -211,3 +211,17 @@ export const getReadonlyMonthlySalesAmountStatistics = async (employeeId) => {
         return { success: false, error: error.message };
     }
 };
+
+// 获取线上客户数据统计数据
+export const getOnlineClientDataStatistics = async () => {
+    try {
+        const response = await api.get('/statistics/online-client-data-statistics');
+        if (response.data.success) {
+            return {success: true, data: response.data.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};

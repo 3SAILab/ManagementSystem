@@ -8,8 +8,12 @@ import { toast } from 'react-toastify';
 
 const TeamDashboardPage = () => {
   const [orders, setOrders] = useState([]);
-  const [yellowAlerts, setYellowAlerts] = useState(0);
-  const [redAlerts, setRedAlerts] = useState(0);
+  const [taskStatus, setTaskStatus] = useState({
+    yellow_count: 0,
+    red_count: 0,
+    completed_count: 0,
+    in_progress_count: 0
+  });
   const [selectedOrder, setSelectedOrder] = useState(null);
   // 过滤条件
   const [filters, setFilters] = useState({
@@ -28,8 +32,7 @@ const TeamDashboardPage = () => {
       if(res.success){
         setOrders(res.data.sub_tasks);
         setTotal(res.data.total);
-        setYellowAlerts(res.data.yellow_count);
-        setRedAlerts(res.data.red_count);
+        setTaskStatus(res.data.task_status);
       }else{
         toast.error('页面加载失败，请刷新重试');
       }
@@ -56,19 +59,19 @@ const TeamDashboardPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <div className="bg-white p-5 rounded-xl shadow-sm border">
             <p className="text-sm text-slate-500">进行中工单</p>
-            <p className="text-3xl font-bold text-slate-800">{inProgressOrders.length}</p>
+            <p className="text-3xl font-bold text-slate-800">{taskStatus.in_progress_count}</p>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border">
             <p className="text-sm text-slate-500">已完成工单</p>
-            <p className="text-3xl font-bold text-slate-800">{completedOrders.length}</p>
+            <p className="text-3xl font-bold text-slate-800">{taskStatus.completed_count}</p>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border">
             <p className="text-sm text-slate-500">黄色预警</p>
-            <p className="text-3xl font-bold text-yellow-500">{yellowAlerts}</p>
+            <p className="text-3xl font-bold text-yellow-500">{taskStatus.yellow_count}</p>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border">
             <p className="text-sm text-slate-500">红色预警</p>
-            <p className="text-3xl font-bold text-red-500">{redAlerts}</p>
+            <p className="text-3xl font-bold text-red-500">{taskStatus.red_count}</p>
           </div>
         </div>
         <div className="flex gap-4 items-center">

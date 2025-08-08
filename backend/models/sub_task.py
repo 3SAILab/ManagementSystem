@@ -11,7 +11,7 @@ class SubTask(Base):
     id = Column(Integer, primary_key=True)
     ticket_id = Column(Integer, ForeignKey('ticket.id', ondelete='CASCADE'), nullable=False)
     task_type = Column(String(100), nullable=False)  # 美工、渲染
-    status = Column(String(100), nullable=False)  # 未分配、未开始、修改中、已完工
+    status = Column(String(100), nullable=False)  # 未分配、未开始、已完工
     progress = Column(Integer, nullable=False) # 进度(0-100)
     edit_count = Column(Integer, nullable=False) # 修改次数
     estimated_completion_time = Column(Integer, server_default=text("2"), nullable=True) # 预计完成时间 /天

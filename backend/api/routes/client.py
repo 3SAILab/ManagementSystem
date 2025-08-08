@@ -121,7 +121,7 @@ async def update_client_status(
     await ClientService.update_client_status(db, id, status)
     return api_response(success=True, data={"msg": f"客户状态已更新为 {status}"})
     
-# 获取客户列表包括销售名称
+# 获取客户列表包括销售名称(团队记录)
 @router.get("/client/get_clients_with_sales_name")
 async def get_clients_with_sales_name(
     db: AsyncSession = Depends(get_async_db),
@@ -165,7 +165,7 @@ async def get_clients_with_sales_name(
     )
     return paginated.model_dump()
 
-# 修改客户负责人
+# 修改客户负责人(销售主管可操作)
 @router.put("/client/update_sales/{id}")
 async def update_client_sales(
     id: int,
@@ -187,5 +187,64 @@ async def update_client_sales(
     return api_response(success=True, data={"msg": f"客户负责人已更新为 {sales_id}"})
 
 
+# 获取线上客户列表包括销售名称(运营看板)
+@router.get("/client/get_online_clients")
+async def get_online_clients(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee),
+    name: str = Query(None),
+    status: List[str] = Query(None),
+    sales_name: str = Query(None),
+    source: List[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+):
+    # 验证权限
+    source = ["线上"]
+    filter_params = ClientFilter(name=name, status=status, source=source,sales_name=sales_name, page=page, page_size=page_size)
+    clients, total = await ClientService.get_clients_with_sales_name(db, filter_params)
 
+    total_pages = (total + page_size - 1) // page_size  # 正确的分页计算
+    #将Client对象转换为ClientOut对象
+    clients_out = [
+        ClientOut(
+            id=client.id, 
+            name=client.name, 
+            status=client.status.value, 
+            product_type=client.product_type, 
+            scale=client.scale.value, 
+            created_at=client.created_at,
+            sales_name=client.sales.name
+        ) 
+        for client in clients
+    ]
+    # 构造分页响应并导出为 dict
+    paginated = PaginatedClient(
+        clients=clients_out, 
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages
+    )
+    return paginated.model_dump()
 
+# 新增线上客户
+@router.post("/client/add_online_client")
+async def add_online_client(
+    sales_id: int = Body(..., description="销售ID"),
+    client: ClientCreate = Body(...),
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    # 验证权限
+
+    new_client = await ClientService.add_client(db, client, sales_id)
+    # 添加客户活动日志
+    client_activity_log = ClientActivityLogCreate(
+        client_id=new_client.id,
+        log_content=f"{current_employee.name}添加线上客户成功",
+        status="刚开始跟进",
+        log_time=datetime.now(timezone.utc)
+    )
+    await ClientActivityLogService.add_client_activity_log(db, client_activity_log, current_employee.id)
+    return api_response(success=True, data=new_client)

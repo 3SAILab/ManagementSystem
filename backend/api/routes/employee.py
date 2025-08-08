@@ -199,3 +199,12 @@ async def get_group_members(
     return employees
     
 
+#获取销售列表
+@router.get("/employee/sales/list", response_model=api_response)
+async def get_sales_list(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    employees = await EmployeeService.get_employee_list_by_filter(db, position_name="销售")
+    return api_response(success=True, data=employees)
+

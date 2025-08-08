@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select, or_
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 from backend.models.ticket import Ticket
 from backend.models.sub_task import SubTask
 from backend.models.employee import Employee
@@ -9,6 +9,7 @@ from backend.models.contract import Contract
 from backend.schemas.sub_task import SubTaskCreate, SubTaskFilter
 from datetime import datetime, timezone
 from sqlalchemy import update
+from zoneinfo import ZoneInfo
 
 class SubTaskService:
     # 根据合同id获取所有美工任务
@@ -221,7 +222,7 @@ class SubTaskService:
     async def get_team_sub_tasks(db: AsyncSession, current_employee_id: int, filter_params: SubTaskFilter):
         # 任务负责人或负责人的上级id是current_employee_id
         # 1. 先构造基础查询（不加options）
-        base_stmt = select(SubTask)
+        base_stmt = select(SubTask).order_by(SubTask.updated_at.desc())
         base_stmt = base_stmt.where(
             or_(
                 SubTask.charge_id == current_employee_id,
@@ -240,14 +241,14 @@ class SubTaskService:
 
         # 3. 分页+ORM预加载
         stmt = base_stmt.options(
-            selectinload(SubTask.ticket)
-                .selectinload(Ticket.contract)
-                .selectinload(Contract.client),
-            selectinload(SubTask.ticket)
-                .selectinload(Ticket.contract)
-                .selectinload(Contract.sales), 
-            selectinload(SubTask.assignee), 
-            selectinload(SubTask.charge)
+            joinedload(SubTask.ticket)
+                .joinedload(Ticket.contract)
+                .joinedload(Contract.client),
+            joinedload(SubTask.ticket)
+                .joinedload(Ticket.contract)
+                .joinedload(Contract.sales), 
+            joinedload(SubTask.assignee), 
+            joinedload(SubTask.charge)
         ).offset((filter_params.page - 1) * filter_params.page_size).limit(filter_params.page_size)
         sub_tasks = await db.execute(stmt)
         sub_tasks = list(sub_tasks.scalars().all())
@@ -320,3 +321,71 @@ class SubTaskService:
         )
         sub_tasks = sub_tasks.scalars().all()
         return sub_tasks
+    
+    # 获取 某个状态 某个时间 某种任务类型 的 任务数量 如果某个条件为空则查询所有
+    """
+    查询条件：
+    status: list[str] = None # 状态
+    start_time: datetime = None # 开始时间
+    end_time: datetime = None # 结束时间
+    task_type: str = None # 任务类型
+    employee_id: int = None # 员工id
+    warning_status: list[str] = None # 预警状态（黄色预警、红色预警、正常）
+    返回：
+    {
+        "count": "数量",
+    }
+    """
+    
+    @staticmethod
+    async def get_sub_tasks_count(
+        db: AsyncSession,
+        status: list[str] = None,
+        start_time: datetime = None,
+        end_time: datetime = None,
+        task_type: str = None,
+        employee_id: int = None,
+        warning_status: list[str] = None,
+    ) -> int:
+        """
+        查询符合条件的子任务数量（支持预警过滤）
+        """
+        stmt = select(func.count()).select_from(SubTask)
+
+        # 基础状态过滤
+        if status:
+            stmt = stmt.where(SubTask.status.in_(status))
+
+        if start_time:
+            stmt = stmt.where(SubTask.started_at >= start_time)
+
+        if end_time:
+            stmt = stmt.where(SubTask.started_at <= end_time)
+
+        if task_type:
+            stmt = stmt.where(SubTask.task_type == task_type)
+
+        if employee_id:
+            stmt = stmt.where(SubTask.charge_id == employee_id)
+
+        # 预警过滤（仅对进行中的任务有效）
+        if warning_status:
+            now = datetime.now(ZoneInfo("Asia/Shanghai"))
+            # estimated_completion_time 是整数字段，单位：天
+            elapsed_days = func.extract('epoch', now - SubTask.started_at) / 3600 / 24
+
+            conditions = []
+            if "红色预警" in warning_status:
+                conditions.append(elapsed_days > SubTask.estimated_completion_time + 1)
+            if "黄色预警" in warning_status:
+                conditions.append(elapsed_days > SubTask.estimated_completion_time)
+
+            if conditions:
+                stmt = stmt.where(or_(*conditions) & (SubTask.status == "进行中"))
+
+        result = await db.execute(stmt)
+        count = result.scalar()
+        return count or 0
+
+
+

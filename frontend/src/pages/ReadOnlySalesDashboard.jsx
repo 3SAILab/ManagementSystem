@@ -52,8 +52,7 @@ const ReadOnlySalesDashboard = () => {
     monthlyCommissionChange: 0,
     monthlyOrderCount: 0,
     monthlyOrderCountChange: 0,
-    monthlyPendingOrderCount: 0,
-    monthlyPendingOrderCountChange: 0,
+    pendingOrderCount: 0,
   });
 
   // 过滤条件
@@ -401,10 +400,9 @@ const ReadOnlySalesDashboard = () => {
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-500">待结算订单</p>
-              {statistics.monthlyPendingOrderCountChange !== undefined && getTrendIndicator(statistics.monthlyPendingOrderCountChange || 0)}
             </div>
             <p className="text-3xl font-bold text-yellow-500">
-              {statistics.monthlyPendingOrderCount !== undefined ? (statistics.monthlyPendingOrderCount || 0) : '加载中...'}
+              {statistics.pendingOrderCount !== undefined ? (statistics.pendingOrderCount || 0) : '加载中...'}
             </p>
           </div>
         </div>

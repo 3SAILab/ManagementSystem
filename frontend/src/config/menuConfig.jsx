@@ -60,6 +60,18 @@ export const menuItems = [
     ]
   },
   {
+    label: '运营',
+    access: {
+      roles: ['owner', 'admin', 'manager', 'employee'],
+      positions: ['运营'],
+      departments: ['营销管理部'],
+    },
+    children: [
+      { label: '线上客户', path: '/online_client', icon: 'contact' },
+      { label: '销售数据', path: '/sales_data', icon: 'bar-chart-3' },
+    ]
+  },
+  {
     label: '美工主管',
     access: {
       roles: ['manager'],

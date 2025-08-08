@@ -1,14 +1,12 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/DashboardPage';
-import MyTasksPage from '../pages/MyTasksPage';
 import EmployeeManagementPage from '../pages/EmployeeManagementPage';
 import PrivateRoute from '../components/PrivateRoute';
 import Layout from '../components/Layout';
 import RequireAuth from '../components/RequireAuth';
 import DepartmentPage from '../pages/DepartmentPage';
 import PositionPage from '../pages/PositionPage';
-import DailyReportPage from '../pages/DailyReportPage';
 import SalesDashboard from '../pages/SalesDashboard';
 import ClientFollowUps from '../pages/ClientFollowUps';
 import TeamRecordPage from '../pages/TeamRecordPage';
@@ -20,6 +18,7 @@ import SalesDataPages from '../pages/SalesDataPages'
 import ReadOnlySalesDashboard from '../pages/ReadOnlySalesDashboard'
 import ReadOnlyContractDetail from '../pages/ReadOnlyContractDetail'
 import ArtDataPage from '../pages/ArtDataPage'
+import OnlineClientPage from '../pages/OnlineClientPage'
 
 const router = createBrowserRouter([
   {
@@ -162,6 +161,15 @@ const router = createBrowserRouter([
               </PrivateRoute>
             ),
             handle: { title: '美工数据' }
+          },
+          {
+            path: 'online_client',
+            element: (
+              <PrivateRoute currentPath='online_client'>
+                <OnlineClientPage />
+              </PrivateRoute>
+            ),
+            handle: { title: '线上客户' }
           }
         ],
       },

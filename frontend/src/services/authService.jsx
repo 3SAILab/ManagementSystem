@@ -181,3 +181,15 @@ export const getGroupMembers = async () => {
     return { success: false, error: detail };
   }
 };
+
+// 获取销售列表
+export const getSalesList = async () => {
+  try {
+    const response = await api.get(`/employee/sales/list`);
+    // Backend returns { success: boolean, data: [...] }
+    return { success: true, data: response.data?.data ?? [] };
+  } catch (err) {
+    const detail = err.response?.data?.detail || err.message;
+    return { success: false, error: detail };
+  }
+};

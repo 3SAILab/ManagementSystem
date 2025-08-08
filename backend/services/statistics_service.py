@@ -1,7 +1,7 @@
 import calendar
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.client import Client
-from sqlalchemy import select, func, and_, or_
+from sqlalchemy import case, extract, select, func, and_, or_
 from datetime import date, datetime, timedelta, timezone
 from backend.models.contract import Contract
 from sqlalchemy.orm import selectinload
@@ -10,6 +10,10 @@ from typing import List, Dict
 from backend.models.employee import Employee
 from backend.models.sub_task import SubTask
 
+
+# 业务常量（避免魔法字符串）
+CLIENT_STATUS_CONVERTED = ["已成交", "复购"]
+CONTRACT_TYPES_VALID = ["首单", "复购"]
 class StatisticsService:
 
     #当前月份的开始和结束时间
@@ -23,260 +27,269 @@ class StatisticsService:
 
 
     # 获取本月客户数量和增长率
+    """
+    获取客户数量
+    :param db: 数据库会话
+    :param sales_id: 销售人员ID（可选）
+    :param source: 客户来源（可选）
+    :param start_date: 开始时间（可选）
+    :param end_date: 结束时间（可选）
+    :return: 客户数量
+    """
+    # 按条件获取客户数量
     @staticmethod
-    async def get_monthly_client_count(db: AsyncSession, sales_id: int = None):
-        # 获取当前月份的客户数量
-        if sales_id:
-            result = await db.execute(
-                select(func.count(Client.id)).where(
-                    and_(
-                        Client.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
-                        Client.sales_id == sales_id
-                    )
-                )
-            )
-        else:
-            result = await db.execute(
-                select(func.count(Client.id)).where(
-                    Client.created_at.between(StatisticsService.start_date, StatisticsService.end_date)
-                )
-            )
-        current_month_count = result.scalar_one_or_none() or 0
+    async def _count_clients(
+        db: AsyncSession,
+        sales_id: int = None,
+        source: str = None,
+        start_date: datetime = None,
+        end_date: datetime = None,
+        status_in: List[str] = None
+    ) -> int:
+        """
+        通用方法：统计指定时间范围内符合条件的客户数量
+        """
+        stmt = select(func.count(Client.id))
         
-        # 获取上个月的客户数量
-        if sales_id:
-            result = await db.execute(
-                select(func.count(Client.id)).where(
-                    and_(
-                        Client.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
-                        Client.sales_id == sales_id
-                    )
-                )
-            )
-        else:
-            result = await db.execute(
-                select(func.count(Client.id)).where(
-                    Client.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date)
-                )
-            )
-        last_month_count = result.scalar_one_or_none() or 0
+        # 构建 WHERE 条件
+        conditions = []
+        if start_date is not None:
+            conditions.append(Client.created_at >= start_date)
+        if end_date is not None:
+            conditions.append(Client.created_at <= end_date)
+        if sales_id is not None:
+            conditions.append(Client.sales_id == sales_id)
+        if source is not None:
+            conditions.append(Client.source == source)
+        if status_in is not None:
+            conditions.append(Client.status.in_(status_in))
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
         
-        # 计算客户数量变化
-        if last_month_count > 0:
-            return current_month_count, (current_month_count - last_month_count) / last_month_count * 100
-        else:
-            return current_month_count, 0
-        
+        result = await db.execute(stmt)
+        return result.scalar_one_or_none() or 0
+    
+    # 按条件获取合同数量
+    @staticmethod
+    async def _count_contracts(
+        db: AsyncSession,
+        start_date: datetime = None,
+        end_date: datetime = None,
+        sales_id: int = None,
+        source: str = None
+    ) -> int:
+        """
+        通用方法：统计指定时间范围内，合同类型为“首单”或“复购”的合同数量
+        支持按销售员或客户来源筛选（通过 Client 表关联）
+        所有条件均为可选
+        """
+        stmt = select(func.count(Contract.id)).join(Contract.client)
+
+        # 构建 WHERE 条件（全部动态）
+        conditions = []
+        # 时间范围条件（可选）
+        if start_date is not None:
+            conditions.append(Contract.created_at >= start_date)
+        if end_date is not None:
+            conditions.append(Contract.created_at <= end_date)
+        # 合同类型：首单 或 复购（业务固定条件）
+        conditions.append(or_(Contract.contract_type == "首单", Contract.contract_type == "复购"))
+        # 销售员筛选
+        if sales_id is not None:
+            conditions.append(Contract.sales_id == sales_id)
+        # 客户来源筛选
+        if source is not None:
+            conditions.append(Client.source == source)
+        # 应用所有条件
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
+        result = await db.execute(stmt)
+        return result.scalar_one_or_none() or 0
+
+    # 获取本月客户数量及环比增长率
+    @staticmethod
+    async def get_monthly_client_count(
+        db: AsyncSession,
+        sales_id: int = None,
+        source: str = None
+    ):
+        """
+        获取本月客户数量及环比增长率（双查询 + 公共方法）
+        """
+        # 获取当前月份客户数量
+        current_month_count = await StatisticsService._count_clients(
+            db=db,
+            start_date=StatisticsService.start_date,
+            end_date=StatisticsService.end_date,
+            sales_id=sales_id,
+            source=source
+        )
+
+        # 获取上月客户数量
+        last_month_count = await StatisticsService._count_clients(
+            db=db,
+            start_date=StatisticsService.last_month_start_date,
+            end_date=StatisticsService.last_month_end_date,
+            sales_id=sales_id,
+            source=source
+        )
+
+        # 计算增长率
+        growth_rate = (
+            (current_month_count - last_month_count) / last_month_count * 100
+            if last_month_count > 0 else 0
+        )
+
+        return current_month_count, round(growth_rate, 2)
+
+        # 获取本月成交量和增长率
+    
     # 获取本月成交量和增长率
     @staticmethod
-    async def get_monthly_transaction_volume(db: AsyncSession, sales_id: int = None):
-        # 获取当前月份的成交量
-        if sales_id:
-            result = await db.execute(select(func.count(Contract.id)).where(
-                and_(
-                    Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
-                    or_(Contract.contract_type == "首单", Contract.contract_type == "复购"),
-                    Contract.sales_id == sales_id
-                )
-            ))
-        else:
-            result = await db.execute(select(func.count(Contract.id)).where(
-                and_(
-                    Contract.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
-                    or_(Contract.contract_type == "首单", Contract.contract_type == "复购")
-                )
-            ))
-        current_month_count = result.scalar_one_or_none() or 0
-        
-        # 获取上个月的成交量
-        if sales_id:
-            result = await db.execute(select(func.count(Contract.id)).where(
-                and_(
-                    Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
-                    or_(Contract.contract_type == "首单", Contract.contract_type == "复购"),
-                    Contract.sales_id == sales_id
-                )
-            ))
-        else:
-            result = await db.execute(select(func.count(Contract.id)).where(
-                and_(
-                    Contract.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
-                    or_(Contract.contract_type == "首单", Contract.contract_type == "复购")
-                )
-            ))
-        last_month_count = result.scalar_one_or_none() or 0
-        
-        # 计算成交量变化
-        if last_month_count > 0:
-            return current_month_count, (current_month_count - last_month_count) / last_month_count * 100
-        else:
-            return current_month_count, 0
-    
+    async def get_monthly_transaction_volume(
+        db: AsyncSession,
+        sales_id: int = None,
+        source: str = None
+    ) -> tuple[int, float]:
+        """
+        获取本月成交量（首单+复购）及环比增长率
+        """
+        # 本月成交量
+        current_count = await StatisticsService._count_contracts(
+            db=db,
+            start_date=StatisticsService.start_date,
+            end_date=StatisticsService.end_date,
+            sales_id=sales_id,
+            source=source
+        )
+        # 上月成交量
+        last_count = await StatisticsService._count_contracts(
+            db=db,
+            start_date=StatisticsService.last_month_start_date,
+            end_date=StatisticsService.last_month_end_date,
+            sales_id=sales_id,
+            source=source
+        )
+        # 计算增长率
+        growth_rate = (
+            (current_count - last_count) / last_count * 100
+            if last_count > 0 else 0
+        )
+        return current_count, round(growth_rate, 2)
 
-    # 获取本月客户转化率以及与上月相比的增长率
+    # 获取本月客户转化率及环比变化率
     @staticmethod
-    async def get_monthly_client_conversion_rate(db: AsyncSession, sales_id: int = None):
-        # 获取当前月份创建且成交的客户数量
-        if sales_id:
-            result = await db.execute(select(func.count(Client.id)).where(
-                and_(
-                    Client.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
-                    or_(Client.status == "已成交", Client.status == "复购"),
-                    Client.sales_id == sales_id
-                )
-            ))
-        else:
-            result = await db.execute(select(func.count(Client.id)).where(
-                and_(
-                    Client.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
-                    or_(Client.status == "已成交", Client.status == "复购")
-                )
-            ))
-        current_month_count = result.scalar_one_or_none() or 0
-        
-        # 获取当前月份创建的客户数量
-        if sales_id:
-            result = await db.execute(select(func.count(Client.id)).where(
-                and_(
-                    Client.created_at.between(StatisticsService.start_date, StatisticsService.end_date),
-                    Client.sales_id == sales_id
-                )
-            ))
-        else:
-            result = await db.execute(select(func.count(Client.id)).where(
-                Client.created_at.between(StatisticsService.start_date, StatisticsService.end_date)
-            ))
-        current_month_client_count = result.scalar_one_or_none() or 0
-        
-        # 获取上个月创建且成交的客户数量
-        if sales_id:
-            result = await db.execute(select(func.count(Client.id)).where(
-                and_(
-                    Client.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
-                    or_(Client.status == "已成交", Client.status == "复购"),
-                    Client.sales_id == sales_id
-                )
-            ))
-        else:
-            result = await db.execute(select(func.count(Client.id)).where(
-                and_(
-                    Client.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
-                    or_(Client.status == "已成交", Client.status == "复购")
-                )
-            ))
-        last_month_count = result.scalar_one_or_none() or 0
-        
-        # 获取上个月创建的客户数量
-        if sales_id:
-            result = await db.execute(select(func.count(Client.id)).where(
-                and_(
-                    Client.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
-                    Client.sales_id == sales_id
-                )
-            ))
-        else:
-            result = await db.execute(select(func.count(Client.id)).where(
-                Client.created_at.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date)
-            ))
-        last_month_client_count = result.scalar_one_or_none() or 0
-        
-        # 计算客户转化率变化
-        if current_month_client_count == 0:
-            current_month_rate = 0.0
-        else:
-            current_month_rate = current_month_count / current_month_client_count
+    async def get_monthly_client_conversion_rate(
+        db: AsyncSession,
+        sales_id: int = None,
+        source: str = None
+    ) -> tuple[float, float]:
+        """
+        获取本月客户转化率及环比变化率
+        转化率 = (本月创建且已成交客户数) / (本月创建客户总数)
+        变化率 = (本月转化率 - 上月转化率) / 上月转化率 * 100%
+        """
+        # 本月成交客户数
+        current_converted = await StatisticsService._count_clients(
+                db=db,
+                start_date=StatisticsService.start_date,
+                end_date=StatisticsService.end_date,
+                sales_id=sales_id,
+                source=source,
+                status_in=CLIENT_STATUS_CONVERTED
+            )
+            # 本月客户总数
+        current_total = await StatisticsService._count_clients(
+                db=db,
+                start_date=StatisticsService.start_date,
+                end_date=StatisticsService.end_date,
+                sales_id=sales_id,
+                source=source
+            )
+            # 上月成交客户数
+        last_converted = await StatisticsService._count_clients(
+                db=db,
+                start_date=StatisticsService.last_month_start_date,
+                end_date=StatisticsService.last_month_end_date,
+                sales_id=sales_id,
+                source=source,
+                status_in=CLIENT_STATUS_CONVERTED
+            )
+            # 上月客户总数
+        last_total = await StatisticsService._count_clients(
+                db=db,
+                start_date=StatisticsService.last_month_start_date,
+                end_date=StatisticsService.last_month_end_date,
+                sales_id=sales_id,
+                source=source
+            )
 
-        # 初始化变化率
-        change_percentage = 0.0
+        # 计算转化率
+        current_rate = current_converted / current_total if current_total > 0 else 0.0
+        last_rate = last_converted / last_total if last_total > 0 else 0.0
 
-        # 只有当上月计数和上月客户数都大于0时，才计算变化率
-        if last_month_count > 0 and last_month_client_count > 0:
-            # 进一步检查上月的分母（虽然 last_month_count > 0，但 last_month_client_count 仍可能为 0 导致错误）
-            last_month_rate = last_month_count / last_month_client_count
-            # 为了避免下面计算变化率时 last_month_rate 为 0 导致除零，也检查一下
-            if last_month_rate != 0:
-                change_percentage = (current_month_rate - last_month_rate) / last_month_rate * 100
-            # 如果 last_month_rate == 0, change_percentage 保持 0.0
+        # 计算变化率
+        change_rate = 0.0
+        if last_rate > 0:
+            change_rate = (current_rate - last_rate) / last_rate * 100
 
-        # 返回结果
-        return current_month_rate, change_percentage
-        
+        return round(current_rate, 4), round(change_rate, 2)
 
-    # 获取平均成交周期和增长率
+    # 获取平均成交周期及环比变化率
     @staticmethod
-    async def get_average_transaction_cycle(db: AsyncSession, sales_id: int = None):
-        # 获取本月平均成交周期
-        if sales_id:
-            result = await db.execute(
-                select(Client.created_at, func.min(Contract.transaction_time).label("first_contract"))
+    async def get_average_transaction_cycle(
+        db: AsyncSession,
+        sales_id: int = None,
+        source: str = None
+    ) -> tuple[float, float]:
+        """
+        获取平均成交周期（天）及环比变化率
+        成交周期 = 首单合同 transaction_time - 客户创建时间 created_at
+        """
+
+        async def _get_avg_cycle(start_date: datetime, end_date: datetime) -> float:
+            # 先计算每个客户的成交周期（天），再求平均
+            # 1. 子查询：每个客户的成交周期
+            per_client_cycles = (
+                select(
+                    (extract('epoch', func.min(Contract.transaction_time) - Client.created_at) / 86400.0)
+                    .label("cycle_days")
+                )
+                .select_from(Client)
                 .join(Contract, Contract.client_id == Client.id)
-                .where(and_(
-                    Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
-                    Contract.contract_type == "首单",
-                    Contract.sales_id == sales_id
-                ))
+                .where(
+                    and_(
+                        Contract.transaction_time.between(start_date, end_date),
+                        Contract.contract_type == "首单"
+                    )
+                )
                 .group_by(Client.id, Client.created_at)
             )
-        else:
-            result = await db.execute(
-                select(Client.created_at, func.min(Contract.transaction_time).label("first_contract"))
-                .join(Contract, Contract.client_id == Client.id)
-                .where(and_(
-                    Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
-                    Contract.contract_type == "首单"
-                ))
-                .group_by(Client.id, Client.created_at)
-            )
-        records = result.all()
-        if records:
-            current_cycles = [
-                (first_contract - transaction_time).days for transaction_time, first_contract in records
-            ]
-            current_avg = sum(current_cycles) / len(current_cycles)
-        else:
-            current_avg = 0
 
-        # 获取上月平均成交周期
-        if sales_id:
-            result = await db.execute(
-                select(Client.created_at, func.min(Contract.transaction_time).label("first_contract"))
-                .join(Contract, Contract.client_id == Client.id)
-                .where(and_(
-                    Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
-                    Contract.contract_type == "首单",
-                    Contract.sales_id == sales_id
-                ))
-                .group_by(Client.id, Client.created_at)
-            )
-        else:
-            result = await db.execute(
-                select(Client.created_at, func.min(Contract.transaction_time).label("first_contract"))
-                .join(Contract, Contract.client_id == Client.id)
-                .where(and_(
-                    Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
-                    Contract.contract_type == "首单"
-                ))
-                .group_by(Client.id, Client.created_at)
-            )
-        records = result.all()
-        if records:
-            last_cycles = [
-                (first_contract - transaction_time).days for transaction_time, first_contract in records
-            ]
-            last_avg = sum(last_cycles) / len(last_cycles)
-        else:
-            last_avg = 0
+            # 添加可选过滤条件
+            if sales_id is not None:
+                per_client_cycles = per_client_cycles.where(Contract.sales_id == sales_id)
+            if source is not None:
+                per_client_cycles = per_client_cycles.where(Client.source == source)
 
-        # 计算平均成交周期变化率
-        if last_avg > 0:
-            rate = (current_avg - last_avg) / last_avg * 100
-        else:
-            rate = 0
+            # 2. 外层查询：对所有客户的周期求平均
+            stmt = select(func.coalesce(func.avg(per_client_cycles.subquery().c.cycle_days), 0.0))
 
-        return current_avg, rate
+            result = await db.execute(stmt)
+            return float(result.scalar() or 0.0)
 
+        # 并发获取本月和上月
+        current_avg = await _get_avg_cycle(StatisticsService.start_date, StatisticsService.end_date)
+        last_avg = await _get_avg_cycle(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date)
 
-    # 根据员工id获取本月销售额和增长率
+        # 计算环比变化率
+        change_rate = (
+            (current_avg - last_avg) / last_avg * 100
+            if last_avg > 0 else 0.0
+        )
+
+        return round(current_avg, 2), round(change_rate, 2)
+    # 根据员工id获取本月销售额和环比增长率
     @staticmethod
     async def get_monthly_sales(db: AsyncSession, employee_id: int):
         # 获取当前月份的销售额(坏单只统计预付金额其余正常统计)
@@ -405,32 +418,18 @@ class StatisticsService:
         else:
             return current_month_order_count, 0
         
-    # 根据员工id获取本月待结算订单数和增长率
+    # 根据员工id获取所有待结算订单数
     @staticmethod
-    async def get_monthly_pending_order_count(db: AsyncSession, employee_id: int):
-        # 获取当前月份的待结算订单数
+    async def get_pending_order_count(db: AsyncSession, employee_id: int):
+        # 获取所有待结算订单数
         result = await db.execute(select(func.count(Contract.id)).where(
             and_(
-                Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
                 Contract.sales_id == employee_id,
                 Contract.status == "待结算"
             )
         ))
-        current_month_pending_order_count = result.scalar_one_or_none() or 0
-        # 获取上个月的待结算订单数
-        result = await db.execute(select(func.count(Contract.id)).where(
-            and_(
-                Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
-                Contract.sales_id == employee_id,
-                Contract.status == "待结算"
-            )
-        ))
-        last_month_pending_order_count = result.scalar_one_or_none() or 0
-        # 计算待结算订单数变化
-        if last_month_pending_order_count > 0:
-            return current_month_pending_order_count, (current_month_pending_order_count - last_month_pending_order_count) / last_month_pending_order_count * 100
-        else:
-            return current_month_pending_order_count, 0
+        pending_order_count = result.scalar_one_or_none() or 0
+        return pending_order_count
         
     # 获取员工今年各月度提点统计数据
     @staticmethod
@@ -885,5 +884,4 @@ class StatisticsService:
             })
 
         return sales_by_cycle
-
 
