@@ -69,7 +69,7 @@ async def login(
         httponly=True,
         secure=False,  # 生产环境应设为True，使用HTTPS
         samesite="lax",
-        max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES*60,  # 24小时，与token过期时间一致
+        max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES*60,  # 与token过期时间一致
         path="/"
     )
     
