@@ -31,3 +31,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Vite
+.vite/
+dist/
+temp/
