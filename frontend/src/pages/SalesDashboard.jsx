@@ -227,7 +227,7 @@ const SalesDashboard = () => {
         axisPointer: {
           type: 'cross',
           label: {
-            backgroundColor: '#6a7985',
+            backgroundColor: '#F59E0B',
           },
         },
       },
@@ -261,7 +261,7 @@ const SalesDashboard = () => {
           symbol: 'circle', // 数据点为圆形
           symbolSize: 6, // 数据点大小
           itemStyle: {
-            color: '#6366F1', // indigo-500
+            color: '#F59E0B', // indigo-500
           },
           lineStyle: {
             width: 2,
@@ -524,7 +524,7 @@ const SalesDashboard = () => {
           </div>
           <div className="flex gap-8 text-sm">
             <div className="flex items-center">
-              <span className="w-3 h-3 rounded-full bg-indigo-500 mr-2"></span>
+              <span className="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>
               <span>销售额</span>
               <span className="ml-2 font-medium">¥{statistics.monthlySales || 0}</span>
             </div>

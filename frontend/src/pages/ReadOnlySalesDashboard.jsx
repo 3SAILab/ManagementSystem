@@ -270,7 +270,7 @@ const ReadOnlySalesDashboard = () => {
         axisPointer: {
           type: 'cross',
           label: {
-            backgroundColor: '#6a7985',
+            backgroundColor: '#F59E0B',
           },
         },
       },
@@ -304,7 +304,7 @@ const ReadOnlySalesDashboard = () => {
           symbol: 'circle',
           symbolSize: 6,
           itemStyle: {
-            color: '#6366F1',
+            color: '#F59E0B',
           },
           lineStyle: {
             width: 2,
@@ -494,7 +494,7 @@ const ReadOnlySalesDashboard = () => {
           <div className="h-64 mb-4">
             {loadingStates.salesAmountChart ? (
               <div className="flex items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-2"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600 mr-2"></div>
                 <span className="text-slate-500">加载图表中...</span>
               </div>
             ) : (
@@ -503,7 +503,7 @@ const ReadOnlySalesDashboard = () => {
           </div>
           <div className="flex gap-8 text-sm">
             <div className="flex items-center">
-              <span className="w-3 h-3 rounded-full bg-indigo-500 mr-2"></span>
+              <span className="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>
               <span>销售额</span>
               <span className="ml-2 font-medium">¥{statistics.monthlySales || 0}</span>
             </div>
