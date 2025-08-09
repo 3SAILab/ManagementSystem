@@ -13,8 +13,13 @@ from backend.schemas.client_activity_log import ClientActivityLogCreate
 from datetime import datetime, timezone
 from backend.services.employee_service import EmployeeService
 from backend.models.client_activity_log import Status
+from backend.api.deps.auth import require_departments
 
-router = APIRouter()
+# 验证权限
+"""
+营销管理部的员工
+"""
+router = APIRouter(dependencies=[Depends(require_departments("营销管理部"))])
 
 # 根据销售id查询客户列表
 @router.get("/clients", response_model=PaginatedClient)

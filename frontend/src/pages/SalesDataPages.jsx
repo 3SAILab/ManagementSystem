@@ -249,7 +249,7 @@ export default function SalesDataPages() {
         const salespersonId = clickedData.itemId; // 销售人员ID
         const salespersonName = clickedData.name; // 销售人员姓名
         // 运营人员无操作权限
-        if(userInfo.position_name === '运营'){
+        if(userInfo.position_name === '运营' || userInfo.position_name === '人事专员'){
           return;
         }
         // 跳转到销售个人看板页面（只读版本）

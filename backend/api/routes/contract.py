@@ -12,8 +12,9 @@ from backend.services.contract_service import ContractService
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from backend.utils.response import api_response
-
-router = APIRouter()
+from backend.api.deps.auth import any_of, require_departments, require_roles
+# 营销管理部的员工或者owner
+router = APIRouter(dependencies=[Depends(any_of(require_departments("营销管理部"), require_roles("owner")))])
 
 # 添加合同
 @router.post("/contracts")
