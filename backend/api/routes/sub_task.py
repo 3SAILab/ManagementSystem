@@ -182,6 +182,7 @@ async def get_sub_task_detail(
         "assignee": res.assignee.name if res.assignee else None,
         "charge": res.charge.name if res.charge else None,
         "estimated_completion_time": res.estimated_completion_time,
+        "need_watermark": res.ticket.need_watermark,
     }
     # 根据任务id获取关于这个任务的所有的记录
     progress_log = await ProgressLogService.get_progress_log_by_id(db, res.ticket.id)

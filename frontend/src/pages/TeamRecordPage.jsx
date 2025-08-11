@@ -311,8 +311,8 @@ const TeamRecordPage = () => {
                                                     }}
                                                     className={`hover:bg-slate-50 cursor-pointer ${expandedClientId === client.id ? 'bg-slate-100' : ''}`}
                                                 >
-                                                    <td className="p-4 font-semibold text-slate-700">{client.name}</td>
-                                                    <td className="p-4">
+                                                    <td className="p-4 text-sm font-semibold text-slate-700">{client.name}</td>
+                                                    <td className="p-4 text-sm text-slate-500">
                                                         {new Date(client.created_at).toLocaleDateString('zh-CN', {
                                                             year: 'numeric',
                                                             month: '2-digit',
@@ -361,7 +361,7 @@ const TeamRecordPage = () => {
                                                             {followUpStatusMap[client.status]?.text || '未知状态'}
                                                         </span>
                                                     </td>
-                                                    <td className="p-4">
+                                                    <td className="p-4 text-sm text-slate-500">
                                                         {client.sales_name || '未知销售'}
                                                     </td>
                                                     <td className="p-4">

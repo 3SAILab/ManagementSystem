@@ -39,6 +39,7 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
     needArt: false,
     needRender: false,
     needShoot: false,
+    needWatermark: false,
     notes: "",
     priority: "高", // 优先级
     platform: "国内", // 平台
@@ -123,6 +124,7 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
       needArt: false,
       needRender: false,
       needShoot: false,
+      needWatermark: false,
       notes: "",
       priority: "高", // 优先级
       platform: "国内", // 平台
@@ -333,6 +335,16 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
                   className="rounded text-indigo-600 focus:ring-indigo-500"
                 />
                 需要拍摄
+              </label>
+              <label className="flex items-center gap-1.5 text-sm text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="needWatermark"
+                  checked={formData.needWatermark}
+                  onChange={handleInputChange}
+                  className="rounded text-indigo-600 focus:ring-indigo-500"
+                />
+                需要水印
               </label>
             </div>
           </div>

@@ -1,6 +1,6 @@
 // components/OrderDetailsPanel.jsx
 import { useEffect, useState } from 'react';
-import { Clock, ShieldAlert, Flag, SlidersHorizontal, ArrowUpCircle, Calendar, Users } from 'lucide-react';
+import { Clock, ShieldAlert, Flag, SlidersHorizontal, ArrowUpCircle, Calendar, Users, Shield } from 'lucide-react';
 import { MessageCircle } from 'lucide-react';
 import UpdateProgressCommentModal from './UpdateProgressCommentModal';
 import { getSubTaskDetailById, updateSubTaskProgress } from '../services/subTaskService';
@@ -155,6 +155,17 @@ const OrderDetailsPanel = ({ orderId, onClose, onRefresh }) => {
               <a target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
                 {order.wechat_group}
               </a>
+            </DetailItem>
+            <DetailItem 
+              icon={Shield} 
+              label="带水印"
+              iconColor={order.need_watermark ? '#d97706' : '#16a34a'} // 橙黄 / 绿
+            >
+              <span className={`font-medium ${order.need_watermark 
+                ? 'text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full text-sm' 
+                : 'text-green-700 bg-green-50 px-2 py-0.5 rounded-full text-sm'}`}>
+                {order.need_watermark ? '是' : '否'}
+              </span>
             </DetailItem>
             <DetailItem icon={ShieldAlert} label="预警状态">
               <span

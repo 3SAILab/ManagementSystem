@@ -17,6 +17,7 @@ class TicketService:
             name=ticket.name,
             contract_id=ticket.contract_id,
             need_shoot=ticket.needShoot,
+            need_watermark=ticket.needWatermark,
             detail_pages=ticket.detail_pages,
             video_count=ticket.video_count,
             image_count=ticket.image_count,

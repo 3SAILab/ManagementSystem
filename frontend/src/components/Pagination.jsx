@@ -1,18 +1,24 @@
 import React from "react";
-import { LucideChevronLeft, LucideChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
+
   const generatePageNumbers = () => {
     const range = [];
     const visiblePages = 5;
+
     if (totalPages <= visiblePages) {
-      for (let i = 1; i <= totalPages; i++) range.push(i);
+      for (let i = 1; i <= totalPages; i++) {
+        range.push(i);
+      }
       return range;
     }
 
     if (currentPage <= 2) {
-      for (let i = 1; i <= 3; i++) range.push(i);
+      for (let i = 1; i <= 3; i++) {
+        range.push(i);
+      }
       range.push("...");
       range.push(totalPages);
       return range;
@@ -21,15 +27,20 @@ const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => 
     if (currentPage >= totalPages - 2) {
       range.push(1);
       range.push("...");
-      for (let i = totalPages - 2; i <= totalPages; i++) range.push(i);
+      for (let i = totalPages - 2; i <= totalPages; i++) {
+        range.push(i);
+      }
       return range;
     }
 
     range.push(1);
     range.push("...");
-    for (let i = currentPage - 1; i <= currentPage + 1; i++) range.push(i);
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(currentPage + 1, totalPages - 1); i++) {
+      range.push(i);
+    }
     range.push("...");
     range.push(totalPages);
+
     return range;
   };
 
@@ -47,7 +58,7 @@ const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => 
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
         >
-          <LucideChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-4 h-4" />
         </button>
 
         {/* 动态生成的页码按钮 */}
@@ -85,7 +96,7 @@ const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => 
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages}
         >
-          <LucideChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
     </div>
