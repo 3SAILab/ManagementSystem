@@ -388,4 +388,34 @@ class SubTaskService:
         return count or 0
 
 
+    # 获取所有任务
+    @staticmethod
+    async def get_sub_tasks(db: AsyncSession, filter_params: SubTaskFilter, task_type: str = None):
+        # 1. 先构造基础查询（不加options）
+        base_stmt = select(SubTask).order_by(SubTask.updated_at.desc())
+        if task_type:
+            base_stmt = base_stmt.where(SubTask.task_type == task_type)
+        if filter_params.task_name:
+            base_stmt = base_stmt.where(SubTask.ticket.has(Ticket.name.ilike(f"%{filter_params.task_name}%")))
+        if filter_params.charge_name:
+            base_stmt = base_stmt.where(SubTask.charge.has(Employee.name.ilike(f"%{filter_params.charge_name}%")))
 
+        # 2. 统计总数
+        count_stmt = select(func.count()).select_from(base_stmt.subquery())
+        total_result = await db.execute(count_stmt)
+        total = total_result.scalar_one()
+
+        # 3. 分页+ORM预加载
+        stmt = base_stmt.options(
+            joinedload(SubTask.ticket)
+                .joinedload(Ticket.contract)
+                .joinedload(Contract.client),
+            joinedload(SubTask.ticket)
+                .joinedload(Ticket.contract)
+                .joinedload(Contract.sales), 
+            joinedload(SubTask.assignee), 
+            joinedload(SubTask.charge)
+        ).offset((filter_params.page - 1) * filter_params.page_size).limit(filter_params.page_size)
+        sub_tasks = await db.execute(stmt)
+        sub_tasks = list(sub_tasks.scalars().all())
+        return sub_tasks, total

@@ -13,7 +13,7 @@ from backend.services.progress_log_service import ProgressLogService
 from backend.services.employee_service import EmployeeService
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-
+from backend.api.deps.auth import require_roles
 from backend.services.ticket_service import TicketService
 from backend.utils.response import api_response
 
@@ -331,3 +331,65 @@ async def get_sub_tasks_by_ticket_id(
     return api_response(success=True, data=sub_tasks_out)
 
 
+# 获取任务列表(总负责人)
+@router.get("/sub_tasks")
+async def get_sub_tasks(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(require_roles("owner")),
+    task_name: str = Query(None),
+    charge_name: str = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+):
+    #权限验证
+    task_type = "美工"
+    # 获取任务列表
+    filter_params = SubTaskFilter(task_name=task_name, charge_name=charge_name, page=page, page_size=page_size)
+    sub_tasks,total = await SubTaskService.get_sub_tasks(db, filter_params, task_type)
+    sub_tasks_out = []  # 存储带警告信息的任务（可选输出）
+    for task in sub_tasks:
+        warning = "正常"
+
+        if task.status == "进行中":
+            elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.started_at).days
+
+            # 黄色预警条件
+            yellow_threshold = task.estimated_completion_time
+            red_threshold = task.estimated_completion_time + 1
+
+            if yellow_threshold is not None:
+                if elapsed_days >= red_threshold:
+                    warning = "红色预警"
+                elif elapsed_days >= yellow_threshold:
+                    warning = "黄色预警"
+        elif task.status == "已完成":
+            warning = "已完成"
+        sub_tasks_out.append({
+            "name": task.ticket.name,
+            "progress": task.progress,
+            "warning": warning,
+            "client_name": task.ticket.contract.client.name,
+            "status" : task.status,
+            "charge_name": task.charge.name,
+            "sub_task_id": task.id,
+            "estimated_completion_time": task.estimated_completion_time,
+            "sales_name": task.ticket.contract.sales.name if task.ticket.contract.sales else None,
+        })
+
+    # 获取任务状态数量(并行请求)，已完成的只统计本月(从一号00:00:00到当前时间)
+    yellow_count, red_count, completed_count, in_progress_count = await asyncio.gather(
+        SubTaskService.get_sub_tasks_count(db, task_type=task_type, warning_status=["黄色预警"]),
+        SubTaskService.get_sub_tasks_count(db, task_type=task_type, warning_status=["红色预警"]),
+        SubTaskService.get_sub_tasks_count(db, task_type=task_type, status=["已完成"], start_time=datetime.now(ZoneInfo("Asia/Shanghai")).replace(day=1, hour=0, minute=0, second=0)),
+        SubTaskService.get_sub_tasks_count(db, task_type=task_type, status=["进行中"])
+    )
+    return {
+        "sub_tasks": sub_tasks_out,
+        "total": total,
+        "task_status": {
+            "yellow_count": yellow_count,
+            "red_count": red_count,
+            "completed_count": completed_count,
+            "in_progress_count": in_progress_count,
+        }
+    }
