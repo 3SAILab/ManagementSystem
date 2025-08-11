@@ -7,6 +7,7 @@ import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
+import DateUtils from '../utils/dateUtils';
 
 const getTrendIndicator = (change) => {
   const isPositive = change > 0;
@@ -333,18 +334,27 @@ const SalesDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingContract, setEditingContract] = useState(null);
   const [newStatus, setNewStatus] = useState('');
+  const [settlementTime, setSettlementTime] = useState('');
   const handleOpenModal = (contract) => {
     setEditingContract(contract);
     setNewStatus(contract.status);
+    setSettlementTime(DateUtils.toInputDateTimeLocal(contract.settlement_time));
+    console.log(settlementTime);
     setIsModalOpen(true);
   };
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingContract(null);
     setNewStatus('');
+    setSettlementTime('');
   };
   const handleConfirmStatusChange = async () => {
-    const res = await updateContractStatus(editingContract.id, newStatus);
+    // 如果状态是已结算，结算时间不能为空
+    if(newStatus === '已结算' && settlementTime === undefined){
+      toast.error('结算时间不能为空');
+      return;
+    }
+    const res = await updateContractStatus(editingContract.id, newStatus, settlementTime);
     if(res.success){
       toast.success('合同状态更新成功');
       // 更新合同列表
@@ -568,7 +578,7 @@ const SalesDashboard = () => {
                   >
                     <td className="p-4 font-medium text-slate-800">{contract.client_name || '未知客户'}</td>
                     <td className="p-4 text-slate-600">¥{contract.total_amount.toLocaleString()}</td>
-                    <td className="p-4 text-slate-600">{new Date(contract.transaction_time).toLocaleDateString()}</td>
+                    <td className="p-4 text-slate-600">{DateUtils.formatDateYMD(contract.transaction_time)}</td>
                     <td className="p-4 text-slate-600">¥{contract.paid_amount.toLocaleString()}</td>
                     <td className="p-4 text-slate-600">¥{commission.toLocaleString()}</td>
                     <td className="p-4">
@@ -632,7 +642,7 @@ const SalesDashboard = () => {
 
 
       </div>
-      {/* **新增模态框** */}
+      {/* **更改合同状态模态框** */}
       {isModalOpen && editingContract && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-96">
@@ -653,7 +663,22 @@ const SalesDashboard = () => {
               <option value="已结算">已结算</option>
               <option value="坏单">坏单</option>
             </select>
-
+            {/** 如果状态是已结算需要选择结算时间，并且结算时间不能为空 */}
+            {newStatus === '已结算' && (
+              <div className="space-y-2">
+                <label htmlFor="settlement-time" className="block text-sm font-medium text-slate-700">
+                  结算时间<span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  id="settlement-time"
+                  name="settlement-time"
+                  value={settlementTime}
+                  onChange={(e) => setSettlementTime(e.target.value)}
+                  className="form-input block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
+                />
+              </div>
+            )}
             <div className="flex justify-end space-x-3">
               <button
                 onClick={handleCloseModal}

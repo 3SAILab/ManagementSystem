@@ -35,10 +35,11 @@ export const getContractDetail = async (id) => {
 };
 
 // 更改合同状态
-export const updateContractStatus = async (id, status) => {
+export const updateContractStatus = async (id, status, settlement_time) => {
     try {
         const payload = {
-            status: status
+            status: status,
+            settlement_time: settlement_time
         }
         const response = await api.put(`/contracts/${id}/status`, payload);
         return {success: true, data: response.data};

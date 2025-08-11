@@ -59,7 +59,8 @@ async def get_contracts(
             commission_rate=contract.commission_rate,
             transaction_time=contract.transaction_time,
             status=contract.status,
-            is_recharged=contract.is_recharged
+            is_recharged=contract.is_recharged,
+            settlement_time=contract.settlement_time
         ) 
         for contract in contracts
     ]
@@ -93,7 +94,8 @@ async def get_contracts_by_client_id(
             commission_rate=contract.commission_rate,
             transaction_time=contract.transaction_time,
             status=contract.status,
-            is_recharged=contract.is_recharged
+            is_recharged=contract.is_recharged,
+            settlement_time=contract.settlement_time
         ) 
         for contract in contracts
     ]
@@ -104,12 +106,13 @@ async def get_contracts_by_client_id(
 async def update_contract_status(
     id: int,
     status: str = Body(..., embed=True),
+    settlement_time: datetime = Body(None, embed=True),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
     #权限认证
 
-    return await ContractService.update_contract_status(db, id, status)
+    return await ContractService.update_contract_status(db, id, status, settlement_time)
 
 
 # 合同详情页初始化数据
@@ -255,7 +258,8 @@ async def get_readonly_contracts(
             commission_rate=contract.commission_rate,
             transaction_time=contract.transaction_time,
             status=contract.status,
-            is_recharged=contract.is_recharged
+            is_recharged=contract.is_recharged,
+            settlement_time=contract.settlement_time
         ) 
         for contract in contracts
     ]

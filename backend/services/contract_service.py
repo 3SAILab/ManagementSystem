@@ -100,7 +100,7 @@ class ContractService:
 
     # 更新合同状态
     @staticmethod
-    async def update_contract_status(db: AsyncSession, contract_id: int, status: str):
+    async def update_contract_status(db: AsyncSession, contract_id: int, status: str, settlement_time: datetime):
         # 使用 with_for_update() 锁定合同行
         result = await db.execute(
             select(Contract).where(Contract.id == contract_id).with_for_update()
@@ -111,6 +111,8 @@ class ContractService:
         
         contract.status = status
         contract.updated_at = datetime.now(timezone.utc)
+        if status == '已结算':
+            contract.settlement_time = settlement_time
         
         await db.flush()
         return api_response(success=True, data={"msg": "合同状态更新成功"})

@@ -43,6 +43,7 @@ class ContractList(BaseModel):
     transaction_time: datetime
     status: str
     is_recharged: bool
+    settlement_time: Optional[datetime] = None
 # 合同过滤
 class ContractFilter(BaseModel):
     name: Optional[str] = None
