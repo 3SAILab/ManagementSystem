@@ -8,10 +8,10 @@ const CustomerSalesModal = ({ id, onClose, onSave }) => {
   const [originalSalesId, setOriginalSalesId] = useState('');
   // 客户信息
   const [client, setClient] = useState({
-    id: '',
-    client_name: '',
-    notes: '',
-    sales_id: '',
+    id: "",
+    client_name: "",
+    notes: "",
+    sales_id: "",
   });
   // 组内成员列表
   const [groupMembers, setGroupMembers] = useState([]);
@@ -75,7 +75,7 @@ const CustomerSalesModal = ({ id, onClose, onSave }) => {
           {/* 备注 */}
           <div className="space-y-2">
             <label htmlFor="notes" className="block text-sm font-medium text-slate-700">
-              备注
+              备注<span className="text-red-500">*</span>
             </label>
             <textarea
               id="notes"
@@ -85,6 +85,7 @@ const CustomerSalesModal = ({ id, onClose, onSave }) => {
               onChange={(e) => handleNotesChange(e.target.value)}
               placeholder="请输入备注..."
               className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              required
             ></textarea>
           </div>
 

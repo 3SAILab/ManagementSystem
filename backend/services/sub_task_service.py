@@ -388,11 +388,12 @@ class SubTaskService:
         return count or 0
 
 
-    # 获取所有任务
+    # 获取所有已分配任务
     @staticmethod
     async def get_sub_tasks(db: AsyncSession, filter_params: SubTaskFilter, task_type: str = None):
         # 1. 先构造基础查询（不加options）
         base_stmt = select(SubTask).order_by(SubTask.updated_at.desc())
+        base_stmt = base_stmt.where(SubTask.charge_id != None)
         if task_type:
             base_stmt = base_stmt.where(SubTask.task_type == task_type)
         if filter_params.task_name:

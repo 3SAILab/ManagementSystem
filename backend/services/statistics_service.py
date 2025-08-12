@@ -17,8 +17,8 @@ CONTRACT_TYPES_VALID = ["首单", "复购"]
 class StatisticsService:
 
     #当前月份的开始和结束时间
-    now = datetime.now(timezone.utc)
-    start_date = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+    current_date = datetime.now(timezone.utc)
+    start_date = datetime(current_date.year, current_date.month, 1, tzinfo=timezone.utc)
     end_date = start_date + relativedelta(months=1) - timedelta(seconds=1)
     # 上个月的开始和结束时间
     last_month_start_date = start_date - relativedelta(months=1)
