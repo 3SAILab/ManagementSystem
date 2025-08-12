@@ -219,7 +219,9 @@ async def get_online_clients(
             product_type=client.product_type, 
             scale=client.scale.value, 
             created_at=client.created_at,
-            sales_name=client.sales.name
+            sales_name=client.sales.name,
+            contact_phone=client.contact_phone,
+            contact_name=client.contact_name,
         ) 
         for client in clients
     ]

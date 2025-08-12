@@ -56,6 +56,8 @@ class ClientOut(BaseModel):
     scale: ClientScale
     created_at: datetime
     sales_name: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_name: Optional[str] = None
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 class PaginatedClient(BaseModel):

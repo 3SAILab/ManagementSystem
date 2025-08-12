@@ -249,8 +249,8 @@ const OnlineClientPage = () => {
                                         <tr>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户名称</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">创建时间</th>
-                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">产品类型</th>
-                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户规模</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">联系人</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">联系方式</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">销售</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
@@ -277,24 +277,14 @@ const OnlineClientPage = () => {
                                                         minute: '2-digit',
                                                     })}
                                                 </td>
-                                                <td className="p-4">
-                                                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
-                                                        {client.product_type || '未分类'}
+                                                <td className="p-4 text-sm text-slate-600">
+                                                    <span>
+                                                        {client.contact_name || '-'}
                                                     </span>
                                                 </td>
                                                 <td className="p-4 text-sm text-slate-600">
-                                                    <span
-                                                        className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                                                            client.scale === '大'
-                                                                ? 'bg-blue-100 text-blue-800'
-                                                                : client.scale === '中'
-                                                                ? 'bg-green-100 text-green-800'
-                                                                : client.scale === '小'
-                                                                ? 'bg-slate-100 text-slate-700'
-                                                                : 'bg-red-100 text-red-800'
-                                                        }`}
-                                                    >
-                                                        {client.scale || '未知'}
+                                                    <span>
+                                                        {client.contact_phone || '-'}
                                                     </span>
                                                 </td>
                                                 <td className="p-4">
