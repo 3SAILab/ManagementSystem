@@ -361,10 +361,10 @@ const ClientFollowUps = () => {
                 {/* 侧边栏 */}
                 <ClientSidePanel refresh={refresh} clientId={clientLogId} />
 
-                <ClientInfoModal isOpen={isModalOpen} onClose={() => {
+                {isModalOpen && <ClientInfoModal isOpen={isModalOpen} onClose={() => {
                     setIsModalOpen(false);
                     setClientId(null);
-                }} onSave={onSave} id={clientId}/>
+                }} onSave={onSave} id={clientId}/>}
 
                 <AddClientActivityLogModal isOpen={isAddClientActivityLogModalOpen} onClose={() => {
                     setIsAddClientActivityLogModalOpen(false);

@@ -128,4 +128,12 @@ export const addOnlineClient = async (client) => {
     }
 }
 
-
+// 编辑线上客户
+export const updateOnlineClient = async (clientId, client) => {
+    try {
+        const response = await api.put(`/client/update_online_client/${clientId}`, {sales_id: client.sales_id, client: client});
+        return {success: true, data: response.data};
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}

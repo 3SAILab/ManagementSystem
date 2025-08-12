@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import ClientSidePanel from '../components/ClientSidePanel'; // 侧边栏组件
-import { Search,MessageCircle,Edit,Plus,ArrowUp,ArrowDown } from 'lucide-react';
+import { Search,Edit,Plus,ArrowUp,ArrowDown } from 'lucide-react';
 import FilterDropdown from '../components/FilterDropdown';
-import { getOnlineClients, addOnlineClient } from '../services/clientService';
+import { getOnlineClients, addOnlineClient, updateOnlineClient } from '../services/clientService';
 import Pagination from '../components/Pagination';
 import { toast } from 'react-toastify';
-import AddClientActivityLogModal from '../components/AddClientActivityLogModal';
 import { getOnlineClientDataStatistics } from '../services/statisticsService';
 import SalesClientModal from '../components/SalesClientModal';
 
@@ -16,8 +15,6 @@ const OnlineClientPage = () => {
     const [clientId, setClientId] = useState(null);
     // 客户模态框
     const [isModalOpen, setIsModalOpen] = useState(false);
-    // 新增跟进记录模态框
-    const [isAddClientActivityLogModalOpen, setIsAddClientActivityLogModalOpen] = useState(false);
     // 跟进状态映射
     const followUpStatusMap = {
         '刚开始跟进': { text: '刚开始跟进', classes: 'bg-slate-100 text-slate-700' },
@@ -83,21 +80,33 @@ const OnlineClientPage = () => {
             }
         });
     }, [filters, refresh]);
-    // 新增客户
+    // 新增或编辑客户
     const onSave = (ClientInfo) => {
-        addOnlineClient(ClientInfo).then(res => {
-            if (res.success) {
-                toast.success('新增客户成功！');
-                setClients(prev => [res.data, ...prev]);
-                setIsModalOpen(false);
-                setRefresh(!refresh);
-                // 重置页码
-                setFilters(prev => ({ ...prev, page: 1 }));
-            } else {
-                toast.error('新增客户失败！');
-            }
-        });
-
+        if (clientId) {
+            updateOnlineClient(clientId, ClientInfo).then(res => {
+                if (res.success) {
+                    toast.success('编辑客户成功！');
+                    setClients(prev => prev.map(client => client.id === clientId ? res.data : client));
+                    setIsModalOpen(false);
+                    setRefresh(!refresh);
+                } else {
+                    toast.error('编辑客户失败！');
+                }
+            });
+        } else {
+            addOnlineClient(ClientInfo).then(res => {
+                if (res.success) {
+                    toast.success('新增客户成功！');
+                    setClients(prev => [res.data, ...prev]);
+                    setIsModalOpen(false);
+                    setRefresh(!refresh);
+                    // 重置页码
+                    setFilters(prev => ({ ...prev, page: 1 }));
+                } else {
+                    toast.error('新增客户失败！');
+                }
+            });
+        }
     };
     
     return (
@@ -218,6 +227,7 @@ const OnlineClientPage = () => {
                                 <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors" onClick={
                                     () => {
                                         setIsModalOpen(true);
+                                        setClientId(null);
                                     }}>
                                     <Plus className="w-4 h-4" /> 添加客户
                                 </button>
@@ -243,6 +253,7 @@ const OnlineClientPage = () => {
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户规模</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">销售</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
                                         </tr>
                                     </thead>
 
@@ -296,6 +307,14 @@ const OnlineClientPage = () => {
                                                 <td className="p-4 text-slate-500">
                                                     {client.sales_name || '未知销售'}
                                                 </td>
+                                                <td className="p-4 text-slate-500">
+                                                    <button className="p-1 rounded hover:bg-slate-100" title="编辑客户信息" onClick={() => {
+                                                        setIsModalOpen(true);
+                                                        setClientId(client.id);
+                                                    }}>
+                                                        <Edit className="w-5 h-5" />
+                                                    </button>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -322,18 +341,10 @@ const OnlineClientPage = () => {
                 {/* 侧边栏 */}
                 <ClientSidePanel refresh={refresh} clientId={clientLogId} />
 
-                <SalesClientModal isOpen={isModalOpen} onClose={() => {
+                {isModalOpen && <SalesClientModal isOpen={isModalOpen} onClose={() => {
                     setIsModalOpen(false);
                     setClientId(null);
-                }} onSave={onSave} id={clientId}/>
-
-                <AddClientActivityLogModal isOpen={isAddClientActivityLogModalOpen} onClose={() => {
-                    setIsAddClientActivityLogModalOpen(false);
-                }} clientId={clientLogId} onAdd={() => {
-                    setIsAddClientActivityLogModalOpen(false);
-                    // 刷新客户跟进记录
-                    setRefresh(!refresh);
-                }}/>
+                }} onSave={onSave} id={clientId}/>}
             </div>
         </div>
     );

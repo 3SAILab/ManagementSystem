@@ -89,9 +89,9 @@ class StatisticsService:
         conditions = []
         # 时间范围条件（可选）
         if start_date is not None:
-            conditions.append(Contract.created_at >= start_date)
+            conditions.append(Contract.transaction_time >= start_date)
         if end_date is not None:
-            conditions.append(Contract.created_at <= end_date)
+            conditions.append(Contract.transaction_time <= end_date)
         # 合同类型：首单 或 复购（业务固定条件）
         conditions.append(or_(Contract.contract_type == "首单", Contract.contract_type == "复购"))
         # 销售员筛选

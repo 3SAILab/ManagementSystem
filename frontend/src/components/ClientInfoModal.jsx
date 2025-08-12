@@ -85,8 +85,6 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
   // 处理表单提交
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // 添加 E.164 格式前缀
     onSave(formData);
     onClose();
   };
@@ -117,7 +115,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
         {loading ? (
           <p className="text-center py-4">加载中...</p>
         ) : (
-          <form id="order-form" onSubmit={handleSubmit} className="space-y-6">
+          <form id="client-form" onSubmit={handleSubmit} className="space-y-6">
             {/* 客户信息 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               <div>
@@ -190,6 +188,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
                       value={formData.online_source}
                       onChange={handleInputChange}
                       className="form-select block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
+                      required
                     >
                       <option value="">请选择子分类</option>
                       <option value="系统推广流">系统推广流</option>
@@ -214,6 +213,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
                       onChange={handleInputChange}
                       className="form-input block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
                       placeholder="请输入活动名称"
+                      required
                     />
                   </div>
                 )}

@@ -253,3 +253,21 @@ async def add_online_client(
     )
     await ClientActivityLogService.add_client_activity_log(db, client_activity_log, current_employee.id)
     return api_response(success=True, data=new_client)
+
+
+# 编辑线上客户
+@router.put("/client/update_online_client/{id}")
+async def update_online_client(
+    id: int,
+    sales_id: int = Body(..., description="销售ID"),
+    client: ClientCreate = Body(...),
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    # 验证权限
+    # 编辑客户信息
+    client_info = await ClientService.update_client(db, id, client)
+    # 更新客户负责人
+    if client_info.sales_id != sales_id:
+        client_info = await ClientService.update_client_sales(db, id, sales_id)
+    return api_response(success=True, data=client_info)
