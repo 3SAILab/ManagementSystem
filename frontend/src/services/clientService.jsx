@@ -32,7 +32,7 @@ export const addClient = async (client) => {
         const response = await api.post('/client/add', payload);
         return {success: true, data: response.data};
     } catch (error) {
-        return { success: false, error: error.message };
+        return { success: false, error: error.response.data.message };
     }
 };
 
@@ -47,7 +47,7 @@ export const updateClient = async (client,clientId) => {
         const response = await api.put(`/client/update/${clientId}`, client);
         return {success: true, data: response.data};
     } catch (error) {
-        return { success: false, error: error.message };
+        return { success: false, error: error.response.data.message };
     }
 };
 
@@ -124,7 +124,7 @@ export const addOnlineClient = async (client) => {
         const response = await api.post('/client/add_online_client', {sales_id: client.sales_id, client: payload});
         return {success: true, data: response.data};
     } catch (error) {
-        return { success: false, error: error.message };
+        return { success: false, error: error.response.data.message };
     }
 }
 
@@ -134,6 +134,7 @@ export const updateOnlineClient = async (clientId, client) => {
         const response = await api.put(`/client/update_online_client/${clientId}`, {sales_id: client.sales_id, client: client});
         return {success: true, data: response.data};
     } catch (error) {
-        return { success: false, error: error.message };
+        console.log(error);
+        return { success: false, error: error.response.data.message };
     }
 }

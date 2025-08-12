@@ -90,7 +90,7 @@ const OnlineClientPage = () => {
                     setIsModalOpen(false);
                     setRefresh(!refresh);
                 } else {
-                    toast.error('编辑客户失败！');
+                    toast.error(res.error);
                 }
             });
         } else {
@@ -103,7 +103,7 @@ const OnlineClientPage = () => {
                     // 重置页码
                     setFilters(prev => ({ ...prev, page: 1 }));
                 } else {
-                    toast.error('新增客户失败！');
+                    toast.error(res.error);
                 }
             });
         }

@@ -93,7 +93,7 @@ const ClientFollowUps = () => {
                     setIsModalOpen(false);
                     setRefresh(!refresh);
                 }else{
-                    toast.error('更新客户失败！');
+                    toast.error(res.error);
                 }
             });
         } else {    
@@ -106,7 +106,7 @@ const ClientFollowUps = () => {
                     // 重置页码
                     setFilters(prev => ({ ...prev, page: 1 }));
                 }else{
-                    toast.error('新增客户失败！');
+                    toast.error(res.error);
                 }
             });
         }

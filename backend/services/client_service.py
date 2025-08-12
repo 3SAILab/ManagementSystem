@@ -117,6 +117,9 @@ class ClientService:
     # 修改客户信息
     @staticmethod
     async def update_client(db: AsyncSession, id: int, client: ClientCreate):
+        result = await db.execute(select(Client).where(Client.name == client.name).with_for_update())
+        if result.scalars().first():
+            raise HTTPException(status_code=400, detail="客户名称已存在")
         # 将Pydantic模型转换为字典
         client_data = client.model_dump(mode="json")
         
