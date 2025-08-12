@@ -92,3 +92,5 @@ class SalesService:
 
         return float(total or 0.0)
     
+
+    
