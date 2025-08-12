@@ -9,10 +9,12 @@ from typing import List
 from backend.services.sub_task_service import SubTaskService
 from backend.services.ticket_service import TicketService
 from backend.services.contract_service import ContractService
-from datetime import datetime
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from backend.utils.response import api_response
 from backend.api.deps.auth import any_of, require_departments, require_roles
+from backend.services.sales_service import SalesService
+from backend.services.client_service import ClientService
 # 营销管理部的员工或者owner
 router = APIRouter(dependencies=[Depends(any_of(require_departments("营销管理部"), require_roles("owner")))])
 
@@ -24,7 +26,31 @@ async def add_contract(
     current_employee: Employee = Depends(get_current_employee)
 ):
     #权限认证
-    
+    # 根据实际到账金额和客户来源确定本单合同的提点
+    """
+    线上客户 固定为4%
+    线下客户：
+    0-5万以下 10%
+    5万-10万 12%
+    10万以上 15%
+    """
+    async def get_commission_rate(client_source: str):
+        if client_source == "线上":
+            return 4
+        else:
+            start_date = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            total_received = await SalesService.get_total_received(db,start_date=start_date,end_date=contract.transaction_time,sales_id=current_employee.id)
+            total_received = total_received + contract.paid_amount
+            if total_received < 50000:
+                return 10
+            elif total_received < 100000:
+                return 12
+            else:
+                return 15
+    # 获取客户信息
+    client = await ClientService.get_client_info(db, contract.client_id)
+    commission_rate = await get_commission_rate(client["source"])    
+    contract.commission_rate = commission_rate
     return await ContractService.add_contract(db, contract, current_employee.id)
 
 # 获取个人成交合同

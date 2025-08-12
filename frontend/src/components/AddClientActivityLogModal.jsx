@@ -89,7 +89,6 @@ const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
       contract_type: contractType,
       total_amount: parseFloat(contract.contractAmount),
       paid_amount: parseFloat(contract.paidAmount),
-      commission_rate: parseFloat(contract.commissionRate),
       detail_pages: parseInt(contract.detailPages),
       video_count: parseInt(contract.videos),
       image_count: parseInt(contract.images),

@@ -24,7 +24,7 @@ class ContractCreate(BaseModel):
     contract_type: ContractType
     total_amount: float
     paid_amount: float
-    commission_rate: float
+    commission_rate: Optional[float] = None
     detail_pages: int
     video_count: int
     image_count: int
