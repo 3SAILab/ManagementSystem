@@ -174,7 +174,7 @@ class SalesService:
         result = await db.execute(stmt)
         total = result.scalar()
 
-        return float(total or 0.0)
+        return float(total/100 or 0.0)
 
     """
     统计待催收尾款金额

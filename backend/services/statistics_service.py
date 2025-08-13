@@ -7,6 +7,7 @@ from backend.models.contract import Contract
 from typing import List, Dict
 from backend.models.employee import Employee
 from backend.models.sub_task import SubTask
+from backend.services.sales_service import SalesService
 from backend.utils.data_utils import get_current_month_range, get_last_month_range,get_now
 
 # 业务常量（避免魔法字符串）
@@ -336,52 +337,10 @@ class StatisticsService:
     # 根据员工id获取本月提点和增长率
     @staticmethod
     async def get_monthly_commission(db: AsyncSession, employee_id: int):
-        # 获取当前月份的提点(坏单只统计预付金额其余正常统计)
-        # 统计坏单
-        bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount * Contract.commission_rate / 100)).where(
-            and_(
-                Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
-                Contract.sales_id == employee_id,
-                Contract.status == "坏单"
-            )
-        ))
-        bad_contract_commission = bad_contract_result.scalar_one_or_none() or 0
-        # 统计正常单
-        result = await db.execute(select(func.sum(Contract.total_amount * Contract.commission_rate / 100)).where(
-            and_(
-                Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
-                Contract.sales_id == employee_id,
-                Contract.status != "坏单"
-            )
-        ))
-        current_month_commission = result.scalar_one_or_none() or 0
-        current_month_commission += bad_contract_commission
-        # 格式化为两位小数
-        current_month_commission = round(float(current_month_commission), 2)
-
+        # 获取当前月份的提点
+        current_month_commission = await SalesService.get_sales_commission(db, start_date=StatisticsService.start_date, end_date=StatisticsService.end_date, sales_id=employee_id)
         # 获取上个月的提点
-        # 统计坏单
-        bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount * Contract.commission_rate / 100)).where(
-            and_(
-                Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
-                Contract.sales_id == employee_id,
-                Contract.status == "坏单"
-            )
-        ))
-        bad_contract_commission = bad_contract_result.scalar_one_or_none() or 0
-        # 统计正常单
-        result = await db.execute(select(func.sum(Contract.total_amount * Contract.commission_rate / 100)).where(
-            and_(
-                Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
-                Contract.sales_id == employee_id,
-                Contract.status != "坏单"
-            )
-        ))
-        last_month_commission = result.scalar_one_or_none() or 0
-        last_month_commission += bad_contract_commission
-        # 格式化为两位小数
-        last_month_commission = round(float(last_month_commission), 2)
-
+        last_month_commission = await SalesService.get_sales_commission(db, start_date=StatisticsService.last_month_start_date, end_date=StatisticsService.last_month_end_date, sales_id=employee_id)
         # 计算提点变化
         if last_month_commission > 0:
             return current_month_commission, (current_month_commission - last_month_commission) / last_month_commission * 100
@@ -434,25 +393,7 @@ class StatisticsService:
         for month in range(1, 13):
             start_date = datetime(StatisticsService.current_date.year, month, 1)
             end_date = start_date + timedelta(days=31)
-            # 统计坏单、待结算
-            bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount*Contract.commission_rate/100)).where(
-                and_(
-                    Contract.transaction_time.between(start_date, end_date),
-                    Contract.sales_id == employee_id,
-                    or_(Contract.status == "坏单", Contract.status == "待结算")
-                )
-            ))
-            bad_contract_sales = bad_contract_result.scalar_one_or_none() or 0
-            # 统计已结算
-            result = await db.execute(select(func.sum(Contract.total_amount*Contract.commission_rate/100)).where(
-                and_(
-                    Contract.transaction_time.between(start_date, end_date),
-                    Contract.sales_id == employee_id,
-                    Contract.status == "已结算"
-                )
-            ))
-            monthly_sales = result.scalar_one_or_none() or 0
-            monthly_sales += bad_contract_sales
+            monthly_sales = await SalesService.get_sales_commission(db, start_date=start_date, end_date=end_date, sales_id=employee_id)
             # 格式化为两位小数
             monthly_sales = round(float(monthly_sales), 2)
             monthly_sales_statistics.append(monthly_sales)
@@ -472,7 +413,7 @@ class StatisticsService:
         - 正常单：统计 total_amount * commission_rate
         返回格式：
         [
-            {"cycle": 1, "start": "2025-04-01", "end": "2025-04-05", "total_amount": 12500.0, "order_count": 3},
+            {"cycle": 1, "start": "2025-04-01", "end": "2025-04-05", "total_amount": 12500.0},
             ...
         ]
         """
@@ -514,37 +455,7 @@ class StatisticsService:
             start = datetime.combine(cycle["start"], datetime.min.time())  # 转为 datetime
             end = datetime.combine(cycle["end"], datetime.max.time())       # 包含当天最后一秒
 
-            # 查询坏单、待结算：只统计预付金额 × 提成比例
-            bad_contract_result = await db.execute(
-                select(func.sum(Contract.paid_amount * Contract.commission_rate / 100))
-                .where(
-                    and_(
-                        Contract.transaction_time.between(start, end),
-                        Contract.sales_id == employee_id,
-                        or_(Contract.status == "坏单", Contract.status == "待结算")
-                    )
-                )
-            )
-            bad_sales = bad_contract_result.scalar_one_or_none() or 0
-
-            # 查询已结算：统计总金额 × 提成比例（排除坏单）
-            normal_contract_result = await db.execute(
-                select(func.sum(Contract.total_amount * Contract.commission_rate / 100),
-                    func.count(Contract.id))  # 同时统计订单数
-                .where(
-                    and_(
-                        Contract.transaction_time.between(start, end),
-                        Contract.sales_id == employee_id,
-                        Contract.status == "已结算"
-                    )
-                )
-            )
-            row = normal_contract_result.fetchone()
-            normal_sales = row[0] if row[0] is not None else 0
-            order_count = row[1] if row[1] is not None else 0
-
-            # 合计销售额（坏单 + 正常单）
-            total_amount = bad_sales + normal_sales
+            total_amount = await SalesService.get_sales_commission(db, start_date=start, end_date=end, sales_id=employee_id)
             total_amount = round(float(total_amount), 2)  # 保留两位小数
 
             sales_by_cycle.append({
@@ -552,7 +463,6 @@ class StatisticsService:
                 "start": cycle["start"].isoformat(),
                 "end": cycle["end"].isoformat(),
                 "total_amount": total_amount,
-                "order_count": order_count
             })
 
         return sales_by_cycle

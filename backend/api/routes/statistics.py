@@ -116,13 +116,13 @@ async def get_client_activity_log_statistics_by_sales_id(
     return api_response(success=True, data=data)
 
 
-# 销售主管查看本月销售数据
+# 销售数据看板 - 获取本月销售数据统计
 @router.get("/statistics/sales-data-statistics")
 async def get_sales_data_statistics(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ) -> Dict[str, Any]:
-    """销售主管查看本月销售数据统计
+    """销售数据看板 - 获取本月销售数据统计
     
     返回数据包括：
     - 销售额、往月到账金额、尾款已支付金额、尾款未支付金额、总到款金额
