@@ -29,9 +29,9 @@ class Client(Base):
 
     id = Column(Integer, primary_key=True)
     sales_id = Column(Integer, ForeignKey('employee.id'), nullable=False) #销售ID
-    name = Column(String(100), unique=True, nullable=False) #客户名称
+    name = Column(String(100), nullable=False) #客户名称
     contact_name = Column(String(50), nullable=False) #联系人
-    contact_phone = Column(String(50), nullable=False) #联系电话
+    contact_phone = Column(String(50), unique=True, nullable=False) #联系电话
     address = Column(JSON, nullable=False) #地址
     source = Column(SQLEnum(ClientSource, name="client_source_enum", native_enum=False), nullable=False) #来源
     online_source = Column(String(100)) #线上来源

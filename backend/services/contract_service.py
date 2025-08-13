@@ -113,7 +113,8 @@ class ContractService:
         contract.updated_at = datetime.now(timezone.utc)
         if status == '已结算':
             contract.settlement_time = settlement_time
-        
+        else:
+            contract.settlement_time = None
         await db.flush()
         return api_response(success=True, data={"msg": "合同状态更新成功"})
 

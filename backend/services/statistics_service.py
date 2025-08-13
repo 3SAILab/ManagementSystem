@@ -1,28 +1,25 @@
 import calendar
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.client import Client
-from sqlalchemy import case, extract, select, func, and_, or_
+from sqlalchemy import extract, select, func, and_, or_
 from datetime import date, datetime, timedelta, timezone
 from backend.models.contract import Contract
-from sqlalchemy.orm import selectinload
 from typing import List, Dict
-from dateutil.relativedelta import relativedelta
 from backend.models.employee import Employee
 from backend.models.sub_task import SubTask
-
+from backend.utils.data_utils import get_current_month_range, get_last_month_range,get_now
 
 # 业务常量（避免魔法字符串）
 CLIENT_STATUS_CONVERTED = ["已成交", "复购"]
 CONTRACT_TYPES_VALID = ["首单", "复购"]
 class StatisticsService:
 
+    #当前时间
+    current_date = get_now()
     #当前月份的开始和结束时间
-    current_date = datetime.now(timezone.utc)
-    start_date = datetime(current_date.year, current_date.month, 1, tzinfo=timezone.utc)
-    end_date = start_date + relativedelta(months=1) - timedelta(seconds=1)
+    start_date, end_date = get_current_month_range()
     # 上个月的开始和结束时间
-    last_month_start_date = start_date - relativedelta(months=1)
-    last_month_end_date = start_date - timedelta(seconds=1)
+    last_month_start_date, last_month_end_date = get_last_month_range()
 
 
     # 获取本月客户数量和增长率
@@ -234,7 +231,7 @@ class StatisticsService:
 
         return round(current_rate, 4), round(change_rate, 2)
 
-    # 获取平均成交周期及环比变化率
+    # 获取平均成交周期及变化时间
     @staticmethod
     async def get_average_transaction_cycle(
         db: AsyncSession,
@@ -280,14 +277,13 @@ class StatisticsService:
         # 并发获取本月和上月
         current_avg = await _get_avg_cycle(StatisticsService.start_date, StatisticsService.end_date)
         last_avg = await _get_avg_cycle(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date)
-
-        # 计算环比变化率
-        change_rate = (
-            (current_avg - last_avg) / last_avg * 100
-            if last_avg > 0 else 0.0
+        # 计算环比变化时间
+        change_time = (
+            (current_avg - last_avg)
+            if last_avg > 0 else 0
         )
 
-        return round(current_avg, 2), round(change_rate, 2)
+        return round(current_avg, 2), round(change_time, 2)
     # 根据员工id获取本月销售额和环比增长率
     @staticmethod
     async def get_monthly_sales(db: AsyncSession, employee_id: int):
@@ -438,21 +434,21 @@ class StatisticsService:
         for month in range(1, 13):
             start_date = datetime(StatisticsService.current_date.year, month, 1)
             end_date = start_date + timedelta(days=31)
-            # 统计坏单
+            # 统计坏单、待结算
             bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount*Contract.commission_rate/100)).where(
                 and_(
                     Contract.transaction_time.between(start_date, end_date),
                     Contract.sales_id == employee_id,
-                    Contract.status == "坏单"
+                    or_(Contract.status == "坏单", Contract.status == "待结算")
                 )
             ))
             bad_contract_sales = bad_contract_result.scalar_one_or_none() or 0
-            # 统计正常单
+            # 统计已结算
             result = await db.execute(select(func.sum(Contract.total_amount*Contract.commission_rate/100)).where(
                 and_(
                     Contract.transaction_time.between(start_date, end_date),
                     Contract.sales_id == employee_id,
-                    Contract.status != "坏单"
+                    Contract.status == "已结算"
                 )
             ))
             monthly_sales = result.scalar_one_or_none() or 0
@@ -518,20 +514,20 @@ class StatisticsService:
             start = datetime.combine(cycle["start"], datetime.min.time())  # 转为 datetime
             end = datetime.combine(cycle["end"], datetime.max.time())       # 包含当天最后一秒
 
-            # 查询坏单：只统计预付金额 × 提成比例
+            # 查询坏单、待结算：只统计预付金额 × 提成比例
             bad_contract_result = await db.execute(
                 select(func.sum(Contract.paid_amount * Contract.commission_rate / 100))
                 .where(
                     and_(
                         Contract.transaction_time.between(start, end),
                         Contract.sales_id == employee_id,
-                        Contract.status == "坏单"
+                        or_(Contract.status == "坏单", Contract.status == "待结算")
                     )
                 )
             )
             bad_sales = bad_contract_result.scalar_one_or_none() or 0
 
-            # 查询正常单：统计总金额 × 提成比例（排除坏单）
+            # 查询已结算：统计总金额 × 提成比例（排除坏单）
             normal_contract_result = await db.execute(
                 select(func.sum(Contract.total_amount * Contract.commission_rate / 100),
                     func.count(Contract.id))  # 同时统计订单数
@@ -539,7 +535,7 @@ class StatisticsService:
                     and_(
                         Contract.transaction_time.between(start, end),
                         Contract.sales_id == employee_id,
-                        Contract.status != "坏单"
+                        Contract.status == "已结算"
                     )
                 )
             )
