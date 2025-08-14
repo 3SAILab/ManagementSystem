@@ -39,6 +39,7 @@ class Client(Base):
     product_type = Column(String(100)) #产品类型
     scale = Column(SQLEnum(ClientScale, name="client_scale_enum", native_enum=False), nullable=False) #规模
     status = Column(SQLEnum(ClientStatus, name="client_status_enum", native_enum=False), nullable=False) #状态
+    access_time = Column(DateTime(timezone=True), nullable=False) # 客户接入时间
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False) #创建时间
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) #更新时间
     # 关联跟踪记录

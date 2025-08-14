@@ -24,6 +24,7 @@ const CustomerSalesModal = ({ id, onClose, onSave }) => {
           id: res.data.id,
           client_name: res.data.name,
           sales_id: res.data.sales_id,
+          notes: ""
         });
       }
     });
@@ -75,7 +76,7 @@ const CustomerSalesModal = ({ id, onClose, onSave }) => {
           {/* 备注 */}
           <div className="space-y-2">
             <label htmlFor="notes" className="block text-sm font-medium text-slate-700">
-              备注<span className="text-red-500">*</span>
+              备注
             </label>
             <textarea
               id="notes"
@@ -85,7 +86,6 @@ const CustomerSalesModal = ({ id, onClose, onSave }) => {
               onChange={(e) => handleNotesChange(e.target.value)}
               placeholder="请输入备注..."
               className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              required
             ></textarea>
           </div>
 

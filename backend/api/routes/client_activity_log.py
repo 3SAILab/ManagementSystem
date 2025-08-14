@@ -17,7 +17,7 @@ async def add_client_activity_log(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-
+    print(client_activity_log)
     await ClientActivityLogService.add_client_activity_log(db, client_activity_log, current_employee.id)
     return api_response(success=True, data={"msg": "客户跟进记录添加成功"})
 

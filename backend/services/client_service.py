@@ -63,10 +63,20 @@ class ClientService:
             raise HTTPException(status_code=400, detail="客户已存在")
         
         # 添加客户
-        # 使用 mode="json" 将枚举转换为原始值（字符串）
-        cdata = client.model_dump(mode="json")
+        cdata = client.model_dump()
         new_client = Client(
-            **cdata,
+            id=cdata.get("id"),
+            name=cdata.get("name"),
+            contact_name=cdata.get("contact_name"),
+            contact_phone=cdata.get("contact_phone"),
+            address=cdata.get("address"),
+            online_source=cdata.get("online_source"),
+            activity_name=cdata.get("activity_name"),
+            source=cdata.get("source").value,
+            product_type=cdata.get("product_type"),
+            scale=cdata.get("scale").value,
+            status=cdata.get("status").value,
+            access_time=cdata.get("access_time"),
             created_at=datetime.now(timezone.utc),
             sales_id=sales_id
         )

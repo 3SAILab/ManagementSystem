@@ -28,7 +28,9 @@ export const addClient = async (client) => {
             product_type: client.product_type,
             scale: client.scale,
             status: "刚开始跟进",
+            access_time: client.access_time,
         }
+        console.log(payload);
         const response = await api.post('/client/add', payload);
         return {success: true, data: response.data};
     } catch (error) {
@@ -86,6 +88,7 @@ export const getClientsWithSalesName = async ({ name, status, source, sales_name
 
 // 修改客户负责人
 export const updateClientSales = async (clientId, salesId, notes) =>{
+    console.log(clientId, salesId, notes);
     try {
         const response = await api.put(`/client/update_sales/${clientId}`, { sales_id: salesId, notes: notes });
         return {success: true, data: response.data};
@@ -120,6 +123,7 @@ export const addOnlineClient = async (client) => {
             product_type: client.product_type,
             scale: client.scale,
             address: client.address,
+            access_time: client.access_time,
         }
         const response = await api.post('/client/add_online_client', {sales_id: client.sales_id, client: payload});
         return {success: true, data: response.data};

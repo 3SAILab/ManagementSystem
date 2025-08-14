@@ -3,6 +3,7 @@ import AddressSelector from "./AddressSelector";
 import ModalCloseButton from "./ModalCloseButton";
 import { getClientInfo } from "../services/clientService";
 import { getSalesList } from "../services/authService";
+import DateUtils from "../utils/dateUtils";
 
 const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
   if (!isOpen) return null;
@@ -18,6 +19,7 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
     scale: "",
     address: null,
     sales_id: "",
+    access_time: DateUtils.nowInputDateTimeLocal(), // 新增字段：客户接入时间
   });
 
   const [errors, setErrors] = useState({});
@@ -51,7 +53,17 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
       getClientInfo(id)
         .then((res) => {
           if (res.success) {
-            setFormData(res.data);
+            const clientData = res.data;
+            // 确保 access_time 是正确格式，否则使用当前时间
+            const accessTime = clientData.access_time
+              ? DateUtils.formatDateTime(new Date(clientData.access_time))
+              : DateUtils.nowInputDateTimeLocal();
+
+            setFormData((prev) => ({
+              ...prev,
+              ...clientData,
+              access_time: accessTime,
+            }));
           } else {
             alert("加载客户信息失败");
           }
@@ -64,7 +76,7 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
           setLoading(false);
         });
     } else {
-      // 新增模式：重置表单
+      // 新增模式：重置表单，设置当前时间为默认接入时间
       setFormData({
         name: "",
         contact_name: "",
@@ -76,9 +88,10 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
         scale: "",
         address: null,
         sales_id: "",
+        access_time: DateUtils.nowInputDateTimeLocal(),
       });
     }
-  }, [id]); // 依赖 id 变化
+  }, [id]); // 依赖 id 变化触发
 
   // 输入变化处理
   const handleInputChange = (e) => {
@@ -138,6 +151,7 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
       scale: "",
       address: null,
       sales_id: "",
+      access_time: DateUtils.nowInputDateTimeLocal(),
     });
     setErrors({});
     onClose();
@@ -298,6 +312,21 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
               </div>
             </div>
 
+            {/* 客户接入时间 */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700">
+                客户接入时间 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="datetime-local"
+                name="access_time"
+                value={formData.access_time}
+                onChange={handleInputChange}
+                className="form-input block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
+                required
+              />
+            </div>
+
             {/* 地址 */}
             <div>
               <label className="block text-sm font-medium text-slate-700">地址</label>
@@ -309,7 +338,7 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
                 ]}
                 onChange={handleAddressSelectorChange}
               />
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">详细地址</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5 mt-2">详细地址</label>
               <input
                 type="text"
                 name="street"

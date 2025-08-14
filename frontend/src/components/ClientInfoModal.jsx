@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import AddressSelector from "./AddressSelector";
 import ModalCloseButton from "./ModalCloseButton";
 import { getClientInfo } from "../services/clientService";
-
+import DateUtils from "../utils/dateUtils";
 const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
   if (!isOpen) return null;
 
@@ -16,6 +16,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
     product_type: "",
     scale: "",
     address: null,
+    access_time: DateUtils.nowInputDateTimeLocal(),
   });
 
   const [errors, setErrors] = useState({});
@@ -53,6 +54,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
         product_type: "",
         scale: "",
         address: null,
+        access_time: DateUtils.nowInputDateTimeLocal(),
       });
     }
   }, [id]); // 依赖 id 变化触发
@@ -101,6 +103,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
       product_type: "",
       scale: "",
       address: null,
+      access_time: DateUtils.nowInputDateTimeLocal(),
     });
     onClose();
   };
@@ -251,7 +254,20 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
                 </select>
               </div>
             </div>
-
+            {/* 客户接入时间 */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700">
+                客户接入时间 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="datetime-local"
+                name="access_time"
+                value={formData.access_time}
+                onChange={handleInputChange}
+                className="form-input block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
+                required
+              />
+            </div>
             {/* 地址信息 */}
             <div className="md:col-span-6">
               <label htmlFor="address" className="block text-sm font-medium text-slate-700">

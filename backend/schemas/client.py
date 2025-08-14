@@ -45,7 +45,20 @@ class ClientCreate(BaseModel):
     product_type: str
     scale: ClientScale
     status: ClientStatus = ClientStatus.刚开始跟进
+    access_time: datetime
 
+    @field_validator('access_time', mode='before')
+    @classmethod
+    def validate_access_time(cls, v):
+        if isinstance(v, str):
+            try:
+                return datetime.fromisoformat(v.replace('Z', '+00:00'))
+            except ValueError:
+                try:
+                    return datetime.fromisoformat(v)
+                except ValueError:
+                    raise ValueError('Invalid datetime format')
+        return v
 
 class ClientOut(BaseModel):
     id: int = Field(...)

@@ -74,6 +74,7 @@ async def add_client(
     # 验证权限
 
     # 添加客户
+    print(client)
     new_client = await ClientService.add_client(db, client, current_employee.id)
 
     # 添加客户活动日志
