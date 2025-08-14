@@ -99,6 +99,16 @@ export const menuItems = [
     ]
   },
   {
+    label: '生产总负责人',
+    access: {
+      roles: ['owner'],
+      departments: ['生产部'],
+    },
+    children: [
+      { label: '工单分配', path: '/work_assignment', icon: 'check-square' },
+    ]
+  },
+  {
     label: '统计看板',
     access: {
       roles: ['owner'],

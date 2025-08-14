@@ -4,7 +4,7 @@ from sqlalchemy import and_, case, func, null, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date, datetime, timedelta, timezone
 from typing import Dict, Any
-from backend.models.client import Client
+from backend.models.client import Client, ClientSource
 from backend.models.contract import Contract
 from backend.models.employee import Employee
 
@@ -14,6 +14,7 @@ class SalesService:
     计算实际总到账
     start_date 开始时间（可选）
     end_date 结束时间（可选）
+    source 客户来源（可选）
     sales_id 销售id （可选)
     """
     @staticmethod
@@ -21,6 +22,7 @@ class SalesService:
         db: AsyncSession,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
+        source: Optional[str] = None,
         sales_id: Optional[int] = None
     ) -> float:
         """
@@ -34,6 +36,7 @@ class SalesService:
             db: AsyncSession
             start_date: 开始时间（可选）
             end_date: 结束时间（可选），使用左闭右开 [start, end)
+            source: 客户来源（可选）
             sales_id: 销售员ID（可选）
 
         返回：
@@ -70,13 +73,16 @@ class SalesService:
         )
 
         # 查询总和
-        stmt = select(func.sum(total_received_expr)).select_from(Contract)
+        stmt = select(func.sum(total_received_expr)).select_from(Contract).join(Client, Client.id == Contract.client_id)
 
         # 添加过滤条件
         where_clauses = []
 
         if sales_id is not None:
             where_clauses.append(Contract.sales_id == sales_id)
+
+        if source is not None:
+            where_clauses.append(Client.source == source)
 
         # 优化：只考虑可能产生进账的合同（至少有一个时间字段非空）
         relevant_time = or_(

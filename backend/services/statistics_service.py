@@ -23,7 +23,7 @@ class StatisticsService:
     last_month_start_date, last_month_end_date = get_last_month_range()
 
 
-    # 获取本月客户数量和增长率
+    # 获取客户数量和增长率
     """
     获取客户数量
     :param db: 数据库会话
@@ -51,9 +51,9 @@ class StatisticsService:
         # 构建 WHERE 条件
         conditions = []
         if start_date is not None:
-            conditions.append(Client.created_at >= start_date)
+            conditions.append(Client.access_time >= start_date)
         if end_date is not None:
-            conditions.append(Client.created_at <= end_date)
+            conditions.append(Client.access_time <= end_date)
         if sales_id is not None:
             conditions.append(Client.sales_id == sales_id)
         if source is not None:

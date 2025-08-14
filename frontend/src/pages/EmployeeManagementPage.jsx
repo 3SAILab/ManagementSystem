@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 export default function EmployeeManagementPage() {
   const [searchName, setSearchName] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('active');
   const [filteredUsers, setFilteredUsers] = useState([]);
   // 模态框相关
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -50,8 +51,12 @@ export default function EmployeeManagementPage() {
       result = result.filter(user => user.department_id === departmentId);
     }
 
+    if (statusFilter) {
+      result = result.filter(user => user.status === statusFilter);
+    }
+
     setFilteredUsers(result);
-  }, [searchName, departmentFilter, allEmployees]);
+  }, [searchName, departmentFilter, statusFilter, allEmployees]);
 
   const handleSave = async (employee) => {
     // 将表单数据转换为后端标准格式
@@ -118,6 +123,20 @@ export default function EmployeeManagementPage() {
 
         {/* 右侧筛选 + 按钮容器 */}
         <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+          {/* 状态下拉筛选 */}
+          <div className="relative w-full sm:w-48">
+            <select
+              id="employee-status-filter"
+              className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">所有状态</option>
+              <option value="active">在职</option>
+              <option value="inactive">离职</option>
+              <option value="on_leave">请假</option>
+            </select>
+          </div>
           {/* 部门下拉筛选 */}
           <div className="relative w-full sm:w-48">
             <select

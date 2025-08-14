@@ -35,6 +35,7 @@ export default function SalesDataPages() {
     totalSales: 0,
     total_received_by_last: 0,
     totalReceived: 0,
+    totalOnlineReceived: 0,
     totalFinalPaid: 0,
     totalPendingFinal: 0,
   });
@@ -58,6 +59,7 @@ export default function SalesDataPages() {
             totalSales: result.data.sales_amount || 0,
             total_received_by_last: result.data.total_received_by_last || 0,
             totalReceived: result.data.total_received || 0,
+            totalOnlineReceived: result.data.total_online_received || 0,
             totalFinalPaid: result.data.total_final_paid || 0,
             totalPendingFinal: result.data.pending_receivable || 0,
           });
@@ -381,6 +383,12 @@ export default function SalesDataPages() {
             <h3 className="text-gray-500 font-medium text-sm">往月尾款金额</h3>
             <p className="text-2xl font-bold text-green-600 mt-1">
               ¥{metrics.total_received_by_last.toLocaleString()}
+            </p>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-md">
+            <h3 className="text-gray-500 font-medium text-sm">线上总到款</h3>
+            <p className="text-2xl font-bold text-green-700 mt-1">
+              ¥{metrics.totalOnlineReceived.toLocaleString()}
             </p>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-md">

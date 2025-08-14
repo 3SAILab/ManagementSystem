@@ -162,9 +162,14 @@ async def get_group_members_with_task_count(
 ):
     #判断当前用户身份
     if current_employee.department.name == "生产部":
-        #获取组内成员以及工作负载(成员未完成的任务个数)
-        employees = await EmployeeService.get_group_members_with_task_count(db, current_employee.id)
-        return employees
+        if current_employee.role == EmployeeRole.owner:
+            #获取组内成员以及工作负载(成员未完成的任务个数)
+            employees = await EmployeeService.get_production_employees_with_task_count(db, "美工")
+            return employees
+        else:
+            #获取组内成员以及工作负载(成员未完成的任务个数)
+            employees = await EmployeeService.get_group_members_with_task_count(db, current_employee.id)
+            return employees
     else:
         raise HTTPException(status_code=403, detail="无权限访问")
 
@@ -193,7 +198,12 @@ async def get_group_members(
 ):
     #判断当前用户身份
     if current_employee.role == EmployeeRole.owner:
-        pass
+        if current_employee.department.name == "生产部":
+            employees = await EmployeeService.get_production_employees_with_task_count(db, "美工")
+            return employees
+        else:
+            employees = await EmployeeService.get_employee_list_by_filter(db, position_name=current_employee.position.name)
+            return employees
     #获取组内成员列表
     employees = await EmployeeService.get_group_members(db, current_employee.id)
     return employees

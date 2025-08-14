@@ -170,7 +170,8 @@ class EmployeeService:
                 department_id=e.department.id,
                 position_id=e.position.id,
                 department_name=e.department.name,
-                position_name=e.position.name
+                position_name=e.position.name,
+                status=e.status.value
             )
                 for e in emps
         ] 
@@ -292,3 +293,38 @@ class EmployeeService:
         result = await db.execute(stmt)
         rows = result.all()
         return [{"id": id, "name": name} for id, name in rows]
+    
+
+    # 获取生产部员工以及工作负载
+    @staticmethod
+    async def get_production_employees_with_task_count(db: AsyncSession, position_name: str = None):
+        """
+        获取生产部员工以及工作负载
+        :param db: 数据库会话
+        :param position_name: 职位名称
+        :return: 生产部员工以及工作负载
+        """
+        # 统计所有任务
+        stmt = (
+            select(
+                Employee.id,
+                Employee.name,
+                func.count(SubTask.id).label("task_count")
+            )
+            .outerjoin(SubTask, and_(SubTask.charge_id == Employee.id, SubTask.status != "已完成"))  # 使用outerjoin确保没有任务的员工也被包含
+            .where(
+                and_(
+                    Employee.position.has(Position.name == position_name),
+                    Employee.status != EmployeeStatus.inactive
+                )
+            )
+            .order_by(Employee.id)
+            .group_by(Employee.id, Employee.name)
+        )
+        result = await db.execute(stmt)
+        rows = result.all()
+        
+        return [
+            {"id": id, "name": name, "task_count": task_count}
+            for id, name, task_count in rows
+        ]

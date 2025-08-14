@@ -139,6 +139,7 @@ async def get_sales_data_statistics(
     result = await asyncio.gather(
         SalesService.get_sales_amount(db, start_date=start_date, end_date=end_date), # 本月销售额
         SalesService.get_total_received_by_last(db, last_end=last_month_end_date, start_date=start_date, end_date=end_date), # 合同成交时间不在本月，但是尾款结算时间在本月的总到账金额
+        SalesService.get_total_received(db, start_date=start_date, end_date=end_date, source="线上"), # 线上总到账金额
         SalesService.get_total_received(db, start_date=start_date, end_date=end_date), # 本月总到账金额
         SalesService.get_received_final_amount(db, start_date=start_date, end_date=end_date), # 本月尾款到账金额
         SalesService.get_pending_receivable(db, end_date=end_date), # 待催收尾款金额
@@ -147,13 +148,14 @@ async def get_sales_data_statistics(
         SalesService.get_sales_performance_by_received(db, start_date=start_date, end_date=end_date), # 销售个人业绩(按照实际到账金额统计)
         SalesService.get_category_stats(db, start_date=start_date, end_date=end_date) # 产品类目销售额分布
     )
-    sales_amount, total_received_by_last, total_received, total_final_paid, pending_receivable, channel_stats, sales_performance_by_sales, sales_performance_by_received, category_stats = result
+    sales_amount, total_received_by_last, total_online_received, total_received, total_final_paid, pending_receivable, channel_stats, sales_performance_by_sales, sales_performance_by_received, category_stats = result
     return {
         "success": True,
         "data": {
             "sales_amount": sales_amount,
             "total_received_by_last": total_received_by_last,
             "total_received": total_received,
+            "total_online_received": total_online_received,
             "total_final_paid": total_final_paid,
             "pending_receivable": pending_receivable,
             "online_orders": channel_stats["online_orders"] if channel_stats else 0,
