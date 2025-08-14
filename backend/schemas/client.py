@@ -30,7 +30,8 @@ class ClientFilter(BaseModel):
     sales_name:Optional[str] = None
     page: int = 1
     page_size: int = 10
-
+    startTime: Optional[str] = None
+    endTime: Optional[str] = None
 
 
 class ClientCreate(BaseModel):

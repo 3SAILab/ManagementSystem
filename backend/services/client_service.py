@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from datetime import datetime, timezone
 from backend.models.employee import Employee
 from sqlalchemy.orm import selectinload
+from backend.utils.data_utils import to_datetime
 
 class ClientService:
 
@@ -30,6 +31,12 @@ class ClientService:
             # 将 Pydantic Enum 转为原始字符串值再过滤
             source_values = [s.value if hasattr(s, 'value') else s for s in filter_params.source]
             filters.append(Client.source.in_(source_values))
+
+        if filter_params.startTime:
+            filters.append(Client.access_time >= to_datetime(filter_params.startTime))
+
+        if filter_params.endTime:
+            filters.append(Client.access_time <= to_datetime(filter_params.endTime))
 
         if filters:
             stmt = stmt.where(and_(*filters))
@@ -171,6 +178,12 @@ class ClientService:
             # 将 Pydantic Enum 转为原始字符串值再过滤
             source_values = [s.value if hasattr(s, 'value') else s for s in filter_params.source]
             filters.append(Client.source.in_(source_values))
+
+        if filter_params.startTime:
+            filters.append(Client.access_time >= to_datetime(filter_params.startTime))
+
+        if filter_params.endTime:
+            filters.append(Client.access_time <= to_datetime(filter_params.endTime))
 
         if filters:
             stmt = stmt.where(and_(*filters))

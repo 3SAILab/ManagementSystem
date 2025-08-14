@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
-import { toast } from 'react-toastify';
 
 const FilterDropdown = ({ followUpStatusMap, filters, onFilterChange }) => {
   // 状态管理
   const [isOpen, setIsOpen] = useState(false);
   const [statusFilters, setStatusFilters] = useState(filters.status || []);
   const [sourceFilters, setSourceFilters] = useState(filters.source || []);
+  const [startTime, setStartTime] = useState(filters.startTime || ''); // ISO 格式字符串
+  const [endTime, setEndTime] = useState(filters.endTime || '');
 
   // 处理状态筛选
   const handleStatusChange = (event) => {
@@ -14,7 +15,6 @@ const FilterDropdown = ({ followUpStatusMap, filters, onFilterChange }) => {
     const newStatusFilters = checked
       ? [...statusFilters, value]
       : statusFilters.filter((item) => item !== value);
-
     setStatusFilters(newStatusFilters);
   };
 
@@ -24,14 +24,33 @@ const FilterDropdown = ({ followUpStatusMap, filters, onFilterChange }) => {
     const newSourceFilters = checked
       ? [...sourceFilters, value]
       : sourceFilters.filter((item) => item !== value);
-
     setSourceFilters(newSourceFilters);
+  };
+
+  // 处理时间输入
+  const handleTimeChange = (type, value) => {
+    if (type === 'start') setStartTime(value);
+    if (type === 'end') setEndTime(value);
   };
 
   // 应用筛选
   const applyFilters = () => {
-    onFilterChange({ status: statusFilters, source: sourceFilters });
+    onFilterChange({
+      status: statusFilters,
+      source: sourceFilters,
+      startTime, // ISO 字符串，如 "2025-08-14T09:00"
+      endTime,
+    });
     setIsOpen(false);
+  };
+
+  // 重置所有筛选
+  const resetFilters = () => {
+    setStatusFilters([]);
+    setSourceFilters([]);
+    setStartTime('');
+    setEndTime('');
+    onFilterChange({ status: [], source: [], startTime: '', endTime: '' });
   };
 
   // 点击外部关闭下拉菜单
@@ -61,16 +80,14 @@ const FilterDropdown = ({ followUpStatusMap, filters, onFilterChange }) => {
         <div
           id="filter-dropdown"
           className="absolute z-50 bg-white rounded-lg shadow-xl border border-slate-200 p-4 transition-all duration-300 w-max"
-          style={{ 
-            opacity: 1, 
-            visibility: 'visible',
+          style={{
             right: 0,
             top: '100%',
             marginTop: '5px',
-            minWidth: '250px',
-            maxWidth: '300px',
+            minWidth: '280px',
+            maxWidth: '320px',
             maxHeight: '80vh',
-            overflowY: 'auto'
+            overflowY: 'auto',
           }}
         >
           {/* 状态筛选 */}
@@ -81,7 +98,6 @@ const FilterDropdown = ({ followUpStatusMap, filters, onFilterChange }) => {
                 <div key={text} className="flex items-center space-x-2 text-sm">
                   <input
                     type="checkbox"
-                    data-filter-type="status"
                     value={text}
                     className="form-checkbox h-4 w-4 rounded text-indigo-600"
                     checked={statusFilters.includes(text)}
@@ -94,14 +110,13 @@ const FilterDropdown = ({ followUpStatusMap, filters, onFilterChange }) => {
           </div>
 
           {/* 来源筛选 */}
-          <div className="mt-4 border-t border-slate-200">
+          <div className="mt-4 border-t border-slate-200 pt-3">
             <h4 className="text-sm font-semibold text-slate-800 mb-3">按客户来源过滤</h4>
             <div className="grid grid-cols-2 gap-2">
               {['线上', '线下', '活动'].map((source) => (
                 <div key={source} className="flex items-center space-x-2 text-sm">
                   <input
                     type="checkbox"
-                    data-filter-type="source"
                     value={source}
                     className="form-checkbox h-4 w-4 rounded text-indigo-600"
                     checked={sourceFilters.includes(source)}
@@ -113,21 +128,42 @@ const FilterDropdown = ({ followUpStatusMap, filters, onFilterChange }) => {
             </div>
           </div>
 
+          {/* 时间区间筛选 */}
+          <div className="mt-4 border-t border-slate-200 pt-3">
+            <h4 className="text-sm font-semibold text-slate-800 mb-3">按接入时间过滤</h4>
+            <div className="space-y-3 text-sm">
+              <div>
+                <label className="block text-slate-600 mb-1">开始时间</label>
+                <input
+                  type="datetime-local"
+                  value={startTime}
+                  onChange={(e) => handleTimeChange('start', e.target.value)}
+                  className="w-full border border-slate-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-slate-600 mb-1">结束时间</label>
+                <input
+                  type="datetime-local"
+                  value={endTime}
+                  onChange={(e) => handleTimeChange('end', e.target.value)}
+                  className="w-full border border-slate-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* 底部操作栏 */}
-          <div className="mt-4 flex justify-end gap-2">
+          <div className="mt-5 flex justify-between gap-2 border-t border-slate-200 pt-3">
             <button
-              onClick={() => {
-                setStatusFilters([]);
-                setSourceFilters([]);
-                onFilterChange({ status: [], source: [] });
-              }}
-              className="text-slate-500 hover:text-slate-700 text-sm"
+              onClick={resetFilters}
+              className="text-slate-500 hover:text-slate-700 text-sm font-medium"
             >
               重置
             </button>
             <button
               onClick={applyFilters}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1 rounded"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-1 rounded"
             >
               应用
             </button>

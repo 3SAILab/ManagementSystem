@@ -3,7 +3,6 @@ import api from './api';
 //添加客户跟进记录
 export const addClientActivityLog = async (client_activity_log) => {
     try {
-        console.log(client_activity_log);
         const response = await api.post('/client_activity_log/add', client_activity_log);
         return {success: true, data: response.data};
     } catch (error) {

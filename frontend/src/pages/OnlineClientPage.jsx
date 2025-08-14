@@ -33,8 +33,11 @@ const OnlineClientPage = () => {
         name: '',
         status: [],
         source: [],
+        sales_name: '',
         page: 1,
-        page_size: 10
+        page_size: 10,
+        startTime: '',
+        endTime: ''
     });
     // 统计数据
     const [statistics, setStatistics] = useState({
@@ -208,17 +211,36 @@ const OnlineClientPage = () => {
                     <div className="p-4 border-b border-slate-200">
                         {/* 搜索框、筛选器等 */}
                         <div className="flex justify-between items-center">
-                            {/* 搜索框 */}
-                            <div className="relative w-full max-w-xs">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Search className="w-5 h-5 text-slate-400" />
+                            {/* 搜索区域 */}
+                            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                                {/* 客户名称搜索框 */}
+                                <div className="relative flex-1 min-w-0">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Search className="w-4 h-4 text-slate-400" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="搜索客户名称..."
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 placeholder:text-slate-400 text-sm"
+                                        value={filters.name}
+                                        onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+                                    />
                                 </div>
-                                <input type="text" placeholder="搜索客户名称" className="form-input !pl-10 w-full bg-slate-50 border-slate-200"
-                                    value={filters.name}
-                                    onChange={(e) => setFilters({ ...filters, name: e.target.value })}
-                                />
+                                {/* 销售名称搜索框 */}
+                                <div className="relative flex-1 min-w-0">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Search className="w-4 h-4 text-slate-400" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="搜索销售名称..."
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 placeholder:text-slate-400 text-sm"
+                                        value={filters.sales_name}
+                                        onChange={(e) => setFilters({ ...filters, sales_name: e.target.value })}
+                                    />
+                                </div>
                             </div>
-
+                            
                             {/* 筛选器 */}
                             <div className="flex items-center gap-2">
                                 <FilterDropdown followUpStatusMap={followUpStatusMap} filters={filters} onFilterChange={(newFilters) => setFilters({...filters, ...newFilters})} />

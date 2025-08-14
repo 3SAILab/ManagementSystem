@@ -2,10 +2,10 @@ import api from './api';
 import Qs from 'qs';
 
 // 查询客户列表，接收一个 filters 对象
-export const getClients = async ({ name, status, source, page, page_size }) => {
+export const getClients = async ({ name, status, source, page, page_size, startTime, endTime }) => {
     try {
         const response = await api.get('/clients', {
-            params: { name, status, source, page, page_size },
+            params: { name, status, source, page, page_size, startTime, endTime },
             paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
         });
         return {success: true, data: response.data};
@@ -30,8 +30,7 @@ export const addClient = async (client) => {
             status: "刚开始跟进",
             access_time: client.access_time,
         }
-        console.log(payload);
-        const response = await api.post('/client/add', payload);
+        const response = await api.post('/client/add', {client: payload});
         return {success: true, data: response.data};
     } catch (error) {
         return { success: false, error: error.response.data.message };
@@ -74,10 +73,10 @@ export const updateClientStatus = async (clientId, status) => {
 };
 
 // 获取客户列表包括销售名称
-export const getClientsWithSalesName = async ({ name, status, source, sales_name, page, page_size }) => {
+export const getClientsWithSalesName = async ({ name, status, source, sales_name, page, page_size, startTime, endTime }) => {
     try {
         const response = await api.get('/client/get_clients_with_sales_name', {
-            params: { name, status, source, sales_name, page, page_size },
+            params: { name, status, source, sales_name, page, page_size, startTime, endTime },
             paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
         });
         return {success: true, data: response.data};
@@ -98,10 +97,10 @@ export const updateClientSales = async (clientId, salesId, notes) =>{
 }
 
 // 获取线上客户列表
-export const getOnlineClients = async ({ name, status, source, page, page_size }) => {
+export const getOnlineClients = async ({ name, status, source, sales_name, page, page_size, startTime, endTime }) => {
     try {
         const response = await api.get('/client/get_online_clients', {
-            params: { name, status, source, page, page_size },
+            params: { name, status, source, sales_name, page, page_size, startTime, endTime },
             paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
         });
         return {success: true, data: response.data};

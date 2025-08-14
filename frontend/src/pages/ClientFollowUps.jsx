@@ -37,7 +37,9 @@ const ClientFollowUps = () => {
         status: [],
         source: [],
         page: 1,
-        page_size: 10
+        page_size: 10,
+        startTime: '',
+        endTime: ''
     });
     // 统计数据
     const [statistics, setStatistics] = useState({

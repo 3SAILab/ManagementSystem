@@ -12,6 +12,36 @@ def get_now() -> datetime:
     """
     return datetime.now(timezone.utc)
 
+def to_datetime(date_str: str) -> datetime:
+    """
+    将字符串转换为datetime对象
+    支持多种日期格式：
+    - '2025-08-13T10:23' (前端 datetime-local 格式)
+    - '2025-08-13 10:23:00' (标准格式)
+    - '2025-08-13T10:23:00' (ISO 格式)
+    """
+    if not date_str:
+        raise ValueError("日期字符串不能为空")
+    
+    # 定义支持的日期格式
+    date_formats = [
+        '%Y-%m-%dT%H:%M',      # 2025-08-13T10:23 (前端 datetime-local 格式)
+        '%Y-%m-%d %H:%M:%S',   # 2025-08-13 10:23:00 (标准格式)
+        '%Y-%m-%dT%H:%M:%S',   # 2025-08-13T10:23:00 (ISO 格式)
+        '%Y-%m-%d %H:%M',      # 2025-08-13 10:23 (简化格式)
+        '%Y-%m-%d',            # 2025-08-13 (仅日期)
+    ]
+    
+    # 尝试每种格式
+    for fmt in date_formats:
+        try:
+            return datetime.strptime(date_str, fmt)
+        except ValueError:
+            continue
+    
+    # 如果所有格式都失败，抛出错误
+    raise ValueError(f"无法解析日期字符串: {date_str}。支持的格式: {', '.join(date_formats)}")
+
 def get_current_month_range() -> Tuple[datetime, datetime]:
     """
     获取本月的时间区间
