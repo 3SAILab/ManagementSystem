@@ -1,9 +1,13 @@
 import api from './api';
 import { useEmployeePermissionStore } from '../store/employee';
-// 获取未分配的子任务(根据当前角色的身份获取美术任务或者渲染任务)
-export const getSubTasks = async () => {
+import Qs from 'qs';
+// 获取未完成的子任务(根据当前角色的身份获取美术任务或者渲染任务)
+export const getSubTasks = async (filters) => {
     try {
-      const response = await api.get(`/sub_tasks/unassigned`);
+      const response = await api.get(`/sub_tasks/uncompleted`, 
+        { params: filters,
+          paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
+        });
       return { success: true, data: response.data };
     } catch (err) {
       const detail = err.response?.data?.detail || err.message;

@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select, or_
 from sqlalchemy.orm import selectinload, joinedload
+from backend.models.client import Client
 from backend.models.ticket import Ticket
 from backend.models.sub_task import SubTask
 from backend.models.employee import Employee
@@ -10,6 +11,7 @@ from backend.schemas.sub_task import SubTaskCreate, SubTaskFilter
 from datetime import datetime, timezone
 from sqlalchemy import update
 from zoneinfo import ZoneInfo
+from typing import Optional
 
 class SubTaskService:
     # 根据合同id获取所有美工任务
@@ -82,55 +84,39 @@ class SubTaskService:
         return new_sub_task
 
 
-    # 获取未完成的美工任务(工单名称、客户名称、创建时间)
+    # 获取未完成的任务(工单名称、客户名称、创建时间)
     @staticmethod
-    async def get_art_tasks_uncompleted(db: AsyncSession):
-        # 更改查询以正确加载关联
-        
-        stmt = select(SubTask).where(
-            SubTask.status != "已完成", 
-            SubTask.task_type == '美工'
-        ).options(
-            selectinload(SubTask.charge),
-            selectinload(SubTask.ticket)
-                .selectinload(Ticket.contract)
-                .selectinload(Contract.client),
-            selectinload(SubTask.ticket)
-                .selectinload(Ticket.contract)
-                .selectinload(Contract.sales)
-        )
-        
-        art_tasks_result = await db.execute(stmt)
-        art_tasks = art_tasks_result.scalars().all() or []
-        
-        # 返回JSON可序列化的列表
-        return [
-            {
-                "id": task.id,
-                "ticket": {
-                    "id": task.ticket.id,
-                    "name": task.ticket.name,
-                    "client": {
-                        "name": task.ticket.contract.client.name
-                    }
-                },
-                "created_at": task.created_at,
-                "task_type": task.task_type,
-                "status": task.status,
-                "sales": task.ticket.contract.sales.name if task.ticket.contract.sales else None,
-                "charge_name": task.charge.name if task.charge else None
-            }
-            for task in art_tasks
-        ]
+    async def get_tasks_uncompleted(db: AsyncSession, filter_params: SubTaskFilter):
+        """
+        查询条件：
+        key_word: str = None # 关键字(工单名称、客户名称、负责人名称)
+        status: list[str] = None # 状态(未分配、未开始、进行中)
+        task_type: str = None # 任务类型(美工、渲染)
+        page: int = 1 # 页码
+        page_size: int = 20 # 每页数量
+        返回：
+        sub_tasks: list[SubTask] # 任务列表(按照创建时间排序)
+        total: int # 总数量
+        """
+        # 1. 先构造基础查询（不加options）
+        base_stmt = select(SubTask).order_by(SubTask.created_at.desc())
+        base_stmt = base_stmt.where(SubTask.status != "已完成")
+        if filter_params.task_type:
+            base_stmt = base_stmt.where(SubTask.task_type == filter_params.task_type)
+        if filter_params.status:
+            base_stmt = base_stmt.where(SubTask.status.in_(filter_params.status))
+        if filter_params.key_word:
+            base_stmt = base_stmt.where(SubTask.ticket.has(or_(Ticket.name.ilike(f"%{filter_params.key_word}%"),
+                 Ticket.contract.has(Contract.client.has(Client.name.ilike(f"%{filter_params.key_word}%"))),
+                 SubTask.charge.has(Employee.name.ilike(f"%{filter_params.key_word}%")))))
 
-    # 获取未完成的渲染任务(工单名称、客户名称、创建时间)
-    @staticmethod
-    async def get_render_tasks_uncompleted(db: AsyncSession):
-        # 更改查询以正确加载关联
-        stmt = select(SubTask).where(
-            SubTask.status != "已完成", 
-            SubTask.task_type == '渲染'
-        ).options(
+        # 2. 统计总数
+        count_stmt = select(func.count()).select_from(base_stmt.subquery())
+        total_result = await db.execute(count_stmt)
+        total = total_result.scalar_one()
+
+        # 3. 分页+ORM预加载
+        stmt = base_stmt.options(
             selectinload(SubTask.charge),
             selectinload(SubTask.ticket)
                 .selectinload(Ticket.contract)
@@ -138,30 +124,10 @@ class SubTaskService:
             selectinload(SubTask.ticket)
                 .selectinload(Ticket.contract)
                 .selectinload(Contract.sales)
-        )
-        
-        render_tasks_result = await db.execute(stmt)
-        render_tasks = render_tasks_result.scalars().all() or []
-        
-        # 返回JSON可序列化的列表
-        return [
-            {
-                "id": task.id,
-                "ticket": {
-                    "id": task.ticket.id,
-                    "name": task.ticket.name,
-                    "client": {
-                        "name": task.ticket.contract.client.name
-                    }
-                },
-                "created_at": task.created_at,
-                "task_type": task.task_type,
-                "status": task.status,
-                "sales": task.ticket.contract.sales.name if task.ticket.contract.sales else None,
-                "charge_name": task.charge.name if task.charge else None
-            }
-            for task in render_tasks
-        ]
+        ).offset((filter_params.page - 1) * filter_params.page_size).limit(filter_params.page_size)
+        sub_tasks = await db.execute(stmt)
+        sub_tasks = list(sub_tasks.scalars().all())
+        return sub_tasks, total
 
     # 分配任务(设置任务分配人id和任务负责人id)
     @staticmethod

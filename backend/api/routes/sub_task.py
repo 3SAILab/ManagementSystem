@@ -1,6 +1,6 @@
 import asyncio
 from backend.config import settings
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, Body, Query
 from backend.schemas.sub_task import SubTaskFilter
 from backend.services.sub_task_service import SubTaskService
@@ -34,16 +34,46 @@ async def get_sub_render_tasks(
 ):
     return await SubTaskService.get_render_tasks(db, current_employee.id)
 
-# 获取未分配任务
-@router.get("/sub_tasks/unassigned")
-async def get_sub_tasks_unassigned(
+# 获取未完成任务
+@router.get("/sub_tasks/uncompleted")
+async def get_sub_tasks_uncompleted(
     db: AsyncSession = Depends(get_async_db),
-    current_employee: Employee = Depends(get_current_employee)
+    current_employee: Employee = Depends(get_current_employee),
+    key_word: str = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    task_type: str = Query(None),
+    status: List[str] = Query(None),
 ):
-    if current_employee.position.name == "美工":
-        return await SubTaskService.get_art_tasks_uncompleted(db)
-    elif current_employee.position.name == "渲染":
-        return await SubTaskService.get_render_tasks_uncompleted(db)
+    if not task_type:
+        task_type = current_employee.position.name
+    if not status:
+        status = ["未分配","未开始", "进行中"]
+    filter_params = SubTaskFilter(key_word=key_word, page=page, page_size=page_size, task_type=task_type, status=status)
+    sub_tasks, total = await SubTaskService.get_tasks_uncompleted(db, filter_params)
+    sub_tasks_out = []
+    for task in sub_tasks:
+        sub_tasks_out.append({
+            "id": task.id,
+            "ticket": {
+                "id": task.ticket.id,
+                "name": task.ticket.name,
+                "client": {
+                    "name": task.ticket.contract.client.name
+                }
+            },
+            "created_at": task.created_at,
+            "task_type": task.task_type,
+            "status": task.status,
+            "sales": task.ticket.contract.sales.name if task.ticket.contract.sales else None,
+            "charge_name": task.charge.name if task.charge else None,
+            "wechat_group": task.ticket.wechat_group if task.ticket.wechat_group else None,
+        })
+    return {
+        "sub_tasks": sub_tasks_out,
+        "total": total,
+    }
+
 
 # 分配任务
 @router.put("/assign_task/{id}")

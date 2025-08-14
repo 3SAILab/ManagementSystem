@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -38,5 +38,8 @@ class SubTaskUpdate(BaseModel):
 class SubTaskFilter(BaseModel):
     task_name: Optional[str] = None
     charge_name: Optional[str] = None
+    key_word: Optional[str] = None
+    task_type: Optional[str] = None
+    status: Optional[List[str]] = None
     page: int = 1
     page_size: int = 20
