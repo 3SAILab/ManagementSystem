@@ -16,7 +16,7 @@ from backend.api.deps.auth import any_of, require_departments, require_roles
 from backend.services.sales_service import SalesService
 from backend.services.client_service import ClientService
 # 营销管理部的员工或者owner
-router = APIRouter(dependencies=[Depends(any_of(require_departments("营销管理部"), require_roles("owner")))])
+router = APIRouter()
 
 # 添加合同
 @router.post("/contracts")
