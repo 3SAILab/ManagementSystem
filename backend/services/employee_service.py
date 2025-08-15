@@ -328,3 +328,24 @@ class EmployeeService:
             {"id": id, "name": name, "task_count": task_count}
             for id, name, task_count in rows
         ]
+    
+    #获取员工薪资
+    @staticmethod
+    async def get_employee_salary(db: AsyncSession, employee_id: Optional[int] = None):
+        # 获取员工薪资
+        stmt = select(Employee.id, Employee.name, Employee.base_salary, Employee.work_performance_score, Employee.attendance_performance_score, Employee.total_salary)
+        if employee_id:
+            stmt = stmt.where(Employee.id == employee_id)
+        result = await db.execute(stmt)
+        rows = result.all()
+        return [
+            {
+                "id": id, 
+                "name": name, 
+                "base_salary": base_salary, 
+                "work_performance_score": work_performance_score, 
+                "attendance_performance_score": attendance_performance_score, 
+                "total_salary": (base_salary + (work_performance_score or 0) + (attendance_performance_score or 0)),
+            }
+            for id, name, base_salary, work_performance_score, attendance_performance_score, total_salary in rows
+        ]

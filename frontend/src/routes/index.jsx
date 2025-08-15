@@ -19,6 +19,7 @@ import ReadOnlySalesDashboard from '../pages/ReadOnlySalesDashboard'
 import ReadOnlyContractDetail from '../pages/ReadOnlyContractDetail'
 import ArtDataPage from '../pages/ArtDataPage'
 import OnlineClientPage from '../pages/OnlineClientPage'
+import SalaryDataPage from '../pages/SalaryData'
 
 const router = createBrowserRouter([
   {
@@ -170,6 +171,15 @@ const router = createBrowserRouter([
               </PrivateRoute>
             ),
             handle: { title: '线上客户' }
+          },
+          {
+            path: 'salary_data',
+            element: (
+              <PrivateRoute currentPath='salary_data'>
+                <SalaryDataPage />
+              </PrivateRoute>
+            ),
+            handle: { title: '薪资数据' }
           }
         ],
       },

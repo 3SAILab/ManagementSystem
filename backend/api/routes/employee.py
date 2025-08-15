@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Literal, Optional
+from typing import Literal, Optional, Dict, Any
 from backend.models.employee import Employee, EmployeeRole
 from backend.services.employee_service import EmployeeService
 from backend.utils.response import api_response
@@ -107,6 +107,15 @@ async def get_employee_list(
         raise HTTPException(status_code=403, detail="无权限访问")
     employees = await EmployeeService.get_employee_list(db)
     return employees
+
+#获取员工薪资列表
+@router.get("/employee/salary")
+async def get_employee_salary(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+)-> Dict[str, Any]:
+    employees = await EmployeeService.get_employee_salary(db)
+    return api_response(success=True, data=employees)
 
 #根据id获取员工信息
 @router.get("/employee/{id}", response_model=EmployeeInfo)

@@ -255,8 +255,12 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
                   required
                 >
                   <option value="">请选择来源</option>
-                  <option value="系统推广流">系统推广流</option>
-                  <option value="自然流">自然流</option>
+                  <option value="小红书推广流">小红书推广流</option>
+                  <option value="小红书自然流">小红书自然流</option>
+                  <option value="抖音推广流">抖音推广流</option>
+                  <option value="抖音自然流">抖音自然流</option>
+                  <option value="腾讯推广流">腾讯推广流</option>
+                  <option value="腾讯自然流">腾讯自然流</option>
                 </select>
                 {errors.online_source && (
                   <p className="mt-1 text-sm text-red-600">{errors.online_source}</p>

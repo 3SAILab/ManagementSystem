@@ -30,7 +30,7 @@ export const addClient = async (client) => {
             status: "刚开始跟进",
             access_time: client.access_time,
         }
-        const response = await api.post('/client/add', {client: payload});
+        const response = await api.post('/client/add', payload);
         return {success: true, data: response.data};
     } catch (error) {
         return { success: false, error: error.response.data.message };
