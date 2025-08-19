@@ -114,6 +114,7 @@ class ClientService:
             "product_type": client.product_type,
             "scale": client.scale.value,
             "status": client.status.value,
+            "access_time": client.access_time,
         }
         return clientInfo
 
@@ -137,8 +138,21 @@ class ClientService:
         result = await db.execute(select(Client).where(and_(Client.id != id, Client.name == client.name)).with_for_update())
         if result.scalars().first():
             raise HTTPException(status_code=400, detail="客户名称已存在")
-        # 将Pydantic模型转换为字典
-        client_data = client.model_dump(mode="json")
+        
+        # 直接使用Pydantic模型的数据，避免类型转换问题
+        client_data = {
+            "name": client.name,
+            "contact_name": client.contact_name,
+            "contact_phone": client.contact_phone,
+            "address": client.address,
+            "online_source": client.online_source,
+            "activity_name": client.activity_name,
+            "source": client.source.value,
+            "product_type": client.product_type,
+            "scale": client.scale.value,
+            "status": client.status.value,
+            "access_time": client.access_time,  # 这里已经是datetime对象，不需要转换
+        }
         
         # 在一条语句中完成：更新并返回更新后的记录
         stmt = (

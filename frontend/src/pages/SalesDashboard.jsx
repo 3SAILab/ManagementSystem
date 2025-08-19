@@ -339,7 +339,6 @@ const SalesDashboard = () => {
     setEditingContract(contract);
     setNewStatus(contract.status);
     setSettlementTime(DateUtils.toInputDateTimeLocal(contract.settlement_time));
-    console.log(settlementTime);
     setIsModalOpen(true);
   };
   const handleCloseModal = () => {

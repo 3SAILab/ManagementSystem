@@ -223,7 +223,8 @@ class EmployeeService:
                 department_id=e.department.id,
                 position_id=e.position.id,
                 department_name=e.department.name,
-                position_name=e.position.name
+                position_name=e.position.name,
+                status=e.status.value
             )
             for e in emps
         ] 

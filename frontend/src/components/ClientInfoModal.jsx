@@ -30,7 +30,10 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
           // 获取客户信息
           getClientInfo(id).then(res => {
             if (res.success) {
-              setFormData(res.data);
+              setFormData({
+                ...res.data,
+                access_time: DateUtils.toInputDateTimeLocal(res.data.access_time)
+              });
             }
           });
         } catch (error) {

@@ -76,7 +76,6 @@ async def add_client(
     # 验证权限
 
     # 添加客户
-    print(client)
     new_client = await ClientService.add_client(db, client, current_employee.id)
 
     # 添加客户活动日志
@@ -93,7 +92,7 @@ async def add_client(
 @router.put("/client/update/{id}")
 async def update_client(
     id: int,
-    client: ClientCreate = Body(...),
+    client: ClientCreate,
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
