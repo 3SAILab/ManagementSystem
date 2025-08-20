@@ -7,6 +7,8 @@ from typing import Dict, Any
 from backend.models.client import Client, ClientSource
 from backend.models.contract import Contract
 from backend.models.employee import Employee
+from backend.utils.contract_utils import calculate_commission_rate
+from backend.utils.data_utils import get_month_list
 
 class SalesService:
     
@@ -116,71 +118,30 @@ class SalesService:
         """
         计算销售员提点
         规则：
-        - 预付款（paid_amount）：若 transaction_time 在 [start_date, end_date) 内 → 计入
-        - 尾款（total_amount - paid_amount）：若 settlement_time 在 [start_date, end_date) 内 → 计入
+        - 按照线上线下分别计算提点
 
         参数：
             db: AsyncSession
             start_date: 开始时间（可选）
             end_date: 结束时间（可选），使用左闭右开 [start, end)
-            sales_id: 销售员ID（可选）
+            sales_id: 销售员ID
 
         返回：
             销售员提点（float）
         """
-        # 构建两部分提点金额的表达式
-        total_received_expr = (
-            # 预付款部分：基于 transaction_time
-            case(
-                (
-                    and_(
-                        (start_date is None or Contract.transaction_time >= start_date),
-                        (end_date is None or Contract.transaction_time < end_date),
-                        Contract.paid_amount > 0  # 可选：避免 0 预付款干扰
-                    ),
-                    Contract.paid_amount * Contract.commission_rate
-                ),
-                else_=0.0
-            )
-            +
-            # 尾款部分：基于 settlement_time
-            case(
-                (
-                    and_(
-                        Contract.settlement_time.isnot(null()),  # 必须已结算
-                        (start_date is None or Contract.settlement_time >= start_date),
-                        (end_date is None or Contract.settlement_time < end_date)
-                    ),
-                    (Contract.total_amount - Contract.paid_amount) * Contract.commission_rate
-                ),
-                else_=0.0
-            )
-        )
+        month_list = get_month_list(start_date,end_date)
+        total_amount = 0
+        for month in month_list:
+            start_date, end_date = month
+            offline_total = await SalesService.get_total_received(db, sales_id=sales_id, start_date=start_date, end_date=end_date, source="线下")
+            online_total = await SalesService.get_total_received(db, sales_id=sales_id, start_date=start_date, end_date=end_date, source="线上")
+            offline_commission_rate = await SalesService.get_commission_rate(db, year=start_date.year, month=start_date.month, sales_id=sales_id, source="线下")
+            online_commission_rate = await SalesService.get_commission_rate(db, year=start_date.year, month=start_date.month, sales_id=sales_id, source="线上")
+            offline_amount = offline_total * offline_commission_rate/100
+            online_amount = online_total * online_commission_rate/100
+            total_amount = total_amount + offline_amount + online_amount
 
-        # 查询总和
-        stmt = select(func.sum(total_received_expr)).select_from(Contract)
-
-        # 添加过滤条件
-        where_clauses = []
-
-        if sales_id is not None:
-            where_clauses.append(Contract.sales_id == sales_id)
-
-        # 优化：只考虑可能产生进账的合同（至少有一个时间字段非空）
-        relevant_time = or_(
-            Contract.transaction_time.isnot(null()),
-            Contract.settlement_time.isnot(null())
-        )
-        where_clauses.append(relevant_time)
-
-        if where_clauses:
-            stmt = stmt.where(and_(*where_clauses))
-
-        # 执行查询
-        result = await db.execute(stmt)
-        total = result.scalar()
-
-        return float(total/100 or 0.0)
+        return float(total_amount or 0.0)
 
     """
     统计待催收尾款金额
@@ -704,3 +665,37 @@ class SalesService:
 
         return float(total or 0.0)
     
+    """
+    计算指定时间的提点比例
+    year: 年份
+    month 月份
+    sales_id 销售id
+    source 客户来源
+    """
+    @staticmethod
+    async def get_commission_rate(
+        db: AsyncSession,
+        year: int,
+        month: int,
+        sales_id: int,
+        source: Optional[str] = None
+    ) -> float:
+        """
+        计算指定时间的提点比例
+        参数：
+            db: AsyncSession
+            year: 年份
+            month: 月份
+            sales_id: 销售员ID
+            source: 客户来源
+        返回：
+            指定时间区间的提点比例（float）
+        """
+        from backend.utils.data_utils import get_month_range
+        if source == "线上":
+            total_received = 0
+        else:
+            start_date, end_date = get_month_range(year,month)
+            total_received = await SalesService.get_total_received(db, start_date=start_date, end_date=end_date, sales_id=sales_id)
+        commission_rate = calculate_commission_rate(source,total_received)
+        return commission_rate

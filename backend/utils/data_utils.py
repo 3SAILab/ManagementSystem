@@ -1,7 +1,8 @@
 # utils/date_utils.py
 from datetime import datetime, date, timedelta
-from typing import Tuple, Optional
+from typing import Tuple, Optional,List
 from datetime import timezone
+from dateutil.relativedelta import relativedelta
 
 def get_now() -> datetime:
     """
@@ -356,3 +357,40 @@ def is_same_quarter(date1: datetime, date2: datetime) -> bool:
     quarter1 = (date1.month - 1) // 3 + 1
     quarter2 = (date2.month - 1) // 3 + 1
     return date1.year == date2.year and quarter1 == quarter2
+
+def get_month_list(start_date: datetime, end_date: datetime) -> List[Tuple[datetime, datetime]]:
+    """
+    将 [start_date, end_date) 按月切分，不跨月，每段为连续的时间区间。
+    使用左闭右开区间 [start, end)
+
+    示例：
+        start=2025-03-15, end=2025-05-10
+        返回：
+            [
+                (2025-03-15, 2025-04-01),
+                (2025-04-01, 2025-05-01),
+                (2025-05-01, 2025-05-10)
+            ]
+    """
+    if start_date >= end_date:
+        return []
+
+    result = []
+    current = start_date
+
+    while current < end_date:
+        # 获取 current 所在月的下个月1日（作为当前段的理论结束）
+        next_month = (current.replace(day=1, hour=0, minute=0, second=0, microsecond=0) 
+                     + relativedelta(months=1))
+
+        # 当前段的结束位置：取 min(next_month, end_date)
+        seg_end = min(next_month, end_date)
+
+        # 只有当 current < seg_end 时才添加
+        if current < seg_end:
+            result.append((current, seg_end))
+
+        # 下一段从 next_month 开始（即使 seg_end 提前截断，也跳到下月1日）
+        current = next_month
+
+    return result
