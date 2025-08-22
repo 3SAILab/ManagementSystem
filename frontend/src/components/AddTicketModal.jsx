@@ -39,7 +39,7 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
     needArt: false,
     needRender: false,
     needShoot: false,
-    needWatermark: false,
+    needWatermark: true,
     notes: "",
     priority: "高", // 优先级
     platform: "国内", // 平台
@@ -124,7 +124,7 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
       needArt: false,
       needRender: false,
       needShoot: false,
-      needWatermark: false,
+      needWatermark: true,
       notes: "",
       priority: "高", // 优先级
       platform: "国内", // 平台
