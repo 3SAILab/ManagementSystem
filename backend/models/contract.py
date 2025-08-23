@@ -15,6 +15,8 @@ class Contract(Base):
     id = Column(Integer, primary_key=True) #合同ID
     client_id = Column(Integer, ForeignKey("client.id"), nullable=False) #客户ID
     sales_id = Column(Integer, ForeignKey("employee.id"), nullable=False) #销售ID
+    prepayment_sales_id = Column(Integer, ForeignKey("employee.id"), nullable=True)  # 预付款销售ID
+    final_payment_sales_id = Column(Integer, ForeignKey("employee.id"), nullable=True)  # 尾款销售ID
     is_recharged = Column(Boolean, nullable=False) #是否充值
     contract_type = Column(Enum(ContractType), nullable=False) #合同类型
     status = Column(String(50), nullable=False) #合同状态
@@ -25,6 +27,7 @@ class Contract(Base):
     video_count = Column(Integer, nullable=False) #视频数
     image_count = Column(Integer, nullable=False) #图片数
     workflow_count = Column(Integer, nullable=False) #工作流数
+    transfer_date = Column(DateTime(timezone=True), nullable=True)  # 转移日期
     transaction_time = Column(DateTime(timezone=True), nullable=False) #合同成交时间
     settlement_time = Column(DateTime(timezone=True), nullable=True) #合同已结算时间
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False) #创建时间
@@ -34,7 +37,8 @@ class Contract(Base):
     client = relationship("Client", back_populates="contracts")
 
     # 外键关联到 Employee 表
-    sales = relationship("Employee", back_populates="contracts")
-    
+    sales = relationship("Employee",foreign_keys=[sales_id], back_populates="contracts")
+    prepayment_sales = relationship("Employee",foreign_keys=[prepayment_sales_id], back_populates="prepayment_contracts")
+    final_payment_sales = relationship("Employee",foreign_keys=[final_payment_sales_id], back_populates="final_payment_contracts")
     # 关联到 Ticket 表
     tickets = relationship("Ticket", back_populates="contract")

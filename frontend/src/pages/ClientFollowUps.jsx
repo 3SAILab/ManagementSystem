@@ -218,7 +218,7 @@ const ClientFollowUps = () => {
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <Search className="w-5 h-5 text-slate-400" />
                                 </div>
-                                <input type="text" placeholder="搜索客户名称" className="form-input !pl-10 w-full bg-slate-50 border-slate-200"
+                                <input type="text" placeholder="搜索客户名称、联系方式" className="form-input !pl-10 w-full bg-slate-50 border-slate-200"
                                     value={filters.name}
                                     onChange={(e) => setFilters({ ...filters, name: e.target.value })}
                                 />

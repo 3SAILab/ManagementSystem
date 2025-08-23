@@ -210,7 +210,8 @@ class EmployeeService:
             )
             .where(
                 Employee.department_id == department_id,
-                Employee.role.in_(higher_levels)
+                Employee.role.in_(higher_levels),
+                Employee.status != EmployeeStatus.inactive
             )
         )
         emps = result.scalars().all()

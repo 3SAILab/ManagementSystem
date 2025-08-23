@@ -3,6 +3,7 @@ from sqlalchemy import and_, or_, func, update
 from typing import List, Optional, Tuple
 from sqlalchemy.future import select
 from backend.models.client import Client
+from backend.models.contract import Contract
 from backend.schemas.client import ClientFilter, ClientCreate, ClientStatus
 from fastapi import HTTPException
 from datetime import datetime, timezone
@@ -20,7 +21,9 @@ class ClientService:
         filters = []
 
         if filter_params.name:
-            filters.append(Client.name.ilike(f"%{filter_params.name}%"))
+            filters.append(or_(Client.name.ilike(f"%{filter_params.name}%"),
+                                Client.contact_name.ilike(f"%{filter_params.name}%"),
+                                  Client.contact_phone.ilike(f"%{filter_params.name}%")))
 
         if filter_params.status:
             # 将 Pydantic Enum 转为原始字符串值再过滤
@@ -227,9 +230,31 @@ class ClientService:
         if not client:
             raise HTTPException(status_code=404, detail="客户不存在")
         
+        # 检查新销售是否存在
+        new_sales = await db.execute(select(Employee).where(Employee.id == sales_id))
+        if not new_sales.scalars().first():
+            raise HTTPException(status_code=404, detail="新销售不存在")
+        
+        # 获取该客户所有需要转移的合同（扩展状态范围）
+        pending_contracts = await db.execute(
+            select(Contract).where(
+                Contract.client_id == id,
+                Contract.status.in_([
+                    "待结算",
+                ])
+            )
+        )
+        pending_contracts = pending_contracts.scalars().all()
+        
+        for contract in pending_contracts:
+            # 只更新尾款负责人，预付款负责人保持不变
+            if contract.final_payment_sales_id != sales_id:
+                contract.final_payment_sales_id = sales_id
+                contract.transfer_date = datetime.now(timezone.utc)
+            contract.sales_id = sales_id
         # 更新客户负责人
         client.sales_id = sales_id
+        client.updated_at = datetime.now(timezone.utc)
         await db.flush()
+        await db.refresh(client)
         return client
-
-

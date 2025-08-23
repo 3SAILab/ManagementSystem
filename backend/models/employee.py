@@ -1,6 +1,8 @@
 import enum
 from sqlalchemy import Column, Integer, String, Numeric, Date, Boolean, ForeignKey, JSON, DateTime, Enum, func
 from sqlalchemy.orm import relationship
+
+from backend.models.contract import Contract
 from ..db.session import Base
 
 #性别
@@ -64,7 +66,11 @@ class Employee(Base):
     # 定义与 Position 的多对一关系
     position = relationship("Position", back_populates="employees")
     # 定义与 Contract 的一对多关系（一个员工可以有多个合同）
-    contracts = relationship("Contract", back_populates="sales")
+    contracts = relationship("Contract", foreign_keys="[Contract.sales_id]", back_populates="sales")
+    # 合同预付款销售
+    prepayment_contracts = relationship("Contract", foreign_keys="[Contract.prepayment_sales_id]", back_populates="prepayment_sales")
+    # 合同尾款销售
+    final_payment_contracts = relationship("Contract", foreign_keys="[Contract.final_payment_sales_id]", back_populates="final_payment_sales")
     # 定义与 客户跟进记录 的一对多关系（一个员工处理的活动记录）
     activity_logs = relationship("ClientActivityLog", back_populates="sales")
     # 定义与 Client 的一对多关系（一个员工可以有多个客户）
