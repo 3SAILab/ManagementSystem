@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import OrderCard from '../components/OrderCard';
 import OrderDetailsPanel from '../components/OrderDetailsPanel';
-import Pagination from '../components/Pagination';
 import { getPersonalTasks } from '../services/subTaskService';
 import { toast } from 'react-toastify';
 
@@ -81,6 +80,7 @@ const DashboardPage = () => {
                     clientName={order.client_name}
                     estimatedCompletionTime={order.estimated_completion_time}
                     performanceSalary={order.performanceSalary}
+                    need_watermark={order.need_watermark}
                     onClick={() => handleSelectOrder(order.sub_task_id)}
                   />
                 ))
@@ -107,6 +107,7 @@ const DashboardPage = () => {
                     clientName={order.client_name}
                     estimatedCompletionTime={order.estimated_completion_time}
                     performanceSalary={order.performanceSalary}
+                    need_watermark={order.need_watermark}
                     onClick={() => handleSelectOrder(order.sub_task_id)}
                   />
                 ))
@@ -133,6 +134,7 @@ const DashboardPage = () => {
                     clientName={order.client_name}
                     estimatedCompletionTime={order.estimated_completion_time}
                     performanceSalary={order.performanceSalary}
+                    need_watermark={order.need_watermark}
                     onClick={() => handleSelectOrder(order.sub_task_id)}
                   />
                 ))

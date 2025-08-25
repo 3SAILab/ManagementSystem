@@ -1,4 +1,4 @@
-const OrderCard = ({ subTaskId, ticketName, progress, warning, clientName, estimatedCompletionTime, chargeName = null, performanceSalary = null, onClick }) => {
+const OrderCard = ({ subTaskId, ticketName, progress, warning, clientName, estimatedCompletionTime, chargeName = null, performanceSalary = null, need_watermark, onClick }) => {
   return (
     <div
       key={subTaskId}
@@ -53,10 +53,18 @@ const OrderCard = ({ subTaskId, ticketName, progress, warning, clientName, estim
         </div>
         {/** 如果chargeName为空则不显示 */}
         {chargeName && (
-            <div className="flex items-center -space-x-2">
-                <span className="text-xs">负责人: {chargeName}</span>
-            </div>
+          <div className="flex items-center -space-x-2">
+            <span className="text-xs">负责人: {chargeName}</span>
+          </div>
         )}
+        <div className="flex items-center -space-x-2 text-xs">
+          打水印：
+          <span className={`font-medium ${need_watermark
+            ? 'text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full text-xs'
+            : 'text-green-700 bg-green-50 px-2 py-0.5 rounded-full text-xs'}`}>
+            {need_watermark ? '是' : '否'}
+          </span>
+        </div>
         <div className="flex items-center -space-x-2">
             <span className="text-xs">客户: {clientName}</span>
         </div>
