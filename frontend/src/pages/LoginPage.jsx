@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Mail, Lock, BrainCircuit } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import Typewriter from '../components/Typewriter'
@@ -10,20 +10,26 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
-  const handleSubmit = async (e) => {
+
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     if (!email || !password) {
       toast.error('请输入账号和密码');
       return;
     }
-    const result = await login(email, password);
-    if (result.success) {
-      navigate('/', { replace: true });
-      toast.success('登录成功！');
-    } else {
-      toast.error('登录失败，请检查账号和密码');
+    
+    try {
+      const result = await login(email, password);
+      if (result.success) {
+        navigate('/', { replace: true });
+        toast.success('登录成功！');
+      } else {
+        toast.error(result.error || '登录失败，请检查账号和密码');
+      }
+    } catch {
+      toast.error('登录过程中发生错误，请重试');
     }
-  };
+  }, [email, password, navigate]);
 
   return (
     <div className="auth-view w-full min-h-screen flex items-center justify-center p-4">

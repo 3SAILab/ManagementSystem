@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import ClientSidePanel from '../components/ClientSidePanel'; // 侧边栏组件
-import { Search,MessageCircle,Edit,Plus,ArrowUp,ArrowDown } from 'lucide-react';
+import { Search,Edit,Plus,ArrowUp,ArrowDown } from 'lucide-react';
 import FilterDropdown from '../components/FilterDropdown';
-import { getOnlineClients, addOnlineClient } from '../services/clientService';
+import { getOnlineClients, addOnlineClient, updateOnlineClient } from '../services/clientService';
 import Pagination from '../components/Pagination';
 import { toast } from 'react-toastify';
-import AddClientActivityLogModal from '../components/AddClientActivityLogModal';
 import { getOnlineClientDataStatistics } from '../services/statisticsService';
 import SalesClientModal from '../components/SalesClientModal';
 
@@ -16,8 +15,6 @@ const OnlineClientPage = () => {
     const [clientId, setClientId] = useState(null);
     // 客户模态框
     const [isModalOpen, setIsModalOpen] = useState(false);
-    // 新增跟进记录模态框
-    const [isAddClientActivityLogModalOpen, setIsAddClientActivityLogModalOpen] = useState(false);
     // 跟进状态映射
     const followUpStatusMap = {
         '刚开始跟进': { text: '刚开始跟进', classes: 'bg-slate-100 text-slate-700' },
@@ -36,8 +33,11 @@ const OnlineClientPage = () => {
         name: '',
         status: [],
         source: [],
+        sales_name: '',
         page: 1,
-        page_size: 10
+        page_size: 10,
+        startTime: '',
+        endTime: ''
     });
     // 统计数据
     const [statistics, setStatistics] = useState({
@@ -83,21 +83,33 @@ const OnlineClientPage = () => {
             }
         });
     }, [filters, refresh]);
-    // 新增客户
+    // 新增或编辑客户
     const onSave = (ClientInfo) => {
-        addOnlineClient(ClientInfo).then(res => {
-            if (res.success) {
-                toast.success('新增客户成功！');
-                setClients(prev => [res.data, ...prev]);
-                setIsModalOpen(false);
-                setRefresh(!refresh);
-                // 重置页码
-                setFilters(prev => ({ ...prev, page: 1 }));
-            } else {
-                toast.error('新增客户失败！');
-            }
-        });
-
+        if (clientId) {
+            updateOnlineClient(clientId, ClientInfo).then(res => {
+                if (res.success) {
+                    toast.success('编辑客户成功！');
+                    setClients(prev => prev.map(client => client.id === clientId ? res.data : client));
+                    setIsModalOpen(false);
+                    setRefresh(!refresh);
+                } else {
+                    toast.error(res.error);
+                }
+            });
+        } else {
+            addOnlineClient(ClientInfo).then(res => {
+                if (res.success) {
+                    toast.success('新增客户成功！');
+                    setClients(prev => [res.data, ...prev]);
+                    setIsModalOpen(false);
+                    setRefresh(!refresh);
+                    // 重置页码
+                    setFilters(prev => ({ ...prev, page: 1 }));
+                } else {
+                    toast.error(res.error);
+                }
+            });
+        }
     };
     
     return (
@@ -199,17 +211,36 @@ const OnlineClientPage = () => {
                     <div className="p-4 border-b border-slate-200">
                         {/* 搜索框、筛选器等 */}
                         <div className="flex justify-between items-center">
-                            {/* 搜索框 */}
-                            <div className="relative w-full max-w-xs">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Search className="w-5 h-5 text-slate-400" />
+                            {/* 搜索区域 */}
+                            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                                {/* 客户名称搜索框 */}
+                                <div className="relative flex-1 min-w-0">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Search className="w-4 h-4 text-slate-400" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="搜索客户名称..."
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 placeholder:text-slate-400 text-sm"
+                                        value={filters.name}
+                                        onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+                                    />
                                 </div>
-                                <input type="text" placeholder="搜索客户名称" className="form-input !pl-10 w-full bg-slate-50 border-slate-200"
-                                    value={filters.name}
-                                    onChange={(e) => setFilters({ ...filters, name: e.target.value })}
-                                />
+                                {/* 销售名称搜索框 */}
+                                <div className="relative flex-1 min-w-0">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Search className="w-4 h-4 text-slate-400" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="搜索销售名称..."
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 placeholder:text-slate-400 text-sm"
+                                        value={filters.sales_name}
+                                        onChange={(e) => setFilters({ ...filters, sales_name: e.target.value })}
+                                    />
+                                </div>
                             </div>
-
+                            
                             {/* 筛选器 */}
                             <div className="flex items-center gap-2">
                                 <FilterDropdown followUpStatusMap={followUpStatusMap} filters={filters} onFilterChange={(newFilters) => setFilters({...filters, ...newFilters})} />
@@ -218,6 +249,7 @@ const OnlineClientPage = () => {
                                 <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors" onClick={
                                     () => {
                                         setIsModalOpen(true);
+                                        setClientId(null);
                                     }}>
                                     <Plus className="w-4 h-4" /> 添加客户
                                 </button>
@@ -239,10 +271,11 @@ const OnlineClientPage = () => {
                                         <tr>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户名称</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">创建时间</th>
-                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">产品类型</th>
-                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户规模</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">联系人</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">联系方式</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">销售</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
                                         </tr>
                                     </thead>
 
@@ -266,24 +299,14 @@ const OnlineClientPage = () => {
                                                         minute: '2-digit',
                                                     })}
                                                 </td>
-                                                <td className="p-4">
-                                                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
-                                                        {client.product_type || '未分类'}
+                                                <td className="p-4 text-sm text-slate-600">
+                                                    <span>
+                                                        {client.contact_name || '-'}
                                                     </span>
                                                 </td>
                                                 <td className="p-4 text-sm text-slate-600">
-                                                    <span
-                                                        className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                                                            client.scale === '大'
-                                                                ? 'bg-blue-100 text-blue-800'
-                                                                : client.scale === '中'
-                                                                ? 'bg-green-100 text-green-800'
-                                                                : client.scale === '小'
-                                                                ? 'bg-slate-100 text-slate-700'
-                                                                : 'bg-red-100 text-red-800'
-                                                        }`}
-                                                    >
-                                                        {client.scale || '未知'}
+                                                    <span>
+                                                        {client.contact_phone || '-'}
                                                     </span>
                                                 </td>
                                                 <td className="p-4">
@@ -295,6 +318,14 @@ const OnlineClientPage = () => {
                                                 </td>
                                                 <td className="p-4 text-slate-500">
                                                     {client.sales_name || '未知销售'}
+                                                </td>
+                                                <td className="p-4 text-slate-500">
+                                                    <button className="p-1 rounded hover:bg-slate-100" title="编辑客户信息" onClick={() => {
+                                                        setIsModalOpen(true);
+                                                        setClientId(client.id);
+                                                    }}>
+                                                        <Edit className="w-5 h-5" />
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -322,18 +353,10 @@ const OnlineClientPage = () => {
                 {/* 侧边栏 */}
                 <ClientSidePanel refresh={refresh} clientId={clientLogId} />
 
-                <SalesClientModal isOpen={isModalOpen} onClose={() => {
+                {isModalOpen && <SalesClientModal isOpen={isModalOpen} onClose={() => {
                     setIsModalOpen(false);
                     setClientId(null);
-                }} onSave={onSave} id={clientId}/>
-
-                <AddClientActivityLogModal isOpen={isAddClientActivityLogModalOpen} onClose={() => {
-                    setIsAddClientActivityLogModalOpen(false);
-                }} clientId={clientLogId} onAdd={() => {
-                    setIsAddClientActivityLogModalOpen(false);
-                    // 刷新客户跟进记录
-                    setRefresh(!refresh);
-                }}/>
+                }} onSave={onSave} id={clientId}/>}
             </div>
         </div>
     );

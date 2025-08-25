@@ -18,6 +18,7 @@ class EmployeePermission(BaseModel):
     department_name: str
     position_name: str
     role: Literal['employee', 'manager', 'admin', 'owner']
+    status: Literal['active', 'inactive', 'on_leave']
     is_probation: bool
     class Config:
         from_attributes = True
@@ -30,6 +31,7 @@ class EmployeePermission(BaseModel):
             department_name=emp.department.name,
             position_name=emp.position.name,
             role=emp.role.value,
+            status=emp.status.value,
             is_probation=emp.is_probation,
         )
 
@@ -40,6 +42,7 @@ class EmployeePermission(BaseModel):
             department_name=self.department_name,
             position_name=self.position_name,
             role=self.role,
+            status=self.status,
             hire_date=self.hire_date,
             is_probation=self.is_probation,
         )
@@ -162,7 +165,6 @@ class EmployeeInfo(BaseModel):
             major=self.major,
             graduation_date=self.graduation_date,
             id_number=self.id_number,
-            nationality=self.nationality,
             marital_status=self.marital_status,
         )
 
@@ -176,3 +178,4 @@ class EmployeeListInfo(BaseModel):
     position_id: int
     department_name: str
     position_name: str
+    status: Literal['active', 'inactive', 'on_leave']

@@ -193,3 +193,18 @@ export const getSalesList = async () => {
     return { success: false, error: detail };
   }
 };
+
+//获取员工薪资列表
+export const getEmployeeSalary = async () => {
+  try {
+    const response = await api.get(`/employee/salary`);
+    return { success: true, data: response.data?.data || [] };
+  } catch (err) {
+    const detail = err.response?.data?.detail || err.message;
+    return { success: false, error: detail };
+  }
+};
+
+
+
+

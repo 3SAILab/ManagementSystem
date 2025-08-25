@@ -30,7 +30,8 @@ class ClientFilter(BaseModel):
     sales_name:Optional[str] = None
     page: int = 1
     page_size: int = 10
-
+    startTime: Optional[str] = None
+    endTime: Optional[str] = None
 
 
 class ClientCreate(BaseModel):
@@ -45,7 +46,20 @@ class ClientCreate(BaseModel):
     product_type: str
     scale: ClientScale
     status: ClientStatus = ClientStatus.刚开始跟进
+    access_time: datetime
 
+    @field_validator('access_time', mode='before')
+    @classmethod
+    def validate_access_time(cls, v):
+        if isinstance(v, str):
+            try:
+                return datetime.fromisoformat(v.replace('Z', '+00:00'))
+            except ValueError:
+                try:
+                    return datetime.fromisoformat(v)
+                except ValueError:
+                    raise ValueError('Invalid datetime format')
+        return v
 
 class ClientOut(BaseModel):
     id: int = Field(...)
@@ -56,6 +70,8 @@ class ClientOut(BaseModel):
     scale: ClientScale
     created_at: datetime
     sales_name: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_name: Optional[str] = None
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 class PaginatedClient(BaseModel):

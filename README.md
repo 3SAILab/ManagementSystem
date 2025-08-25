@@ -18,3 +18,9 @@ tmux list-sessions
 
 
 tmux new-session -d -s frontendtest 'cd frontend && npm run dev'
+
+# 数据库备份
+
+pg_dump -h localhost -U myuser -d mydb > backup.sql
+
+pg_dump -h localhost -U user -d mydb > backup_$(date +%Y%m%d_%H%M%S).sql

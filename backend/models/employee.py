@@ -1,7 +1,7 @@
 import enum
 from sqlalchemy import Column, Integer, String, Numeric, Date, Boolean, ForeignKey, JSON, DateTime, Enum, func
 from sqlalchemy.orm import relationship
-from ..db.session import Base
+from backend.db.session import Base
 
 #性别
 class GenderEnum(enum.Enum):

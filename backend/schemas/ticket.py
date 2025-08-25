@@ -7,6 +7,7 @@ class TicketCreate(BaseModel):
     needArt: bool
     needRender: bool
     needShoot: bool
+    needWatermark: bool
     detail_pages: int
     video_count: int
     image_count: int

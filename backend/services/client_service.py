@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from datetime import datetime, timezone
 from backend.models.employee import Employee
 from sqlalchemy.orm import selectinload
+from backend.utils.data_utils import to_datetime
 
 class ClientService:
 
@@ -30,6 +31,12 @@ class ClientService:
             # 将 Pydantic Enum 转为原始字符串值再过滤
             source_values = [s.value if hasattr(s, 'value') else s for s in filter_params.source]
             filters.append(Client.source.in_(source_values))
+
+        if filter_params.startTime:
+            filters.append(Client.access_time >= to_datetime(filter_params.startTime))
+
+        if filter_params.endTime:
+            filters.append(Client.access_time <= to_datetime(filter_params.endTime))
 
         if filters:
             stmt = stmt.where(and_(*filters))
@@ -63,10 +70,20 @@ class ClientService:
             raise HTTPException(status_code=400, detail="客户已存在")
         
         # 添加客户
-        # 使用 mode="json" 将枚举转换为原始值（字符串）
-        cdata = client.model_dump(mode="json")
+        cdata = client.model_dump()
         new_client = Client(
-            **cdata,
+            id=cdata.get("id"),
+            name=cdata.get("name"),
+            contact_name=cdata.get("contact_name"),
+            contact_phone=cdata.get("contact_phone"),
+            address=cdata.get("address"),
+            online_source=cdata.get("online_source"),
+            activity_name=cdata.get("activity_name"),
+            source=cdata.get("source").value,
+            product_type=cdata.get("product_type"),
+            scale=cdata.get("scale").value,
+            status=cdata.get("status").value,
+            access_time=cdata.get("access_time"),
             created_at=datetime.now(timezone.utc),
             sales_id=sales_id
         )
@@ -97,6 +114,7 @@ class ClientService:
             "product_type": client.product_type,
             "scale": client.scale.value,
             "status": client.status.value,
+            "access_time": client.access_time,
         }
         return clientInfo
 
@@ -117,8 +135,24 @@ class ClientService:
     # 修改客户信息
     @staticmethod
     async def update_client(db: AsyncSession, id: int, client: ClientCreate):
-        # 将Pydantic模型转换为字典
-        client_data = client.model_dump(mode="json")
+        result = await db.execute(select(Client).where(and_(Client.id != id, Client.name == client.name)).with_for_update())
+        if result.scalars().first():
+            raise HTTPException(status_code=400, detail="客户名称已存在")
+        
+        # 直接使用Pydantic模型的数据，避免类型转换问题
+        client_data = {
+            "name": client.name,
+            "contact_name": client.contact_name,
+            "contact_phone": client.contact_phone,
+            "address": client.address,
+            "online_source": client.online_source,
+            "activity_name": client.activity_name,
+            "source": client.source.value,
+            "product_type": client.product_type,
+            "scale": client.scale.value,
+            "status": client.status.value,
+            "access_time": client.access_time,  # 这里已经是datetime对象，不需要转换
+        }
         
         # 在一条语句中完成：更新并返回更新后的记录
         stmt = (
@@ -158,6 +192,12 @@ class ClientService:
             # 将 Pydantic Enum 转为原始字符串值再过滤
             source_values = [s.value if hasattr(s, 'value') else s for s in filter_params.source]
             filters.append(Client.source.in_(source_values))
+
+        if filter_params.startTime:
+            filters.append(Client.access_time >= to_datetime(filter_params.startTime))
+
+        if filter_params.endTime:
+            filters.append(Client.access_time <= to_datetime(filter_params.endTime))
 
         if filters:
             stmt = stmt.where(and_(*filters))

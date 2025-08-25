@@ -1,14 +1,15 @@
 from typing import List
 from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...db.session import get_async_db
+from backend.db.session import get_async_db
 from backend.api.routes.employee import get_current_employee
 from backend.models.employee import Employee
 from backend.services.department_service import DepartmentService
 from backend.schemas.department import DepartmentOut
 from backend.utils.response import api_response
+from backend.api.deps.auth import require_departments
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_departments("人事行政部"))])
 
 
 #增加部门
@@ -18,10 +19,7 @@ async def create_department(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    #判断当前用户身份
     
-    if current_employee.department.name != "人事行政部":
-        raise HTTPException(status_code=403, detail="无权限访问")
     # 业务逻辑
 
     result = await DepartmentService.create_department(db, name)
@@ -37,9 +35,7 @@ async def get_departments(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    #判断当前用户身份
-    if current_employee.department.name != "人事行政部":
-        raise HTTPException(status_code=403, detail="无权限访问")
+    
     #获取部门
     depts = await DepartmentService.search_all_departments(db)
     return depts
@@ -51,9 +47,6 @@ async def delete_department(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    #判断当前用户身份
-    if current_employee.department.name != "人事行政部":
-        raise HTTPException(status_code=403, detail="无权限访问")
     
     #删除部门
     result = await DepartmentService.delete_department(db, id)

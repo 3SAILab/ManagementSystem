@@ -26,6 +26,7 @@ class Contract(Base):
     image_count = Column(Integer, nullable=False) #图片数
     workflow_count = Column(Integer, nullable=False) #工作流数
     transaction_time = Column(DateTime(timezone=True), nullable=False) #合同成交时间
+    settlement_time = Column(DateTime(timezone=True), nullable=True) #合同已结算时间
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False) #创建时间
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) #更新时间
 

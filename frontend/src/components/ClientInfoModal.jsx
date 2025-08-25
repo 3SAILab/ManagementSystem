@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import AddressSelector from "./AddressSelector";
 import ModalCloseButton from "./ModalCloseButton";
 import { getClientInfo } from "../services/clientService";
-
+import DateUtils from "../utils/dateUtils";
 const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
   if (!isOpen) return null;
 
@@ -16,6 +16,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
     product_type: "",
     scale: "",
     address: null,
+    access_time: DateUtils.nowInputDateTimeLocal(),
   });
 
   const [errors, setErrors] = useState({});
@@ -29,7 +30,10 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
           // 获取客户信息
           getClientInfo(id).then(res => {
             if (res.success) {
-              setFormData(res.data);
+              setFormData({
+                ...res.data,
+                access_time: DateUtils.toInputDateTimeLocal(res.data.access_time)
+              });
             }
           });
         } catch (error) {
@@ -53,6 +57,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
         product_type: "",
         scale: "",
         address: null,
+        access_time: DateUtils.nowInputDateTimeLocal(),
       });
     }
   }, [id]); // 依赖 id 变化触发
@@ -85,8 +90,6 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
   // 处理表单提交
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // 添加 E.164 格式前缀
     onSave(formData);
     onClose();
   };
@@ -103,6 +106,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
       product_type: "",
       scale: "",
       address: null,
+      access_time: DateUtils.nowInputDateTimeLocal(),
     });
     onClose();
   };
@@ -117,7 +121,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
         {loading ? (
           <p className="text-center py-4">加载中...</p>
         ) : (
-          <form id="order-form" onSubmit={handleSubmit} className="space-y-6">
+          <form id="client-form" onSubmit={handleSubmit} className="space-y-6">
             {/* 客户信息 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               <div>
@@ -190,10 +194,15 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
                       value={formData.online_source}
                       onChange={handleInputChange}
                       className="form-select block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
+                      required
                     >
                       <option value="">请选择子分类</option>
-                      <option value="系统推广流">系统推广流</option>
-                      <option value="自然流">自然流</option>
+                      <option value="小红书推广流">小红书推广流</option>
+                      <option value="小红书自然流">小红书自然流</option>
+                      <option value="抖音推广流">抖音推广流</option>
+                      <option value="抖音自然流">抖音自然流</option>
+                      <option value="腾讯推广流">腾讯推广流</option>
+                      <option value="腾讯自然流">腾讯自然流</option>
                     </select>
                     {errors.online_source && (
                       <p className="mt-1 text-sm text-red-600">{errors.online_source}</p>
@@ -214,6 +223,7 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
                       onChange={handleInputChange}
                       className="form-input block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
                       placeholder="请输入活动名称"
+                      required
                     />
                   </div>
                 )}
@@ -251,7 +261,20 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
                 </select>
               </div>
             </div>
-
+            {/* 客户接入时间 */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700">
+                客户接入时间 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="datetime-local"
+                name="access_time"
+                value={formData.access_time}
+                onChange={handleInputChange}
+                className="form-input block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
+                required
+              />
+            </div>
             {/* 地址信息 */}
             <div className="md:col-span-6">
               <label htmlFor="address" className="block text-sm font-medium text-slate-700">

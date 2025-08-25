@@ -33,8 +33,9 @@ export default function SalesDataPages() {
   const { employee: userInfo } = useEmployeePermissionStore();
   const [metrics, setMetrics] = useState({
     totalSales: 0,
-    totalDeposit: 0,
+    total_received_by_last: 0,
     totalReceived: 0,
+    totalOnlineReceived: 0,
     totalFinalPaid: 0,
     totalPendingFinal: 0,
   });
@@ -55,11 +56,12 @@ export default function SalesDataPages() {
         if (result.success) {
           setData(result.data);
           setMetrics({
-            totalSales: result.data.total_sales || 0,
-            totalDeposit: result.data.total_deposit || 0,
+            totalSales: result.data.sales_amount || 0,
+            total_received_by_last: result.data.total_received_by_last || 0,
             totalReceived: result.data.total_received || 0,
+            totalOnlineReceived: result.data.total_online_received || 0,
             totalFinalPaid: result.data.total_final_paid || 0,
-            totalPendingFinal: result.data.total_pending_final || 0,
+            totalPendingFinal: result.data.pending_receivable || 0,
           });
         } else {
           setError(result.error || '获取数据失败');
@@ -81,7 +83,7 @@ export default function SalesDataPages() {
     '线下': { sales: data.offline_sales || 0, count: data.offline_orders || 0 }
   } : {};
   // 销售人员业绩以及id
-  const salesStats = data ? data.sales_performance || {} : {};
+  const salesStats = data ? data.sales_performance_by_sales || {} : {};
   const categoryStats = data ? data.category_stats || {} : {};
 
 
@@ -248,10 +250,7 @@ export default function SalesDataPages() {
         const clickedData = event.data; // 被点击的数据对象
         const salespersonId = clickedData.itemId; // 销售人员ID
         const salespersonName = clickedData.name; // 销售人员姓名
-        // 运营人员无操作权限
-        if(userInfo.position_name === '运营'){
-          return;
-        }
+        
         // 跳转到销售个人看板页面（只读版本）
         // 如果是本人，则跳转到正常版本
         if (salespersonId === userInfo.id) {
@@ -381,9 +380,15 @@ export default function SalesDataPages() {
             </p>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-md">
-            <h3 className="text-gray-500 font-medium text-sm">总定金额</h3>
+            <h3 className="text-gray-500 font-medium text-sm">往月尾款金额</h3>
             <p className="text-2xl font-bold text-green-600 mt-1">
-              ¥{metrics.totalDeposit.toLocaleString()}
+              ¥{metrics.total_received_by_last.toLocaleString()}
+            </p>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-md">
+            <h3 className="text-gray-500 font-medium text-sm">线上总到款</h3>
+            <p className="text-2xl font-bold text-green-700 mt-1">
+              ¥{metrics.totalOnlineReceived.toLocaleString()}
             </p>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-md">

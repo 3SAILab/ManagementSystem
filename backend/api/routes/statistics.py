@@ -5,8 +5,11 @@ from backend.models.employee import Employee
 from backend.db.session import get_async_db
 from backend.api.routes.employee import get_current_employee
 from backend.services.statistics_service import StatisticsService
+from backend.services.sales_service import SalesService
 from backend.utils.response import api_response
 from typing import Dict, Any
+import asyncio
+from backend.utils.data_utils import get_now, get_current_month_range, get_last_month_range
 
 router = APIRouter()
 
@@ -113,25 +116,56 @@ async def get_client_activity_log_statistics_by_sales_id(
     return api_response(success=True, data=data)
 
 
-# 销售主管查看本月销售数据
+# 销售数据看板 - 获取本月销售数据统计
 @router.get("/statistics/sales-data-statistics")
 async def get_sales_data_statistics(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ) -> Dict[str, Any]:
-    """销售主管查看本月销售数据统计
+    """销售数据看板 - 获取本月销售数据统计
     
     返回数据包括：
-    - 销售额、定金额、尾款已支付金额、尾款未支付金额、总到款金额
+    - 销售额、往月到账金额、尾款已支付金额、尾款未支付金额、总到款金额
     - 线上订单数量、线下订单数量、线上销售额、线下销售额
-    - 销售个人业绩、产品类目分布
+    - 销售个人业绩(按照销售额统计)、销售个人业绩(按照实际到账金额统计)、产品类目分布
     """
+    #当前时间
+    current_date = get_now()
+    #当前月份的开始和结束时间
+    start_date, end_date = get_current_month_range()
+    # 上个月的开始和结束时间
+    last_month_start_date, last_month_end_date = get_last_month_range()
     # 获取销售数据统计
-    statistics = await StatisticsService.get_sales_data_statistics(db)
-        
+    result = await asyncio.gather(
+        SalesService.get_sales_amount(db, start_date=start_date, end_date=end_date), # 本月销售额
+        SalesService.get_total_received_by_last(db, last_end=last_month_end_date, start_date=start_date, end_date=end_date), # 合同成交时间不在本月，但是尾款结算时间在本月的总到账金额
+        SalesService.get_total_received(db, start_date=start_date, end_date=end_date, source="线上"), # 线上总到账金额
+        SalesService.get_total_received(db, start_date=start_date, end_date=end_date), # 本月总到账金额
+        SalesService.get_received_final_amount(db, start_date=start_date, end_date=end_date), # 本月尾款到账金额
+        SalesService.get_pending_receivable(db, end_date=end_date), # 待催收尾款金额
+        SalesService.get_channel_stats(db, start_date=start_date, end_date=end_date), # 线上/线下订单数量与销售额
+        SalesService.get_sales_performance_by_sales(db, start_date=start_date, end_date=end_date), # 销售个人业绩(按照销售额统计)
+        SalesService.get_sales_performance_by_received(db, start_date=start_date, end_date=end_date), # 销售个人业绩(按照实际到账金额统计)
+        SalesService.get_category_stats(db, start_date=start_date, end_date=end_date) # 产品类目销售额分布
+    )
+    sales_amount, total_received_by_last, total_online_received, total_received, total_final_paid, pending_receivable, channel_stats, sales_performance_by_sales, sales_performance_by_received, category_stats = result
     return {
         "success": True,
-        "data": statistics,
+        "data": {
+            "sales_amount": sales_amount,
+            "total_received_by_last": total_received_by_last,
+            "total_received": total_received,
+            "total_online_received": total_online_received,
+            "total_final_paid": total_final_paid,
+            "pending_receivable": pending_receivable,
+            "online_orders": channel_stats["online_orders"] if channel_stats else 0,
+            "offline_orders": channel_stats["offline_orders"] if channel_stats else 0,
+            "online_sales": channel_stats["online_sales"] if channel_stats else 0,
+            "offline_sales": channel_stats["offline_sales"] if channel_stats else 0,
+            "sales_performance_by_sales": sales_performance_by_sales,
+            "sales_performance_by_received": sales_performance_by_received,
+            "category_stats": category_stats
+        },
         "message": "获取销售数据统计成功"
     }
 

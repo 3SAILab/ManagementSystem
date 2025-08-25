@@ -13,8 +13,13 @@ from backend.schemas.client_activity_log import ClientActivityLogCreate
 from datetime import datetime, timezone
 from backend.services.employee_service import EmployeeService
 from backend.models.client_activity_log import Status
+from backend.api.deps.auth import require_departments
 
-router = APIRouter()
+# 验证权限
+"""
+营销管理部的员工
+"""
+router = APIRouter(dependencies=[Depends(require_departments("营销管理部"))])
 
 # 根据销售id查询客户列表
 @router.get("/clients", response_model=PaginatedClient)
@@ -26,12 +31,14 @@ async def read_clients(
     source: List[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
+    startTime: str = Query(None),
+    endTime: str = Query(None)
 ):
     """
     查询客户列表，支持名称、状态、来源筛选与分页
     """
 
-    filter_params = ClientFilter(name=name, status=status, source=source, page=page, page_size=page_size)
+    filter_params = ClientFilter(name=name, status=status, source=source, page=page, page_size=page_size, startTime=startTime, endTime=endTime)
     clients, total = await ClientService.get_clients(db, filter_params, current_employee.id)
 
     total_pages = (total + page_size - 1) // page_size  # 正确的分页计算
@@ -45,7 +52,7 @@ async def read_clients(
             source=client.source.value, 
             product_type=client.product_type, 
             scale=client.scale.value, 
-            created_at=client.created_at
+            created_at=client.access_time
         ) 
         for client in clients
     ]
@@ -85,7 +92,7 @@ async def add_client(
 @router.put("/client/update/{id}")
 async def update_client(
     id: int,
-    client: ClientCreate = Body(...),
+    client: ClientCreate,
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
@@ -132,11 +139,13 @@ async def get_clients_with_sales_name(
     source: List[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
+    startTime: str = Query(None),
+    endTime: str = Query(None)
 ):
     """
     查询客户列表，支持名称、状态、来源筛选与分页
     """
-    filter_params = ClientFilter(name=name, status=status, source=source,sales_name=sales_name, page=page, page_size=page_size)
+    filter_params = ClientFilter(name=name, status=status, source=source,sales_name=sales_name, page=page, page_size=page_size, startTime=startTime, endTime=endTime)
     clients, total = await ClientService.get_clients_with_sales_name(db, filter_params)
 
     total_pages = (total + page_size - 1) // page_size  # 正确的分页计算
@@ -150,7 +159,7 @@ async def get_clients_with_sales_name(
             source=client.source.value, 
             product_type=client.product_type, 
             scale=client.scale.value, 
-            created_at=client.created_at,
+            created_at=client.access_time,
             sales_name=client.sales.name
         ) 
         for client in clients
@@ -198,10 +207,12 @@ async def get_online_clients(
     source: List[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
+    startTime: str = Query(None),
+    endTime: str = Query(None)
 ):
     # 验证权限
     source = ["线上"]
-    filter_params = ClientFilter(name=name, status=status, source=source,sales_name=sales_name, page=page, page_size=page_size)
+    filter_params = ClientFilter(name=name, status=status, source=source,sales_name=sales_name, page=page, page_size=page_size, startTime=startTime, endTime=endTime)
     clients, total = await ClientService.get_clients_with_sales_name(db, filter_params)
 
     total_pages = (total + page_size - 1) // page_size  # 正确的分页计算
@@ -213,8 +224,10 @@ async def get_online_clients(
             status=client.status.value, 
             product_type=client.product_type, 
             scale=client.scale.value, 
-            created_at=client.created_at,
-            sales_name=client.sales.name
+            created_at=client.access_time,
+            sales_name=client.sales.name,
+            contact_phone=client.contact_phone,
+            contact_name=client.contact_name,
         ) 
         for client in clients
     ]
@@ -248,3 +261,21 @@ async def add_online_client(
     )
     await ClientActivityLogService.add_client_activity_log(db, client_activity_log, current_employee.id)
     return api_response(success=True, data=new_client)
+
+
+# 编辑线上客户
+@router.put("/client/update_online_client/{id}")
+async def update_online_client(
+    id: int,
+    sales_id: int = Body(..., description="销售ID"),
+    client: ClientCreate = Body(...),
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    # 验证权限
+    # 编辑客户信息
+    client_info = await ClientService.update_client(db, id, client)
+    # 更新客户负责人
+    if client_info.sales_id != sales_id:
+        client_info = await ClientService.update_client_sales(db, id, sales_id)
+    return api_response(success=True, data=client_info)

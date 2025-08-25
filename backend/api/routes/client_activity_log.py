@@ -6,8 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.schemas.client_activity_log import ClientActivityLogCreate
 from backend.api.routes.employee import get_current_employee
 from backend.utils.response import api_response
+from backend.api.deps.auth import require_departments
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_departments("营销管理部"))])
 
 # 添加客户跟进记录
 @router.post("/client_activity_log/add")
@@ -16,7 +17,7 @@ async def add_client_activity_log(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-
+    print(client_activity_log)
     await ClientActivityLogService.add_client_activity_log(db, client_activity_log, current_employee.id)
     return api_response(success=True, data={"msg": "客户跟进记录添加成功"})
 

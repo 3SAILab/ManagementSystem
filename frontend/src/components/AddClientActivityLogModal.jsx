@@ -6,11 +6,9 @@ import AddContractModal from "./AddContractModal";
 import { getClientInfo } from "../services/clientService";
 import { addContract } from "../services/contractService";
 import { updateClientStatus } from "../services/clientService";
-
 const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
-    if (!isOpen) return null;
 
-    const [clientInfo, setClientInfo] = useState({
+  const [clientInfo, setClientInfo] = useState({
         name: "",
         contact_name: "",
         contact_phone: "",
@@ -89,7 +87,6 @@ const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
       contract_type: contractType,
       total_amount: parseFloat(contract.contractAmount),
       paid_amount: parseFloat(contract.paidAmount),
-      commission_rate: parseFloat(contract.commissionRate),
       detail_pages: parseInt(contract.detailPages),
       video_count: parseInt(contract.videos),
       image_count: parseInt(contract.images),
@@ -151,6 +148,8 @@ const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
     });
     onClose();
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">

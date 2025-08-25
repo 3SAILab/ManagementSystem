@@ -43,7 +43,6 @@ api.interceptors.response.use(
           window.location.href = '/login';
         }
       }
-    } else {
     }
     return Promise.reject(error);
   }

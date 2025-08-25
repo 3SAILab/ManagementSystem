@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Literal, Optional
+from typing import Literal, Optional, Dict, Any
 from backend.models.employee import Employee, EmployeeRole
 from backend.services.employee_service import EmployeeService
 from backend.utils.response import api_response
-from ...db.session import get_async_db
+from backend.db.session import get_async_db
 from ...schemas.employee import EmployeePermission, Token, EmployeeInfo, EmployeeListInfo
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi import Query
@@ -108,6 +108,15 @@ async def get_employee_list(
     employees = await EmployeeService.get_employee_list(db)
     return employees
 
+#获取员工薪资列表
+@router.get("/employee/salary")
+async def get_employee_salary(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+)-> Dict[str, Any]:
+    employees = await EmployeeService.get_employee_salary(db)
+    return api_response(success=True, data=employees)
+
 #根据id获取员工信息
 @router.get("/employee/{id}", response_model=EmployeeInfo)
 async def get_employee_info(
@@ -162,9 +171,14 @@ async def get_group_members_with_task_count(
 ):
     #判断当前用户身份
     if current_employee.department.name == "生产部":
-        #获取组内成员以及工作负载(成员未完成的任务个数)
-        employees = await EmployeeService.get_group_members_with_task_count(db, current_employee.id)
-        return employees
+        if current_employee.role == EmployeeRole.owner:
+            #获取组内成员以及工作负载(成员未完成的任务个数)
+            employees = await EmployeeService.get_production_employees_with_task_count(db, "美工")
+            return employees
+        else:
+            #获取组内成员以及工作负载(成员未完成的任务个数)
+            employees = await EmployeeService.get_group_members_with_task_count(db, current_employee.id)
+            return employees
     else:
         raise HTTPException(status_code=403, detail="无权限访问")
 
@@ -193,7 +207,12 @@ async def get_group_members(
 ):
     #判断当前用户身份
     if current_employee.role == EmployeeRole.owner:
-        pass
+        if current_employee.department.name == "生产部":
+            employees = await EmployeeService.get_production_employees_with_task_count(db, "美工")
+            return employees
+        else:
+            employees = await EmployeeService.get_employee_list_by_filter(db, position_name=current_employee.position.name)
+            return employees
     #获取组内成员列表
     employees = await EmployeeService.get_group_members(db, current_employee.id)
     return employees

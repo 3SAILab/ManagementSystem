@@ -40,7 +40,9 @@ const TeamRecordPage = () => {
         source: [],
         sales_name: '',
         page: 1,
-        page_size: 10
+        page_size: 10,
+        startTime: '',
+        endTime: ''
     });
     // 统计数据
     const [statistics, setStatistics] = useState({
@@ -290,13 +292,13 @@ const TeamRecordPage = () => {
                                     {/* 表头 */}
                                     <thead>
                                         <tr>
-                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户名称</th>
-                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">创建时间</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">客户名称</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">创建时间</th>
                                             <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户来源</th>
-                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">产品类型</th>
-                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">客户规模</th>
-                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
-                                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">销售</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">产品类型</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">客户规模</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">状态</th>
+                                            <th className="p-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">销售</th>
                                         </tr>
                                     </thead>
                                     {/* 表体 */}
@@ -321,9 +323,9 @@ const TeamRecordPage = () => {
                                                             minute: '2-digit',
                                                         })}
                                                     </td>
-                                                    <td className="p-4 text-sm text-slate-500">
+                                                    <td className="p-4">
                                                         <span
-                                                            className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                                                            className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
                                                                 client.source === '线上'
                                                                     ? 'bg-blue-100 text-blue-800'
                                                                     : client.source === '线下'
@@ -335,13 +337,13 @@ const TeamRecordPage = () => {
                                                         </span>
                                                     </td>
                                                     <td className="p-4">
-                                                        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
+                                                        <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
                                                             {client.product_type || '未分类'}
                                                         </span>
                                                     </td>
-                                                    <td className="p-4 text-sm text-slate-600">
+                                                    <td className="p-4">
                                                         <span
-                                                            className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                                                            className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
                                                                 client.scale === '大'
                                                                     ? 'bg-blue-100 text-blue-800'
                                                                     : client.scale === '中'
@@ -355,16 +357,16 @@ const TeamRecordPage = () => {
                                                         </span>
                                                     </td>
                                                     <td className="p-4">
-                                                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                                                        <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
                                                             followUpStatusMap[client.status]?.classes || 'bg-slate-100 text-slate-700'
                                                         }`}>
                                                             {followUpStatusMap[client.status]?.text || '未知状态'}
                                                         </span>
                                                     </td>
-                                                    <td className="p-4 text-slate-500">
+                                                    <td className="p-4 text-sm text-slate-500">
                                                         {client.sales_name || '未知销售'}
                                                     </td>
-                                                    <td className="p-4 text-sm text-slate-500">
+                                                    <td className="p-4">
                                                         <button 
                                                             className="text-slate-500 hover:text-slate-700" 
                                                             onClick={(e) => {

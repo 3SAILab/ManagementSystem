@@ -8,10 +8,10 @@ const CustomerSalesModal = ({ id, onClose, onSave }) => {
   const [originalSalesId, setOriginalSalesId] = useState('');
   // 客户信息
   const [client, setClient] = useState({
-    id: '',
-    client_name: '',
-    notes: '',
-    sales_id: '',
+    id: "",
+    client_name: "",
+    notes: "",
+    sales_id: "",
   });
   // 组内成员列表
   const [groupMembers, setGroupMembers] = useState([]);
@@ -24,6 +24,7 @@ const CustomerSalesModal = ({ id, onClose, onSave }) => {
           id: res.data.id,
           client_name: res.data.name,
           sales_id: res.data.sales_id,
+          notes: ""
         });
       }
     });

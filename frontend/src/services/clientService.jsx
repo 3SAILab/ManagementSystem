@@ -2,10 +2,10 @@ import api from './api';
 import Qs from 'qs';
 
 // 查询客户列表，接收一个 filters 对象
-export const getClients = async ({ name, status, source, page, page_size }) => {
+export const getClients = async ({ name, status, source, page, page_size, startTime, endTime }) => {
     try {
         const response = await api.get('/clients', {
-            params: { name, status, source, page, page_size },
+            params: { name, status, source, page, page_size, startTime, endTime },
             paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
         });
         return {success: true, data: response.data};
@@ -28,11 +28,12 @@ export const addClient = async (client) => {
             product_type: client.product_type,
             scale: client.scale,
             status: "刚开始跟进",
+            access_time: client.access_time,
         }
         const response = await api.post('/client/add', payload);
         return {success: true, data: response.data};
     } catch (error) {
-        return { success: false, error: error.message };
+        return { success: false, error: error.response.data.message };
     }
 };
 
@@ -47,7 +48,7 @@ export const updateClient = async (client,clientId) => {
         const response = await api.put(`/client/update/${clientId}`, client);
         return {success: true, data: response.data};
     } catch (error) {
-        return { success: false, error: error.message };
+        return { success: false, error: error.response.data.message };
     }
 };
 
@@ -72,10 +73,10 @@ export const updateClientStatus = async (clientId, status) => {
 };
 
 // 获取客户列表包括销售名称
-export const getClientsWithSalesName = async ({ name, status, source, sales_name, page, page_size }) => {
+export const getClientsWithSalesName = async ({ name, status, source, sales_name, page, page_size, startTime, endTime }) => {
     try {
         const response = await api.get('/client/get_clients_with_sales_name', {
-            params: { name, status, source, sales_name, page, page_size },
+            params: { name, status, source, sales_name, page, page_size, startTime, endTime },
             paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
         });
         return {success: true, data: response.data};
@@ -86,6 +87,7 @@ export const getClientsWithSalesName = async ({ name, status, source, sales_name
 
 // 修改客户负责人
 export const updateClientSales = async (clientId, salesId, notes) =>{
+    console.log(clientId, salesId, notes);
     try {
         const response = await api.put(`/client/update_sales/${clientId}`, { sales_id: salesId, notes: notes });
         return {success: true, data: response.data};
@@ -95,10 +97,10 @@ export const updateClientSales = async (clientId, salesId, notes) =>{
 }
 
 // 获取线上客户列表
-export const getOnlineClients = async ({ name, status, source, page, page_size }) => {
+export const getOnlineClients = async ({ name, status, source, sales_name, page, page_size, startTime, endTime }) => {
     try {
         const response = await api.get('/client/get_online_clients', {
-            params: { name, status, source, page, page_size },
+            params: { name, status, source, sales_name, page, page_size, startTime, endTime },
             paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
         });
         return {success: true, data: response.data};
@@ -120,12 +122,22 @@ export const addOnlineClient = async (client) => {
             product_type: client.product_type,
             scale: client.scale,
             address: client.address,
+            access_time: client.access_time,
         }
         const response = await api.post('/client/add_online_client', {sales_id: client.sales_id, client: payload});
         return {success: true, data: response.data};
     } catch (error) {
-        return { success: false, error: error.message };
+        return { success: false, error: error.response.data.message };
     }
 }
 
-
+// 编辑线上客户
+export const updateOnlineClient = async (clientId, client) => {
+    try {
+        const response = await api.put(`/client/update_online_client/${clientId}`, {sales_id: client.sales_id, client: client});
+        return {success: true, data: response.data};
+    } catch (error) {
+        console.log(error);
+        return { success: false, error: error.response.data.message };
+    }
+}

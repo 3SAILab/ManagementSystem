@@ -543,10 +543,17 @@ const ReadOnlySalesDashboard = () => {
               <tbody className="divide-y divide-slate-200">
                 {contracts.map((contract) => {
                   // 提点保留两位小数
-                  // 如果是坏单，提点为预付金额*提点
-                  const commission = contract.status === '坏单'
-                    ? Math.round(contract.paid_amount * contract.commission_rate / 100 * 100) / 100
-                    : Math.round(contract.total_amount * contract.commission_rate / 100 * 100) / 100;
+                  //如果是坏单，提点为预付金额*提点
+                  //如果是待结算，提点为预付金额*提点
+                  //如果是已结算，提点为合同金额*提点
+                  let commission = 0;
+                  if(contract.status === '坏单'){
+                    commission = Math.round(contract.paid_amount * contract.commission_rate / 100 * 100) / 100;
+                  }else if(contract.status === '待结算'){
+                    commission = Math.round(contract.paid_amount * contract.commission_rate / 100 * 100) / 100;
+                  }else if(contract.status === '已结算'){
+                    commission = Math.round(contract.total_amount * contract.commission_rate / 100 * 100) / 100;
+                  }
                   return (
                     <tr
                       key={contract.id}

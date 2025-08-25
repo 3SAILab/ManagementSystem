@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Clock, ShieldAlert, SlidersHorizontal,Flag, ArrowUpCircle, Calendar, Users } from 'lucide-react';
+import { Clock, ShieldAlert, SlidersHorizontal,Flag, ArrowUpCircle, Calendar, Users, Shield } from 'lucide-react';
 import { MessageCircle } from 'lucide-react';
 import { getSubTaskDetailById } from '../services/subTaskService';
 import Avatar from './Avatar';
@@ -108,7 +108,17 @@ const ReadOnlyOrderDetailsPanel = ({ orderId, onClose }) => {
             <ReadOnlyDetailItem icon={MessageCircle} label="微信群">
               {order.wechat_group || '-'}
             </ReadOnlyDetailItem>
-            
+            <ReadOnlyDetailItem 
+              icon={Shield} 
+              label="带水印"
+              iconColor={order.need_watermark ? '#d97706' : '#16a34a'} // 橙黄 / 绿
+            >
+              <span className={`font-medium ${order.need_watermark 
+                ? 'text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full text-sm' 
+                : 'text-green-700 bg-green-50 px-2 py-0.5 rounded-full text-sm'}`}>
+                {order.need_watermark ? '是' : '否'}
+              </span>
+            </ReadOnlyDetailItem>
             <ReadOnlyDetailItem icon={ShieldAlert} label="预警状态">
               <span
                 className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full capitalize ${

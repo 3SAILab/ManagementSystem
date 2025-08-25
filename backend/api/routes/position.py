@@ -1,14 +1,15 @@
 from typing import List
 from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...db.session import get_async_db
+from backend.db.session import get_async_db
 from backend.api.routes.employee import get_current_employee
 from backend.models.employee import Employee
 from backend.services.position_service import PositionService
 from backend.schemas.position import PositionCreate,PositionInfo
 from backend.utils.response import api_response
+from backend.api.deps.auth import require_departments
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_departments("人事行政部"))])
 
 
 #增加职位
@@ -18,11 +19,7 @@ async def create_position(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    #判断当前用户身份
-    if current_employee.department.name != "人事行政部":
-        raise HTTPException(status_code=403, detail="无权限访问")
     # 业务逻辑
-
     result = await PositionService.add_position(db, position)
     if result:
         positions = await PositionService.get_positions(db)
@@ -35,10 +32,7 @@ async def create_position(
 async def get_positions(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
-):
-    #判断当前用户身份
-    if current_employee.department.name != "人事行政部":
-        raise HTTPException(status_code=403, detail="无权限访问")
+):    
     #获取职位信息
     positions = await PositionService.get_positions(db)
     return positions
@@ -49,11 +43,7 @@ async def delete_position(
     id: int = Body(..., embed=True),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
-):
-    #判断当前用户身份
-    if current_employee.department.name != "人事行政部":
-        raise HTTPException(status_code=403, detail="无权限访问")
-    
+):    
     #删除职位
     result = await PositionService.delete_position(db, id)
     if result["success"]:
@@ -68,10 +58,7 @@ async def get_positions_by_department_id(
     department_id: int,
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
-):
-    #判断当前用户身份
-    if current_employee.department.name != "人事行政部":
-        raise HTTPException(status_code=403, detail="无权限访问")
+):    
     #获取职位信息
     positions = await PositionService.get_positions_by_department_id(db, department_id)
     return positions

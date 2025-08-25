@@ -37,7 +37,9 @@ const ClientFollowUps = () => {
         status: [],
         source: [],
         page: 1,
-        page_size: 10
+        page_size: 10,
+        startTime: '',
+        endTime: ''
     });
     // 统计数据
     const [statistics, setStatistics] = useState({
@@ -93,7 +95,7 @@ const ClientFollowUps = () => {
                     setIsModalOpen(false);
                     setRefresh(!refresh);
                 }else{
-                    toast.error('更新客户失败！');
+                    toast.error(res.error);
                 }
             });
         } else {    
@@ -106,7 +108,7 @@ const ClientFollowUps = () => {
                     // 重置页码
                     setFilters(prev => ({ ...prev, page: 1 }));
                 }else{
-                    toast.error('新增客户失败！');
+                    toast.error(res.error);
                 }
             });
         }
@@ -281,7 +283,7 @@ const ClientFollowUps = () => {
                                                 </td>
                                                 <td className="p-4 text-sm text-slate-500">
                                                     <span
-                                                        className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                                                        className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
                                                             client.source === '线上'
                                                                 ? 'bg-blue-100 text-blue-800'
                                                                 : client.source === '线下'
@@ -293,13 +295,13 @@ const ClientFollowUps = () => {
                                                     </span>
                                                 </td>
                                                 <td className="p-4">
-                                                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
+                                                    <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
                                                         {client.product_type || '未分类'}
                                                     </span>
                                                 </td>
                                                 <td className="p-4 text-sm text-slate-600">
                                                     <span
-                                                        className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                                                        className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
                                                             client.scale === '大'
                                                                 ? 'bg-blue-100 text-blue-800'
                                                                 : client.scale === '中'
@@ -313,7 +315,7 @@ const ClientFollowUps = () => {
                                                     </span>
                                                 </td>
                                                 <td className="p-4">
-                                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                                                    <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
                                                         followUpStatusMap[client.status]?.classes || 'bg-slate-100 text-slate-700'
                                                     }`}>
                                                         {followUpStatusMap[client.status]?.text || '未知状态'}
@@ -361,10 +363,10 @@ const ClientFollowUps = () => {
                 {/* 侧边栏 */}
                 <ClientSidePanel refresh={refresh} clientId={clientLogId} />
 
-                <ClientInfoModal isOpen={isModalOpen} onClose={() => {
+                {isModalOpen && <ClientInfoModal isOpen={isModalOpen} onClose={() => {
                     setIsModalOpen(false);
                     setClientId(null);
-                }} onSave={onSave} id={clientId}/>
+                }} onSave={onSave} id={clientId}/>}
 
                 <AddClientActivityLogModal isOpen={isAddClientActivityLogModalOpen} onClose={() => {
                     setIsAddClientActivityLogModalOpen(false);
