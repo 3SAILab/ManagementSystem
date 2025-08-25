@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 import uvicorn
-from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from backend.config import settings
 from backend.api.api import api_router
@@ -17,13 +16,6 @@ from backend.services.employee_service import EmployeeService
 from backend.models.department import Department
 from backend.models.position import Position
 from backend.models.employee import Employee
-from backend.models.client import Client
-from backend.models.client_activity_log import ClientActivityLog
-from backend.models.contract import Contract
-from backend.models.ticket import Ticket
-from backend.models.sub_task import SubTask
-from backend.models.progress_log import ProgressLog
-
 
 # 配置日志
 logging.basicConfig(
@@ -114,7 +106,7 @@ async def init_db():
 
 # # 2. 将 Lifespan 管理器传递给 FastAPI
 # app = FastAPI(lifespan=lifespan)
-app =FastAPI()
+app = FastAPI()
 origins = settings.CORS_ORIGINS
 
 # 配置 CORS
@@ -138,6 +130,9 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 @app.exception_handler(Exception)
 async def all_exception_handler(request: Request, exc: Exception):
     # 未捕获的异常（500）在这里统一日志＋友好提示
+    # 排除 HTTPException，避免重复处理
+    if isinstance(exc, HTTPException):
+        raise exc
     logger.error(f"[{request.method} {request.url}] 未处理异常", exc_info=exc)
     return JSONResponse(
         status_code=500,
