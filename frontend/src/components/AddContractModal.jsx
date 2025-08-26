@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import ModalCloseButton from "./ModalCloseButton";
 
 const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
-  if (!isOpen) return null;
   
   const [formData, setFormData] = useState({
     contractAmount: 0,
@@ -46,6 +45,8 @@ const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
     const minutes = String(now.getMinutes()).padStart(2, "0");
     setFormData((prev) => ({ ...prev, transactionTime: `${year}-${month}-${day}T${hours}:${minutes}` }));
   }, []);
+  
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">

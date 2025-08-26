@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as echarts from 'echarts'; // 核心库
 import { getSalesData } from '../services/statisticsService';
 import { useNavigate } from 'react-router-dom';
@@ -85,13 +85,16 @@ export default function SalesDataPages() {
   }, []);
 
   // 数据处理：将后端数据转换为图表所需格式
-  const sourceStats = data ? {
-    '线上': { sales: data.online_sales || 0, count: data.online_orders || 0 },
-    '线下': { sales: data.offline_sales || 0, count: data.offline_orders || 0 }
-  } : {};
+  const sourceStats = useMemo(() => {
+    if (!data) return {};
+    return {
+      '线上': { sales: data.online_sales || 0, count: data.online_orders || 0 },
+      '线下': { sales: data.offline_sales || 0, count: data.offline_orders || 0 }
+    };
+  }, [data]);
   // 销售人员业绩以及id
-  const salesStats = data ? data.sales_performance_by_sales || {} : {};
-  const categoryStats = data ? data.category_stats || {} : {};
+  const salesStats = useMemo(() => (data ? data.sales_performance_by_sales || {} : {}), [data]);
+  const categoryStats = useMemo(() => (data ? data.category_stats || {} : {}), [data]);
 
 
   // 初始化图表
@@ -252,6 +255,7 @@ export default function SalesDataPages() {
       });
 
       // 添加点击事件监听
+      chartInstances.current.chart3.off('click');
       chartInstances.current.chart3.on('click', function(event) {
         // event 参数包含点击的详细信息
         const clickedData = event.data; // 被点击的数据对象
@@ -331,7 +335,7 @@ export default function SalesDataPages() {
       });
       chartInstances.current = {};
     };
-  }, [data, sourceStats, salesStats, categoryStats]);
+  }, [data, sourceStats, salesStats, categoryStats, navigate, userInfo.id]);
 
   // 加载状态
   if (loading) {

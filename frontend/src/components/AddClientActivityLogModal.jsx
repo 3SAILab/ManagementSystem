@@ -6,11 +6,9 @@ import AddContractModal from "./AddContractModal";
 import { getClientInfo } from "../services/clientService";
 import { addContract } from "../services/contractService";
 import { updateClientStatus } from "../services/clientService";
-
 const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
-    if (!isOpen) return null;
 
-    const [clientInfo, setClientInfo] = useState({
+  const [clientInfo, setClientInfo] = useState({
         name: "",
         contact_name: "",
         contact_phone: "",
@@ -71,7 +69,7 @@ const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
     const day = String(now.getDate()).padStart(2, "0");
     const hours = String(now.getHours()).padStart(2, "0");
     const minutes = String(now.getMinutes()).padStart(2, "0");
-    setClientActivityLog({ ...clientActivityLog, log_time: `${year}-${month}-${day}T${hours}:${minutes}` });
+    setClientActivityLog((prev) => ({ ...prev, log_time: `${year}-${month}-${day}T${hours}:${minutes}` }));
   }, []);
 
   // 处理合同表单提交
@@ -150,6 +148,8 @@ const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
     });
     onClose();
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">

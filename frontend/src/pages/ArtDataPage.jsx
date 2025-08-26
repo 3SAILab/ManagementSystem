@@ -1,5 +1,6 @@
 // ArtDataPage.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import BarChart from '../components/BarChart'; // 引入通用组件
 
 import { getMonthlyCoefficientStatistics, getMonthlyAverageCompletionTimeStatistics } from '../services/statisticsService';
@@ -9,6 +10,13 @@ const ArtDataPage = () => {
   const [completionTimeData, setCompletionTimeData] = useState({ employeeIds: [], averageCompletionTimes: [] });
   const [loading, setLoading] = useState({ coefficients: true, completionTimes: true });
   const [error, setError] = useState({ coefficients: null, completionTimes: null });
+  const navigate = useNavigate();
+
+  const handleBarClick = useCallback((params) => {
+    const name = params?.name || params?.data?.name || '';
+    // 直接跳转到团队任务监控面板
+    navigate('/team_dashboard', { state: { focusName: name } });
+  }, [navigate]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -94,6 +102,7 @@ const ArtDataPage = () => {
               error={error.coefficients}
               onRetry={() => window.location.reload()}
               isEmpty={coefficientData.employeeIds.length === 0}
+              onItemClick={handleBarClick}
             />
           </div>
 
@@ -113,6 +122,7 @@ const ArtDataPage = () => {
               error={error.completionTimes}
               onRetry={() => window.location.reload()}
               isEmpty={completionTimeData.employeeIds.length === 0}
+              onItemClick={handleBarClick}
             />
           </div>
 

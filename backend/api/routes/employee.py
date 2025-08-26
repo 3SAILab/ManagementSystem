@@ -4,7 +4,7 @@ from typing import Literal, Optional, Dict, Any
 from backend.models.employee import Employee, EmployeeRole
 from backend.services.employee_service import EmployeeService
 from backend.utils.response import api_response
-from ...db.session import get_async_db
+from backend.db.session import get_async_db
 from ...schemas.employee import EmployeePermission, Token, EmployeeInfo, EmployeeListInfo
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi import Query

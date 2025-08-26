@@ -6,11 +6,16 @@ from datetime import datetime
 # 使用 uvicorn 的 logger
 logger = logging.getLogger("uvicorn")
 
+def get_client_ip(request: Request) -> str:
+    """从请求头或连接信息中提取客户端 IP。"""
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
 async def logging_middleware(request: Request, call_next: Callable):
     # 获取客户端IP
-    client_host = request.client.host if request.client else "unknown"
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    client_ip = forwarded_for.split(",")[0] if forwarded_for else client_host
+    client_ip = get_client_ip(request)
     
     # 处理请求
     start_time = time.time()

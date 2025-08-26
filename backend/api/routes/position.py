@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...db.session import get_async_db
+from backend.db.session import get_async_db
 from backend.api.routes.employee import get_current_employee
 from backend.models.employee import Employee
 from backend.services.position_service import PositionService

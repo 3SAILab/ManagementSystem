@@ -17,13 +17,6 @@ from backend.services.employee_service import EmployeeService
 from backend.models.department import Department
 from backend.models.position import Position
 from backend.models.employee import Employee
-from backend.models.client import Client
-from backend.models.client_activity_log import ClientActivityLog
-from backend.models.contract import Contract
-from backend.models.ticket import Ticket
-from backend.models.sub_task import SubTask
-from backend.models.progress_log import ProgressLog
-
 
 # 配置日志
 logging.basicConfig(
@@ -51,7 +44,7 @@ async def init_db():
 
         # 插入职位（存在就跳过）
         dept_id = await conn.scalar(select(Department.id).where(Department.name == "人事行政部"))
-        pos_stmt = insert(Position).values(name="HRBP", department_id=dept_id)
+        pos_stmt = insert(Position).values(name="人事专员", department_id=dept_id)
         pos_skip_stmt = pos_stmt.on_conflict_do_nothing(
             index_elements=[Position.name]
         )
@@ -59,7 +52,7 @@ async def init_db():
         logger.info(f"职位插入完成，受影响行数: {pos_result.rowcount}")
 
         # 插入员工（email 唯一冲突时跳过）
-        pos_id = await conn.scalar(select(Position.id).where(Position.name == "HRBP"))
+        pos_id = await conn.scalar(select(Position.id).where(Position.name == "人事专员"))
         password_hash = EmployeeService.get_password_hash("123456qwerty")
 
         emp_stmt = insert(Employee).values(
@@ -89,7 +82,7 @@ async def init_db():
         logger.info("数据库初始化完成")
 
 
-# # 1. 创建 Lifespan 上下文管理器
+# #1. 创建 Lifespan 上下文管理器
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
 #     # 在应用启动时执行
@@ -114,7 +107,7 @@ async def init_db():
 
 # # 2. 将 Lifespan 管理器传递给 FastAPI
 # app = FastAPI(lifespan=lifespan)
-app =FastAPI()
+app = FastAPI()
 origins = settings.CORS_ORIGINS
 
 # 配置 CORS
@@ -138,6 +131,9 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 @app.exception_handler(Exception)
 async def all_exception_handler(request: Request, exc: Exception):
     # 未捕获的异常（500）在这里统一日志＋友好提示
+    # 排除 HTTPException，避免重复处理
+    if isinstance(exc, HTTPException):
+        raise exc
     logger.error(f"[{request.method} {request.url}] 未处理异常", exc_info=exc)
     return JSONResponse(
         status_code=500,

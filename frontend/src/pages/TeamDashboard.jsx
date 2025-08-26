@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import OrderCard from '../components/OrderCard';
 import OrderDetailsPanel from '../components/OrderDetailsPanel';
@@ -7,6 +8,8 @@ import { getTeamTasks } from '../services/subTaskService';
 import { toast } from 'react-toastify';
 
 const TeamDashboardPage = () => {
+  const { state } = useLocation();
+  const focusName = state && state.focusName;
   const [orders, setOrders] = useState([]);
   const [taskStatus, setTaskStatus] = useState({
     yellow_count: 0,
@@ -16,12 +19,12 @@ const TeamDashboardPage = () => {
   });
   const [selectedOrder, setSelectedOrder] = useState(null);
   // 过滤条件
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState(() => ({
     task_name: '',
-    charge_name: '',
+    charge_name: typeof focusName === 'string' && focusName.trim() ? focusName : '',
     page: 1,
     page_size: 20
-  });
+  }));
   // 总页数
   const [total, setTotal] = useState(0);
   // 页面刷新

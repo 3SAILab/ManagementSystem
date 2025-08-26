@@ -165,7 +165,6 @@ class EmployeeInfo(BaseModel):
             major=self.major,
             graduation_date=self.graduation_date,
             id_number=self.id_number,
-            nationality=self.nationality,
             marital_status=self.marital_status,
         )
 
