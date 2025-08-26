@@ -3,6 +3,7 @@ import * as echarts from 'echarts'; // 核心库
 import { getSalesData } from '../services/statisticsService';
 import { useNavigate } from 'react-router-dom';
 import { useEmployeePermissionStore } from '../store/employee';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 
 // ECharts 颜色主题
 const chartColors = [
@@ -33,9 +34,12 @@ export default function SalesDataPages() {
   const { employee: userInfo } = useEmployeePermissionStore();
   const [metrics, setMetrics] = useState({
     totalSales: 0,
+    salesAmountChange: 0,
     total_received_by_last: 0,
     totalReceived: 0,
     totalOnlineReceived: 0,
+    totalOnlineReceivedChange: 0,
+    totalReceivedChange: 0,
     totalFinalPaid: 0,
     totalPendingFinal: 0,
   });
@@ -57,9 +61,12 @@ export default function SalesDataPages() {
           setData(result.data);
           setMetrics({
             totalSales: result.data.sales_amount || 0,
+            salesAmountChange: result.data.sales_amount_change || 0,
             total_received_by_last: result.data.total_received_by_last || 0,
             totalReceived: result.data.total_received || 0,
             totalOnlineReceived: result.data.total_online_received || 0,
+            totalOnlineReceivedChange: result.data.total_online_received_change || 0,
+            totalReceivedChange: result.data.total_received_change || 0,
             totalFinalPaid: result.data.total_final_paid || 0,
             totalPendingFinal: result.data.pending_receivable || 0,
           });
@@ -373,10 +380,20 @@ export default function SalesDataPages() {
       <section className="mb-6">
         <h2 className="text-2xl font-semibold text-gray-700 mb-3">核心数据总览</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          <div className="bg-white p-4 rounded-xl shadow-md">
+          <div className="bg-white p-4 rounded-xl shadow-md relative">
             <h3 className="text-gray-500 font-medium text-sm">总销售额</h3>
             <p className="text-2xl font-bold text-blue-600 mt-1">
               ¥{metrics.totalSales.toLocaleString()}
+            </p>
+            <p className={`absolute top-3 right-3 text-xs font-semibold inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${
+              metrics.salesAmountChange >= 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+            }`}>
+              {metrics.salesAmountChange >= 0 ? (
+                <ArrowUp className="w-4 h-4" />
+              ) : (
+                <ArrowDown className="w-4 h-4" />
+              )}
+              {Math.abs(metrics.salesAmountChange).toFixed(1)}%
             </p>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-md">
@@ -385,16 +402,36 @@ export default function SalesDataPages() {
               ¥{metrics.total_received_by_last.toLocaleString()}
             </p>
           </div>
-          <div className="bg-white p-4 rounded-xl shadow-md">
+          <div className="bg-white p-4 rounded-xl shadow-md relative">
             <h3 className="text-gray-500 font-medium text-sm">线上总到款</h3>
             <p className="text-2xl font-bold text-green-700 mt-1">
               ¥{metrics.totalOnlineReceived.toLocaleString()}
             </p>
+            <p className={`absolute top-3 right-3 text-xs font-semibold inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${
+              metrics.totalOnlineReceivedChange >= 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+            }`}>
+              {metrics.totalOnlineReceivedChange >= 0 ? (
+                <ArrowUp className="w-4 h-4" />
+              ) : (
+                <ArrowDown className="w-4 h-4" />
+              )}
+              {Math.abs(metrics.totalOnlineReceivedChange).toFixed(1)}%
+            </p>
           </div>
-          <div className="bg-white p-4 rounded-xl shadow-md">
+          <div className="bg-white p-4 rounded-xl shadow-md relative">
             <h3 className="text-gray-500 font-medium text-sm">实际总到款</h3>
             <p className="text-2xl font-bold text-green-700 mt-1">
               ¥{metrics.totalReceived.toLocaleString()}
+            </p>
+            <p className={`absolute top-3 right-3 text-xs font-semibold inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${
+              metrics.totalReceivedChange >= 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+            }`}>
+              {metrics.totalReceivedChange >= 0 ? (
+                <ArrowUp className="w-4 h-4" />
+              ) : (
+                <ArrowDown className="w-4 h-4" />
+              )}
+              {Math.abs(metrics.totalReceivedChange).toFixed(1)}%
             </p>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-md">

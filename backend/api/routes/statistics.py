@@ -138,9 +138,12 @@ async def get_sales_data_statistics(
     # 获取销售数据统计
     result = await asyncio.gather(
         SalesService.get_sales_amount(db, start_date=start_date, end_date=end_date), # 本月销售额
+        SalesService.get_sales_amount(db, start_date=last_month_start_date, end_date=last_month_end_date), # 上个月销售额
         SalesService.get_total_received_by_last(db, last_end=last_month_end_date, start_date=start_date, end_date=end_date), # 合同成交时间不在本月，但是尾款结算时间在本月的总到账金额
         SalesService.get_total_received(db, start_date=start_date, end_date=end_date, source="线上"), # 线上总到账金额
+        SalesService.get_total_received(db, start_date=last_month_start_date, end_date=last_month_end_date, source="线上"), # 上个月线上总到账金额
         SalesService.get_total_received(db, start_date=start_date, end_date=end_date), # 本月总到账金额
+        SalesService.get_total_received(db, start_date=last_month_start_date, end_date=last_month_end_date), # 上个月总到账金额
         SalesService.get_received_final_amount(db, start_date=start_date, end_date=end_date), # 本月尾款到账金额
         SalesService.get_pending_receivable(db, end_date=end_date), # 待催收尾款金额
         SalesService.get_channel_stats(db, start_date=start_date, end_date=end_date), # 线上/线下订单数量与销售额
@@ -148,14 +151,23 @@ async def get_sales_data_statistics(
         SalesService.get_sales_performance_by_received(db, start_date=start_date, end_date=end_date), # 销售个人业绩(按照实际到账金额统计)
         SalesService.get_category_stats(db, start_date=start_date, end_date=end_date) # 产品类目销售额分布
     )
-    sales_amount, total_received_by_last, total_online_received, total_received, total_final_paid, pending_receivable, channel_stats, sales_performance_by_sales, sales_performance_by_received, category_stats = result
+    sales_amount, last_month_sales_amount, total_received_by_last, total_online_received, last_month_total_online_received, total_received, last_month_total_received, total_final_paid, pending_receivable, channel_stats, sales_performance_by_sales, sales_performance_by_received, category_stats = result
+    # 计算本月销售额环比
+    sales_amount_change = (sales_amount - last_month_sales_amount) / last_month_sales_amount if last_month_sales_amount != 0 else 0
+    # 计算本月线上销售额环比
+    total_online_received_change = (total_online_received - last_month_total_online_received) / last_month_total_online_received if last_month_total_online_received != 0 else 0
+    # 计算本月总到账金额环比
+    total_received_change = (total_received - last_month_total_received) / last_month_total_received if last_month_total_received != 0 else 0
     return {
         "success": True,
         "data": {
             "sales_amount": sales_amount,
+            "sales_amount_change": sales_amount_change,
             "total_received_by_last": total_received_by_last,
             "total_received": total_received,
             "total_online_received": total_online_received,
+            "total_online_received_change": total_online_received_change,
+            "total_received_change": total_received_change,
             "total_final_paid": total_final_paid,
             "pending_receivable": pending_receivable,
             "online_orders": channel_stats["online_orders"] if channel_stats else 0,
