@@ -69,7 +69,7 @@ const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
     const day = String(now.getDate()).padStart(2, "0");
     const hours = String(now.getHours()).padStart(2, "0");
     const minutes = String(now.getMinutes()).padStart(2, "0");
-    setClientActivityLog({ ...clientActivityLog, log_time: `${year}-${month}-${day}T${hours}:${minutes}` });
+    setClientActivityLog((prev) => ({ ...prev, log_time: `${year}-${month}-${day}T${hours}:${minutes}` }));
   }, []);
 
   // 处理合同表单提交
