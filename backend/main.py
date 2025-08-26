@@ -82,32 +82,32 @@ async def init_db():
         logger.info("数据库初始化完成")
 
 
-#1. 创建 Lifespan 上下文管理器
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # 在应用启动时执行
-    print("应用启动，开始初始化数据库...")
-    async with async_engine.begin() as conn:
-        # 每次启动时清空数据库（仅限开发！）
-        #await conn.run_sync(Base.metadata.drop_all)
-        # 创建所有模型
-        await conn.run_sync(Base.metadata.create_all)
-    print("数据库初始化完成。")
-    # 添加初始数据（仅限开发环境）
-    await init_db()
+# #1. 创建 Lifespan 上下文管理器
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     # 在应用启动时执行
+#     print("应用启动，开始初始化数据库...")
+#     async with async_engine.begin() as conn:
+#         # 每次启动时清空数据库（仅限开发！）
+#         #await conn.run_sync(Base.metadata.drop_all)
+#         # 创建所有模型
+#         await conn.run_sync(Base.metadata.create_all)
+#     print("数据库初始化完成。")
+#     # 添加初始数据（仅限开发环境）
+#     await init_db()
 
-    # 这是应用运行的时间点
-    yield
+#     # 这是应用运行的时间点
+#     yield
 
-    # 在应用关闭时执行
-    print("应用关闭，正在断开数据库连接...")
-    await async_engine.dispose()
-    print("数据库连接已关闭。")
+#     # 在应用关闭时执行
+#     print("应用关闭，正在断开数据库连接...")
+#     await async_engine.dispose()
+#     print("数据库连接已关闭。")
 
 
-# 2. 将 Lifespan 管理器传递给 FastAPI
-app = FastAPI(lifespan=lifespan)
-
+# # 2. 将 Lifespan 管理器传递给 FastAPI
+# app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 origins = settings.CORS_ORIGINS
 
 # 配置 CORS
