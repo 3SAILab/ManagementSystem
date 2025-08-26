@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
 
-const FilterDropdown = ({ followUpStatusMap, filters, onFilterChange }) => {
+const FilterDropdown = ({ followUpStatusMap, filters, onFilterChange, onExport = null }) => {
   // 状态管理
   const [isOpen, setIsOpen] = useState(false);
   const [statusFilters, setStatusFilters] = useState(filters.status || []);
@@ -157,14 +157,30 @@ const FilterDropdown = ({ followUpStatusMap, filters, onFilterChange }) => {
           <div className="mt-5 flex justify-between gap-2 border-t border-slate-200 pt-3">
             <button
               onClick={resetFilters}
-              className="text-slate-500 hover:text-slate-700 text-sm font-medium"
+              className="px-3 py-1.5 text-slate-600 hover:text-slate-700 text-sm font-medium border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2"
             >
+              <Icons.RotateCcw className="w-4 h-4" />
               重置
             </button>
+                         {onExport && (
+              <button
+                onClick={() => onExport({
+                  status: statusFilters,
+                  source: sourceFilters,
+                  startTime,
+                  endTime
+                })}
+                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors flex items-center gap-2"
+              >
+                <Icons.Download className="w-4 h-4" />
+                导出
+              </button>
+            )}
             <button
               onClick={applyFilters}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-1 rounded"
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors flex items-center gap-2"
             >
+              <Icons.Check className="w-4 h-4" />
               应用
             </button>
           </div>

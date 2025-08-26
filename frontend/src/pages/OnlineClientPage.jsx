@@ -7,6 +7,7 @@ import Pagination from '../components/Pagination';
 import { toast } from 'react-toastify';
 import { getOnlineClientDataStatistics } from '../services/statisticsService';
 import SalesClientModal from '../components/SalesClientModal';
+import { exportOnlineClients } from '../services/exportService';
 
 const OnlineClientPage = () => {
     // 客户跟进记录ID
@@ -111,7 +112,24 @@ const OnlineClientPage = () => {
             });
         }
     };
-    
+    // 导出客户
+    const [exportLoading, setExportLoading] = useState(false);
+
+    const handleExport = async (exportFilters) => {
+        setExportLoading(true);
+        try {
+            const result = await exportOnlineClients(exportFilters);
+            if (result.success) {
+                toast.success('导出成功');
+            } else {
+                toast.error(result.error);
+            }
+        } catch (error) {
+            toast.error('导出失败');
+        } finally {
+            setExportLoading(false);
+        }
+    };
     return (
         <div className="flex flex-col h-full min-h-0 bg-slate-50 p-0">
             {/* 统计面板 */}
@@ -243,7 +261,7 @@ const OnlineClientPage = () => {
                             
                             {/* 筛选器 */}
                             <div className="flex items-center gap-2">
-                                <FilterDropdown followUpStatusMap={followUpStatusMap} filters={filters} onFilterChange={(newFilters) => setFilters({...filters, ...newFilters})} />
+                                <FilterDropdown followUpStatusMap={followUpStatusMap} filters={filters} onFilterChange={(newFilters) => setFilters({...filters, ...newFilters})} onExport={handleExport} />
 
                                 {/* 添加客户按钮 */}
                                 <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors" onClick={
