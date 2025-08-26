@@ -18,6 +18,7 @@ const BarChart = ({
   onRetry,
   height = '500px',
   isEmpty = false,
+  onItemClick,
 }) => {
 
   const option = React.useMemo(() => {
@@ -197,6 +198,7 @@ const BarChart = ({
         option={option}
         style={{ height, width: '100%' }}
         opts={{ renderer: 'canvas' }}
+        onEvents={onItemClick ? { click: onItemClick } : undefined}
       />
     );
   };
