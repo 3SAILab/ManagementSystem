@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 import uvicorn
+from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from backend.config import settings
 from backend.api.api import api_router
@@ -43,7 +44,7 @@ async def init_db():
 
         # 插入职位（存在就跳过）
         dept_id = await conn.scalar(select(Department.id).where(Department.name == "人事行政部"))
-        pos_stmt = insert(Position).values(name="HRBP", department_id=dept_id)
+        pos_stmt = insert(Position).values(name="人事专员", department_id=dept_id)
         pos_skip_stmt = pos_stmt.on_conflict_do_nothing(
             index_elements=[Position.name]
         )
@@ -51,7 +52,7 @@ async def init_db():
         logger.info(f"职位插入完成，受影响行数: {pos_result.rowcount}")
 
         # 插入员工（email 唯一冲突时跳过）
-        pos_id = await conn.scalar(select(Position.id).where(Position.name == "HRBP"))
+        pos_id = await conn.scalar(select(Position.id).where(Position.name == "人事专员"))
         password_hash = EmployeeService.get_password_hash("123456qwerty")
 
         emp_stmt = insert(Employee).values(
@@ -81,32 +82,32 @@ async def init_db():
         logger.info("数据库初始化完成")
 
 
-# # 1. 创建 Lifespan 上下文管理器
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     # 在应用启动时执行
-#     print("应用启动，开始初始化数据库...")
-#     async with async_engine.begin() as conn:
-#         # 每次启动时清空数据库（仅限开发！）
-#         #await conn.run_sync(Base.metadata.drop_all)
-#         # 创建所有模型
-#         await conn.run_sync(Base.metadata.create_all)
-#     print("数据库初始化完成。")
-#     # 添加初始数据（仅限开发环境）
-#     await init_db()
+#1. 创建 Lifespan 上下文管理器
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 在应用启动时执行
+    print("应用启动，开始初始化数据库...")
+    async with async_engine.begin() as conn:
+        # 每次启动时清空数据库（仅限开发！）
+        #await conn.run_sync(Base.metadata.drop_all)
+        # 创建所有模型
+        await conn.run_sync(Base.metadata.create_all)
+    print("数据库初始化完成。")
+    # 添加初始数据（仅限开发环境）
+    await init_db()
 
-#     # 这是应用运行的时间点
-#     yield
+    # 这是应用运行的时间点
+    yield
 
-#     # 在应用关闭时执行
-#     print("应用关闭，正在断开数据库连接...")
-#     await async_engine.dispose()
-#     print("数据库连接已关闭。")
+    # 在应用关闭时执行
+    print("应用关闭，正在断开数据库连接...")
+    await async_engine.dispose()
+    print("数据库连接已关闭。")
 
 
-# # 2. 将 Lifespan 管理器传递给 FastAPI
-# app = FastAPI(lifespan=lifespan)
-app = FastAPI()
+# 2. 将 Lifespan 管理器传递给 FastAPI
+app = FastAPI(lifespan=lifespan)
+
 origins = settings.CORS_ORIGINS
 
 # 配置 CORS
