@@ -4,7 +4,6 @@ from sqlalchemy.types import Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from backend.models.client import ClientStatus
 from ..db.session import Base
 
 
