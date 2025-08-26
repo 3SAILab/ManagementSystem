@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
+import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ChevronDown, Search } from 'lucide-react';
 import * as echarts from 'echarts';
 import { getContracts, updateContractStatus, deleteContract } from '../services/contractService';
 import { getMonthlySales, getMonthlySalesStatistics, getMonthlySalesByCycle, getMonthlySalesAmountStatistics, getMonthlySalesAmountByCycle } from '../services/statisticsService';
@@ -544,8 +544,26 @@ const SalesDashboard = () => {
       {/* 订单尾款跟踪表格 */}
       <div className="flex-grow flex flex-col bg-white rounded-xl shadow-sm border overflow-visible min-h-0">
         {/* 表格头部 */}
-        <div className="bg-white">
-          <h3 className="p-4 border-b border-slate-200 text-lg font-semibold">合同尾款跟踪</h3>
+        <div className="bg-white px-6 py-6 border-b border-slate-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-800 mb-2">订单尾款跟踪</h3>
+              <p className="text-sm text-slate-600">管理客户合同状态和付款情况</p>
+            </div>
+            {/* 搜索框 */}
+            <div className="relative w-full max-w-xs">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="w-5 h-5 text-slate-400" />
+              </div>
+              <input 
+                type="text" 
+                placeholder="搜索客户名称..." 
+                className="form-input !pl-12 w-full bg-white border-slate-300 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                value={filters.name}
+                onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+              />
+            </div>
+          </div>
           {contracts.length === 0 ? (
             <div className="p-4 text-center text-slate-500">
               暂无数据
@@ -647,8 +665,6 @@ const SalesDashboard = () => {
             />
           </div>
         </div>
-
-
       </div>
       {/* **更改合同状态模态框** */}
       {isModalOpen && editingContract && (

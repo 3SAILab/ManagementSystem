@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import func, select, or_
+from sqlalchemy import and_, func, select, or_
 from sqlalchemy.orm import selectinload, joinedload
 from backend.models.client import Client
 from backend.models.ticket import Ticket
@@ -344,7 +344,12 @@ class SubTaskService:
             if "红色预警" in warning_status:
                 conditions.append(elapsed_days > SubTask.estimated_completion_time + 1)
             if "黄色预警" in warning_status:
-                conditions.append(elapsed_days > SubTask.estimated_completion_time)
+                conditions.append(
+                    and_(
+                        SubTask.estimated_completion_time + 1> elapsed_days,
+                        elapsed_days > SubTask.estimated_completion_time
+                    )
+                )
 
             if conditions:
                 stmt = stmt.where(or_(*conditions) & (SubTask.status == "进行中"))

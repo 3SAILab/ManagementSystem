@@ -14,6 +14,7 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
     workflow_count: 0,
     priority: '高',
     platform: '国内',
+    need_watermark: true
   });
   // 提交信息
   const [formData, setFormData] = useState({
@@ -115,14 +116,25 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
             </div>
           </div>
 
-          {/* 微信群 */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              微信群
-            </label>
-            <p className="w-full px-3 py-2 text-slate-800">
-              {task.wechat_group || '-'}
-            </p>
+          {/* 微信群和是否带水印 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                微信群
+              </label>
+              <p className="w-full px-3 py-2 text-slate-800">
+                {task.wechat_group || '-'}
+              </p>
+            </div>
+            <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  带水印
+                </label>
+                <p className="w-full px-3 py-2 text-slate-800">
+                  {task.need_watermark ? '是' : '否'}
+                </p>
+            </div>
+            
           </div>
           {/* 任务详情 */}
           <div>

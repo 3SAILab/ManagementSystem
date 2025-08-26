@@ -25,6 +25,8 @@ class ContractService:
         contract = Contract(
             client_id=contract.client_id,
             sales_id=sales_id,
+            prepayment_sales_id=sales_id,
+            final_payment_sales_id=sales_id,
             contract_type=contract.contract_type,
             status="待结算",
             total_amount=contract.total_amount,
@@ -52,7 +54,7 @@ class ContractService:
 
         if filter_params.name:
             stmt = stmt.join(Client)
-            filters.append(Contract.client.name.ilike(f"%{filter_params.name}%"))
+            filters.append(Client.name.ilike(f"%{filter_params.name}%"))
 
         if filter_params.status:
             # 将 Pydantic Enum 转为原始字符串值再过滤

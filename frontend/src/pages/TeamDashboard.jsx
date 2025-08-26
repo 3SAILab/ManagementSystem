@@ -121,6 +121,7 @@ const TeamDashboardPage = () => {
                     clientName={order.client_name}
                     estimatedCompletionTime={order.estimated_completion_time}
                     chargeName={order.charge_name}
+                    need_watermark={order.need_watermark}
                     onClick={() => handleSelectOrder(order.sub_task_id)}
                   />
                 ))
@@ -147,6 +148,7 @@ const TeamDashboardPage = () => {
                     clientName={order.client_name}
                     estimatedCompletionTime={order.estimated_completion_time}
                     chargeName={order.charge_name}
+                    need_watermark={order.need_watermark}
                     onClick={() => handleSelectOrder(order.sub_task_id)}
                   />
                 ))
@@ -173,6 +175,7 @@ const TeamDashboardPage = () => {
                     clientName={order.client_name}
                     estimatedCompletionTime={order.estimated_completion_time}
                     chargeName={order.charge_name}
+                    need_watermark={order.need_watermark}
                     onClick={() => handleSelectOrder(order.sub_task_id)}
                   />
                 ))

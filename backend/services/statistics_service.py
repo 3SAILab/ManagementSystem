@@ -338,9 +338,9 @@ class StatisticsService:
     @staticmethod
     async def get_monthly_commission(db: AsyncSession, employee_id: int):
         # 获取当前月份的提点
-        current_month_commission = await SalesService.get_sales_commission(db, start_date=StatisticsService.start_date, end_date=StatisticsService.end_date, sales_id=employee_id)
-        # 获取上个月的提点
-        last_month_commission = await SalesService.get_sales_commission(db, start_date=StatisticsService.last_month_start_date, end_date=StatisticsService.last_month_end_date, sales_id=employee_id)
+        current_month_commission = await SalesService.get_sales_commission(db, sales_id=employee_id, start_date=StatisticsService.start_date, end_date=StatisticsService.end_date)
+        # 获取上个月的提点  
+        last_month_commission = await SalesService.get_sales_commission(db, sales_id=employee_id, start_date=StatisticsService.last_month_start_date, end_date=StatisticsService.last_month_end_date)
         # 计算提点变化
         if last_month_commission > 0:
             return current_month_commission, (current_month_commission - last_month_commission) / last_month_commission * 100
@@ -393,7 +393,7 @@ class StatisticsService:
         for month in range(1, 13):
             start_date = datetime(StatisticsService.current_date.year, month, 1)
             end_date = start_date + timedelta(days=31)
-            monthly_sales = await SalesService.get_sales_commission(db, start_date=start_date, end_date=end_date, sales_id=employee_id)
+            monthly_sales = await SalesService.get_sales_commission(db, sales_id=employee_id, start_date=start_date, end_date=end_date)
             # 格式化为两位小数
             monthly_sales = round(float(monthly_sales), 2)
             monthly_sales_statistics.append(monthly_sales)

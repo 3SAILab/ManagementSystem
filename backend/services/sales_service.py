@@ -53,6 +53,7 @@ class SalesService:
                     and_(
                         (start_date is None or Contract.transaction_time >= start_date),
                         (end_date is None or Contract.transaction_time < end_date),
+                        (sales_id is None or Contract.prepayment_sales_id == sales_id),
                         Contract.paid_amount > 0  # 可选：避免 0 预付款干扰
                     ),
                     Contract.paid_amount
@@ -66,7 +67,8 @@ class SalesService:
                     and_(
                         Contract.settlement_time.isnot(null()),  # 必须已结算
                         (start_date is None or Contract.settlement_time >= start_date),
-                        (end_date is None or Contract.settlement_time < end_date)
+                        (end_date is None or Contract.settlement_time < end_date),
+                        (sales_id is None or Contract.final_payment_sales_id == sales_id)
                     ),
                     Contract.total_amount - Contract.paid_amount
                 ),
@@ -79,9 +81,6 @@ class SalesService:
 
         # 添加过滤条件
         where_clauses = []
-
-        if sales_id is not None:
-            where_clauses.append(Contract.sales_id == sales_id)
 
         if source is not None:
             where_clauses.append(Client.source == source)
@@ -367,7 +366,7 @@ class SalesService:
                         and_(
                             (start_date is None or Contract.transaction_time >= start_date),
                             (end_date is None or Contract.transaction_time < end_date),
-                            Contract.paid_amount > 0  # 预付款部分
+                            Contract.paid_amount > 0,  # 预付款部分
                         ),
                         Contract.paid_amount
                     ),
@@ -379,7 +378,8 @@ class SalesService:
                         and_(
                             Contract.settlement_time.isnot(null()),  # 必须已结算
                             (start_date is None or Contract.settlement_time >= start_date),
-                            (end_date is None or Contract.settlement_time < end_date)
+                            (end_date is None or Contract.settlement_time < end_date),
+                            Contract.total_amount - Contract.paid_amount > 0
                         ),
                         Contract.total_amount - Contract.paid_amount  # 尾款部分
                     ),
@@ -467,7 +467,6 @@ class SalesService:
     计算满足以下条件的尾款到账金额：
     合同成交时间段区间：[last_start, last_end) （可选）
     尾款结算时间段区间：[start_date, end_date) （可选）
-    sales_id 销售id （可选)
     """
     @staticmethod
     async def get_total_received_by_last(
@@ -528,7 +527,7 @@ class SalesService:
         
         # 可选：按销售员过滤
         if sales_id is not None:
-            where_clauses.append(Contract.sales_id == sales_id)
+            where_clauses.append(Contract.final_payment_sales_id == sales_id)
 
         # 构建查询
         stmt = select(
@@ -693,7 +692,7 @@ class SalesService:
         """
         from backend.utils.data_utils import get_month_range
         if source == "线上":
-            total_received = 0
+            total_received = None
         else:
             start_date, end_date = get_month_range(year,month)
             total_received = await SalesService.get_total_received(db, start_date=start_date, end_date=end_date, sales_id=sales_id)

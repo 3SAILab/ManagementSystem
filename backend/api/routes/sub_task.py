@@ -115,6 +115,7 @@ async def get_sub_task(
         "wechat_group": res.ticket.wechat_group,
         "estimated_completion_time": res.estimated_completion_time,
         "difficulty_score": res.difficulty_score,
+        "need_watermark": res.ticket.need_watermark
     }
     return out
 
@@ -167,6 +168,7 @@ async def get_personal_tasks(
             "estimated_completion_time": task.estimated_completion_time,
             "sales_name": task.ticket.contract.sales.name if task.ticket.contract.sales else None,
             "performanceSalary": performanceSalary,
+            "need_watermark": task.ticket.need_watermark,
         })
     return {
         "sub_tasks": sub_tasks_out,
@@ -286,6 +288,7 @@ async def get_team_tasks(
             "sub_task_id": task.id,
             "estimated_completion_time": task.estimated_completion_time,
             "sales_name": task.ticket.contract.sales.name if task.ticket.contract.sales else None,
+            "need_watermark": task.ticket.need_watermark,
         })
     if current_employee.position.name == "渲染":
         task_type = "渲染"
@@ -405,6 +408,8 @@ async def get_sub_tasks(
             "sub_task_id": task.id,
             "estimated_completion_time": task.estimated_completion_time,
             "sales_name": task.ticket.contract.sales.name if task.ticket.contract.sales else None,
+            "need_watermark": task.ticket.need_watermark,
+
         })
 
     # 获取任务状态数量(并行请求)，已完成的只统计本月(从一号00:00:00到当前时间)
