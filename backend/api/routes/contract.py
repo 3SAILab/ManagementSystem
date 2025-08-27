@@ -79,6 +79,7 @@ async def get_contracts(
         ContractList(
             id=contract.id,
             client_name=contract.client.name,
+            sales_name=contract.sales.name if contract.sales else '',
             contract_type=contract.contract_type.value,
             total_amount=contract.total_amount,
             paid_amount=contract.paid_amount,
@@ -100,6 +101,52 @@ async def get_contracts(
     )
     return paginated.model_dump()
 
+# 获取所有待催收尾款合同（不限定当前登录销售）
+@router.get("/contracts/pending")
+async def get_all_contracts(
+    name: str = Query(None),
+    status: List[str] = Query(['待结算']),
+    contract_type: List[str] = Query(None),
+    page: int = Query(1),
+    page_size: int = Query(10),
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    """
+    查询所有待催收尾款合同列表，支持客户名称、状态、合同类型筛选与分页。
+    用于管理端汇总视图。
+    """
+    filter_params = ContractFilter(name=name, status=status, contract_type=contract_type, page=page, page_size=page_size)
+    contracts, total = await ContractService.get_contracts(db, filter_params, employee_id=0)
+
+    total_pages = (total + page_size - 1) // page_size
+
+    contracts_out = [
+        ContractList(
+            id=contract.id,
+            client_name=contract.client.name,
+            sales_name=contract.sales.name if contract.sales else '',
+            contract_type=contract.contract_type.value,
+            total_amount=contract.total_amount,
+            paid_amount=contract.paid_amount,
+            commission_rate=contract.commission_rate,
+            transaction_time=contract.transaction_time,
+            status=contract.status,
+            is_recharged=contract.is_recharged,
+            settlement_time=contract.settlement_time
+        )
+        for contract in contracts
+    ]
+
+    paginated = PaginatedContract(
+        contracts=contracts_out,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages
+    )
+    return paginated.model_dump()
+
 # 销售主管根据客户id获取成交合同列表
 @router.get("/contracts/client/{client_id}")
 async def get_contracts_by_client_id(
@@ -114,6 +161,7 @@ async def get_contracts_by_client_id(
         ContractList(
             id=contract.id,
             client_name=contract.client.name,
+            sales_name=contract.sales.name if contract.sales else '',
             contract_type=contract.contract_type.value,
             total_amount=contract.total_amount,
             paid_amount=contract.paid_amount,
@@ -278,6 +326,7 @@ async def get_readonly_contracts(
         ContractList(
             id=contract.id,
             client_name=contract.client.name,
+            sales_name=contract.sales.name if contract.sales else '',
             contract_type=contract.contract_type.value,
             total_amount=contract.total_amount,
             paid_amount=contract.paid_amount,
