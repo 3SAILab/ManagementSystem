@@ -109,7 +109,7 @@ const PendingReceivables = () => {
 
         <div className="p-4 border-t border-slate-200 text-sm text-slate-600 flex justify-between items-center bg-slate-50/60">
           <span>显示 {contracts.length} / 共 {total} 条数据</span>
-          <div className="flex items-center gap-2">
+          <div>
             <Pagination
               totalItems={total}
               itemsPerPage={filters.page_size}
