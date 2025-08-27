@@ -4,7 +4,6 @@ import ModalCloseButton from "./ModalCloseButton";
 import { getClientInfo } from "../services/clientService";
 import DateUtils from "../utils/dateUtils";
 const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
-  if (!isOpen) return null;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -110,7 +109,8 @@ const ClientInfoModal = ({ isOpen, id = null, onClose, onSave }) => {
     });
     onClose();
   };
-
+  if (!isOpen) return null;
+  
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 animate-fade-in">

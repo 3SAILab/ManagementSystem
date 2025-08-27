@@ -4,7 +4,7 @@ import { getRemainingRequirements } from "../services/contractService";
 import { getTicketInfo } from "../services/ticketService";
 
 const EditTicketModal = ({ isOpen, onClose, onEdit, ticketId, contractId }) => {
-  if (!isOpen) return null;
+
   const [remainingRequirements, setRemainingRequirements] = useState({
     detail_pages: 0,
     video_count: 0,
@@ -125,7 +125,7 @@ const EditTicketModal = ({ isOpen, onClose, onEdit, ticketId, contractId }) => {
 
   // 检查是否有任何错误
   const hasErrors = Object.values(errors).some(error => error !== "");
-
+  if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 transform transition-all animate-scale-in">
