@@ -2,6 +2,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BarChart from '../components/BarChart'; // 引入通用组件
+import { useEmployeePermissionStore } from '../store/employee'; // 引入员工权限存储
+import { toast } from 'react-toastify'; // 引入 toast 组件
 
 import { getMonthlyCoefficientStatistics, getMonthlyAverageCompletionTimeStatistics } from '../services/statisticsService';
 
@@ -11,12 +13,38 @@ const ArtDataPage = () => {
   const [loading, setLoading] = useState({ coefficients: true, completionTimes: true });
   const [error, setError] = useState({ coefficients: null, completionTimes: null });
   const navigate = useNavigate();
+  const { employee } = useEmployeePermissionStore();
+
+  // 检查用户是否有团队任务监控面板的权限
+  const hasTeamDashboardAccess = useCallback(() => {
+    if (!employee) return false;
+    
+    const { role, department_name, position_name } = employee;
+    
+    // 统计看板权限（owner角色）
+    if (role === 'owner') return true;
+    
+    // 美工主管权限（manager角色 + 生产部 + 美工职位）
+    if (role === 'manager' && department_name === '生产部' && position_name === '美工') return true;
+    
+    // 渲染主管权限（manager角色 + 生产部 + 渲染职位）
+    if (role === 'manager' && department_name === '生产部' && position_name === '渲染') return true;
+    
+    return false;
+  }, [employee]);
 
   const handleBarClick = useCallback((params) => {
+    // 检查权限
+    if (!hasTeamDashboardAccess()) {
+      // 如果没有权限，显示提示信息
+      toast.warning('您无需访问团队任务监控面板');
+      return;
+    }
+    
     const name = params?.name || params?.data?.name || '';
-    // 直接跳转到团队任务监控面板
+    // 有权限时跳转到团队任务监控面板
     navigate('/team_dashboard', { state: { focusName: name } });
-  }, [navigate]);
+  }, [navigate, hasTeamDashboardAccess]);
 
   useEffect(() => {
     const fetchData = async () => {
