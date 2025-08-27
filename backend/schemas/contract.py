@@ -36,6 +36,7 @@ class ContractCreate(BaseModel):
 class ContractList(BaseModel):
     id: int
     client_name: str
+    sales_name: str
     contract_type: ContractType
     total_amount: float
     paid_amount: float
