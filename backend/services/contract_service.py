@@ -48,7 +48,10 @@ class ContractService:
     # 获取个人成交合同列表
     @staticmethod
     async def get_contracts(db: AsyncSession, filter_params: ContractFilter, employee_id: int) -> Tuple[List[Contract], int]:
-        stmt = select(Contract).options(selectinload(Contract.client))
+        stmt = select(Contract).options(
+            selectinload(Contract.client),
+            selectinload(Contract.sales)
+            )
 
         filters = []
 
@@ -124,7 +127,10 @@ class ContractService:
     # 销售主管根据客户id获取合同
     @staticmethod
     async def get_contracts_by_client_id(db: AsyncSession, client_id: int) -> List[Contract]:
-        stmt = select(Contract).where(Contract.client_id == client_id).options(selectinload(Contract.client))
+        stmt = select(Contract).where(Contract.client_id == client_id).options(
+            selectinload(Contract.client),
+            selectinload(Contract.sales)
+        )
         result = await db.execute(stmt)
         contracts = result.scalars().all()
         return contracts
