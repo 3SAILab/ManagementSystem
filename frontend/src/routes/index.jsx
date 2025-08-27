@@ -15,6 +15,7 @@ import WorkAssignmentPage from '../pages/WorkAssignmentPage'
 import ResetPassword from '../pages/ResetPassword'
 import TeamDashboardPage from '../pages/TeamDashboard';
 import SalesDataPages from '../pages/SalesDataPages'
+import PendingReceivables from '../pages/PendingReceivables'
 import ReadOnlySalesDashboard from '../pages/ReadOnlySalesDashboard'
 import ReadOnlyContractDetail from '../pages/ReadOnlyContractDetail'
 import ArtDataPage from '../pages/ArtDataPage'
@@ -153,6 +154,15 @@ const router = createBrowserRouter([
               </PrivateRoute>
             ),
             handle: { title: '销售数据' }
+          },
+          {
+            path: 'pending_receivables',
+            element: (
+              <PrivateRoute currentPath='pending_receivables'>
+                <PendingReceivables />
+              </PrivateRoute>
+            ),
+            handle: { title: '待催收尾款' }
           },
           {
             path: 'art_data',

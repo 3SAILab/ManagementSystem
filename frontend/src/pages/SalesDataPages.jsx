@@ -444,7 +444,8 @@ export default function SalesDataPages() {
               ¥{metrics.totalFinalPaid.toLocaleString()}
             </p>
           </div>
-          <div className="bg-white p-4 rounded-xl shadow-md">
+          <div className="bg-white p-4 rounded-xl shadow-md cursor-pointer hover:scale-105 transition-transform duration-200 ease-in-out" 
+          onClick={() => navigate('/pending_receivables')}>
             <h3 className="text-gray-500 font-medium text-sm">待催收尾款</h3>
             <p className="text-2xl font-bold text-red-500 mt-1">
               ¥{metrics.totalPendingFinal.toLocaleString()}
