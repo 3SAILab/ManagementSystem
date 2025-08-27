@@ -1,8 +1,8 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+//import { useNavigate } from 'react-router-dom';
 
 const ContractTable = ({ contracts = [] }) => {
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
 
   // 提点计算函数
   const calculateCommission = (contract) => {
