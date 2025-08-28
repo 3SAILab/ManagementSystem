@@ -10,6 +10,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi import Query
 import logging
 from backend.config import settings
+from backend.api.deps.auth import require_departments
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -77,14 +78,11 @@ async def login(
     return {"access_token": token, "token_type": "bearer"}
 
 #员工注册
-@router.post("/register", response_model=api_response)
+@router.post("/register", response_model=Dict[str, Any], dependencies=[Depends(require_departments("人事行政部"))])
 async def register(
     newEmployee: EmployeeInfo,
     db: AsyncSession = Depends(get_async_db),
 ):
-    #判断权限
-    #开发环境无需权限
-    
     employee = await EmployeeService.create_employee(db, newEmployee)
     #返回员工信息
     return api_response(data={"employeeName": employee.name})
@@ -98,18 +96,16 @@ async def get_employee_permission(
 
 
 #获取员工列表
-@router.get("/employee/list", response_model=list[EmployeeListInfo])
+@router.get("/employee/list", response_model=list[EmployeeListInfo], dependencies=[Depends(require_departments("人事行政部"))])
 async def get_employee_list(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    if current_employee.department.name != "人事行政部":
-        raise HTTPException(status_code=403, detail="无权限访问")
     employees = await EmployeeService.get_employee_list(db)
     return employees
 
 #获取员工薪资列表
-@router.get("/employee/salary")
+@router.get("/employee/salary", dependencies=[Depends(require_departments("人事行政部"))])
 async def get_employee_salary(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
@@ -118,47 +114,37 @@ async def get_employee_salary(
     return api_response(success=True, data=employees)
 
 #根据id获取员工信息
-@router.get("/employee/{id}", response_model=EmployeeInfo)
+@router.get("/employee/{id}", response_model=EmployeeInfo, dependencies=[Depends(require_departments("人事行政部"))])
 async def get_employee_info(
     id: int,
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    #判断当前用户身份
-    if current_employee.department.name != "人事行政部":
-        raise HTTPException(status_code=403, detail="无权限访问")
-    
     employee = await EmployeeService.get_employee_by_id(db, id)
     return employee
 
 
 #获取上级列表
-@router.get("/manager/list", response_model=list[EmployeeListInfo])
+@router.get("/manager/list", response_model=list[EmployeeListInfo], dependencies=[Depends(require_departments("人事行政部"))])
 async def get_managers(
     department_id: int = Query(...),
     role: Literal['employee', 'manager', 'admin', 'owner'] = Query(...),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    #判断当前用户身份
-    if current_employee.department.name != "人事行政部":
-        raise HTTPException(status_code=403, detail="无权限访问")
     #获取上级列表
     employees = await EmployeeService.get_managers(db, department_id, role)
     return employees
 
 
 #编辑员工工作信息
-@router.put("/employee/work-info/{id}", response_model=EmployeeInfo)
+@router.put("/employee/work-info/{id}", response_model=EmployeeInfo, dependencies=[Depends(require_departments("人事行政部"))])
 async def update_employee_work_info(
     id: int,
     employee: EmployeeInfo,
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    #判断当前用户身份
-    if current_employee.department.name != "人事行政部":
-        raise HTTPException(status_code=403, detail="无权限访问")
     #修改员工信息
     result = await EmployeeService.update_employee_work_info(db, id, employee)
     return EmployeeInfo.from_model(result) 
@@ -219,7 +205,7 @@ async def get_group_members(
     
 
 #获取销售列表
-@router.get("/employee/sales/list", response_model=api_response)
+@router.get("/employee/sales/list", response_model=api_response, dependencies=[Depends(require_departments("人事行政部"))])
 async def get_sales_list(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
