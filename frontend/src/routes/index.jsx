@@ -165,13 +165,13 @@ const router = createBrowserRouter([
             handle: { title: '待催收尾款' }
           },
           {
-            path: 'art_data',
+            path: 'production_data',
             element: (
-              <PrivateRoute currentPath='art_data'>
+              <PrivateRoute currentPath='production_data'>
                 <ArtDataPage />
               </PrivateRoute>
             ),
-            handle: { title: '美工数据' }
+            handle: { title: '生产数据' }
           },
           {
             path: 'online_client',

@@ -23,7 +23,7 @@ export const menuItems = [
       { label: '部门管理', path: '/department_management', icon: 'building-2' },
       { label: '职位管理', path: '/position_management', icon: 'briefcase' },
       { label: '销售数据', path: '/sales_data', icon: 'bar-chart-3' },
-      { label: '美工数据', path: '/art_data', icon: 'bar-chart-3' },
+      { label: '生产数据', path: '/production_data', icon: 'bar-chart-3' },
     ]
   },
   {
@@ -83,7 +83,7 @@ export const menuItems = [
     children: [
       { label: '工单分配', path: '/work_assignment', icon: 'check-square' },
       { label: '团队任务监控', path: '/team_dashboard', icon: 'contact' },
-      { label: '美工数据', path: '/art_data', icon: 'bar-chart-3' },
+      { label: '生产数据', path: '/production_data', icon: 'bar-chart-3' },
     ]
   },
   {
@@ -96,6 +96,7 @@ export const menuItems = [
     children: [
       { label: '工单分配', path: '/work_assignment', icon: 'check-square' },
       { label: '团队任务监控', path: '/team_dashboard', icon: 'contact' },
+      { label: '生产数据', path: '/production_data', icon: 'bar-chart-3' },
     ]
   },
   {
@@ -115,7 +116,7 @@ export const menuItems = [
     },
     children: [
       { label: '销售数据', path: '/sales_data', icon: 'bar-chart-3' },
-      { label: '美工数据', path: '/art_data', icon: 'bar-chart-3' },
+      { label: '生产数据', path: '/production_data', icon: 'bar-chart-3' },
       { label: '团队任务监控', path: '/team_dashboard', icon: 'contact' },
     ]
   },

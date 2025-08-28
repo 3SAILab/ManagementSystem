@@ -553,6 +553,78 @@ class StatisticsService:
             })
         return statistics
 
+    # 渲染本月系数统计（与美工不同的系数计算）
+    @staticmethod
+    async def get_monthly_render_coefficient_statistics(db: AsyncSession):
+        result = await db.execute(
+            select(
+                SubTask.charge_id,
+                Employee.name,
+                func.sum(SubTask.difficulty_score).label("total_score")
+            )
+            .join(Employee, SubTask.charge_id == Employee.id)
+            .where(
+                and_(
+                    SubTask.started_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    SubTask.difficulty_score.is_not(None),
+                    SubTask.task_type == "渲染",
+                    SubTask.status == "已完成"
+                )
+            )
+            .group_by(SubTask.charge_id, Employee.name)
+            .order_by(func.sum(SubTask.difficulty_score).desc())
+        )
+        rows = result.fetchall()
+        statistics = []
+        for row in rows:
+            charge_id, name, total_score = row
+            if total_score and total_score > 0:
+                coefficient = float(total_score)
+                coefficient = StatisticsService.calculate_render_coefficient(coefficient)
+                statistics.append({
+                    "id": charge_id,
+                    "name": name,
+                    "coefficient": round(coefficient, 3),
+                    "total_score": round(float(total_score), 3)
+                })
+        return statistics
+
+    @staticmethod
+    def calculate_render_coefficient(total_score: float) -> float:
+        # 渲染：只有原倍数
+        return float(total_score)
+
+    # 渲染本月平均每单完成时间
+    @staticmethod
+    async def get_monthly_render_average_completion_time_statistics(db: AsyncSession):
+        result = await db.execute(
+            select(
+                SubTask.charge_id,
+                Employee.name,
+                func.avg(SubTask.completed_at - SubTask.started_at).label("average_completion_time")
+            )
+            .join(Employee, SubTask.charge_id == Employee.id)
+            .where(
+                and_(
+                    SubTask.started_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    SubTask.task_type == "渲染",
+                    SubTask.status == "已完成"
+                )
+            )
+            .group_by(SubTask.charge_id, Employee.name)
+        )
+        rows = result.fetchall()
+        statistics = []
+        for row in rows:
+            charge_id, name, average_completion_time = row
+            average_completion_time = average_completion_time.total_seconds() / 3600
+            statistics.append({
+                "id": charge_id,
+                "name": name,
+                "average_completion_time": round(float(average_completion_time), 2)
+            })
+        return statistics
+
 
     # 获取员工今年各月度销售额统计数据
     @staticmethod

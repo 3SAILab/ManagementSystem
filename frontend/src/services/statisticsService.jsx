@@ -130,7 +130,7 @@ export const getReadonlyMonthlySalesStatistics = async (employeeId) => {
 // 美工本月系数统计
 export const getMonthlyCoefficientStatistics = async () => {
     try {
-        const response = await api.get('/statistics/monthly-coefficient-statistics');
+        const response = await api.get('/statistics/art-monthly-coefficient-statistics');
         if (response.data.success) {
             return {success: true, data: response.data.data};
         } else {
@@ -144,7 +144,35 @@ export const getMonthlyCoefficientStatistics = async () => {
 // 本月美工平均每单完成时间
 export const getMonthlyAverageCompletionTimeStatistics = async () => {
     try {
-        const response = await api.get('/statistics/monthly-average-completion-time-statistics');
+        const response = await api.get('/statistics/art-monthly-average-completion-time-statistics');
+        if (response.data.success) {
+            return {success: true, data: response.data.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// 渲染本月系数统计
+export const getRenderMonthlyCoefficientStatistics = async () => {
+    try {
+        const response = await api.get('/statistics/render-monthly-coefficient-statistics');
+        if (response.data.success) {
+            return {success: true, data: response.data.data};
+        } else {
+            return {success: false, error: response.data.error};
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// 本月渲染平均每单完成时间
+export const getRenderMonthlyAverageCompletionTimeStatistics = async () => {
+    try {
+        const response = await api.get('/statistics/render-monthly-average-completion-time-statistics');
         if (response.data.success) {
             return {success: true, data: response.data.data};
         } else {

@@ -3,17 +3,20 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BarChart from '../components/BarChart'; // 引入通用组件
 import { useEmployeePermissionStore } from '../store/employee'; // 引入员工权限存储
-import { toast } from 'react-toastify'; // 引入 toast 组件
+// import { toast } from 'react-toastify'; // 引入 toast 组件
 
-import { getMonthlyCoefficientStatistics, getMonthlyAverageCompletionTimeStatistics } from '../services/statisticsService';
+import { getArtMonthlyCoefficientStatistics, getArtMonthlyAverageCompletionTimeStatistics, getRenderMonthlyCoefficientStatistics, getRenderMonthlyAverageCompletionTimeStatistics } from '../services/statisticsService';
 
 const ArtDataPage = () => {
   const [coefficientData, setCoefficientData] = useState({ employeeIds: [], coefficients: [] });
   const [completionTimeData, setCompletionTimeData] = useState({ employeeIds: [], averageCompletionTimes: [] });
-  const [loading, setLoading] = useState({ coefficients: true, completionTimes: true });
-  const [error, setError] = useState({ coefficients: null, completionTimes: null });
+  const [loading, setLoading] = useState({ coefficients: true, completionTimes: true, renderCoefficients: true, renderCompletionTimes: true });
+  const [error, setError] = useState({ coefficients: null, completionTimes: null, renderCoefficients: null, renderCompletionTimes: null });
+  const [renderCoefficientData, setRenderCoefficientData] = useState({ employeeIds: [], coefficients: [] });
+  const [renderCompletionTimeData, setRenderCompletionTimeData] = useState({ employeeIds: [], averageCompletionTimes: [] });
   const navigate = useNavigate();
   const { employee } = useEmployeePermissionStore();
+  const [activePanel, setActivePanel] = useState('art'); // 'art' | 'render'
 
   // 检查用户是否有团队任务监控面板的权限
   const hasTeamDashboardAccess = useCallback(() => {
@@ -47,12 +50,14 @@ const ArtDataPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading({ coefficients: true, completionTimes: true });
-        setError({ coefficients: null, completionTimes: null });
+        setLoading({ coefficients: true, completionTimes: true, renderCoefficients: true, renderCompletionTimes: true });
+        setError({ coefficients: null, completionTimes: null, renderCoefficients: null, renderCompletionTimes: null });
 
-        const [coefficientResponse, completionTimeResponse] = await Promise.all([
-          getMonthlyCoefficientStatistics(),
-          getMonthlyAverageCompletionTimeStatistics(),
+        const [coefficientResponse, completionTimeResponse, renderCoefficientResponse, renderCompletionTimeResponse] = await Promise.all([
+          getArtMonthlyCoefficientStatistics(),
+          getArtMonthlyAverageCompletionTimeStatistics(),
+          getRenderMonthlyCoefficientStatistics(),
+          getRenderMonthlyAverageCompletionTimeStatistics(),
         ]);
 
         // 处理系数数据
@@ -73,7 +78,7 @@ const ArtDataPage = () => {
           setError(prev => ({ ...prev, coefficients: '获取系数数据失败' }));
         }
 
-        // 处理完成时间数据
+        // 处理完成时间数据（美工）
         if (completionTimeResponse?.success && Array.isArray(completionTimeResponse.data)) {
           const processed = completionTimeResponse.data
             .map(item => ({
@@ -90,11 +95,46 @@ const ArtDataPage = () => {
         } else {
           setError(prev => ({ ...prev, completionTimes: '获取平均完成时间失败' }));
         }
+        // 处理系数数据（渲染）
+        if (renderCoefficientResponse?.success && Array.isArray(renderCoefficientResponse.data)) {
+          const processed = renderCoefficientResponse.data
+            .map(item => ({
+              id: item.id,
+              name: item.name || `员工 #${item.id}`,
+              value: parseFloat(item.coefficient) || 0,
+            }))
+            .sort((a, b) => a.value - b.value);
+
+          setRenderCoefficientData({
+            employeeIds: processed.map(item => item.name),
+            coefficients: processed.map(item => item.value),
+          });
+        } else {
+          setError(prev => ({ ...prev, renderCoefficients: '获取渲染系数数据失败' }));
+        }
+
+        // 处理完成时间数据（渲染）
+        if (renderCompletionTimeResponse?.success && Array.isArray(renderCompletionTimeResponse.data)) {
+          const processed = renderCompletionTimeResponse.data
+            .map(item => ({
+              id: item.id,
+              name: item.name || `员工 #${item.id}`,
+              value: parseFloat(item.average_completion_time) || 0,
+            }))
+            .sort((a, b) => a.value - b.value);
+
+          setRenderCompletionTimeData({
+            employeeIds: processed.map(item => item.name),
+            averageCompletionTimes: processed.map(item => item.value),
+          });
+        } else {
+          setError(prev => ({ ...prev, renderCompletionTimes: '获取渲染平均完成时间失败' }));
+        }
       } catch (err) {
         console.error('获取数据失败:', err);
         setError({ coefficients: '网络错误', completionTimes: '网络错误' });
       } finally {
-        setLoading({ coefficients: false, completionTimes: false });
+        setLoading({ coefficients: false, completionTimes: false, renderCoefficients: false, renderCompletionTimes: false });
       }
     };
 
@@ -105,14 +145,31 @@ const ArtDataPage = () => {
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
         
-        <div className="p-6 text-center border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">美工数据看板</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">本月美工绩效与效率分析</p>
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">生产数据</h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">本月绩效与效率分析</p>
+          </div>
+          <div className="mt-4 flex justify-center gap-3">
+            <button
+              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${activePanel === 'art' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+              onClick={() => setActivePanel('art')}
+            >
+              美工数据
+            </button>
+            <button
+              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${activePanel === 'render' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+              onClick={() => setActivePanel('render')}
+            >
+              渲染数据
+            </button>
+          </div>
         </div>
 
+        {activePanel === 'art' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
           
-          {/* 系数图表 */}
+          {/* 美工系数图表 */}
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden flex flex-col h-full">
             <BarChart
               title="美工本月系数统计"
@@ -132,7 +189,7 @@ const ArtDataPage = () => {
             />
           </div>
 
-          {/* 平均完成时间图表 */}
+          {/* 美工平均完成时间图表 */}
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden flex flex-col h-full">
             <BarChart
               title="美工平均完成时间统计"
@@ -153,6 +210,52 @@ const ArtDataPage = () => {
           </div>
 
         </div>
+        )}
+
+        {activePanel === 'render' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
+          {/* 渲染系数图表 */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden flex flex-col h-full">
+            <BarChart
+              title="渲染本月系数统计"
+              subtitle="使用滚动条或鼠标滚轮缩放查看更多渲染"
+              xAxisName="系数"
+              yAxisData={renderCoefficientData.employeeIds}
+              seriesName="系数"
+              seriesData={renderCoefficientData.coefficients}
+              tooltipFormatter={(params) => `${params[0].axisValue}<br/>系数: ${params[0].value}`}
+              colorGradient={['#34d399', '#059669']}
+              emphasisColorGradient={['#6ee7b7', '#10b981']}
+              loading={loading.renderCoefficients}
+              error={error.renderCoefficients}
+              onRetry={() => window.location.reload()}
+              isEmpty={renderCoefficientData.employeeIds.length === 0}
+              onItemClick={handleBarClick}
+            />
+          </div>
+
+          {/* 渲染平均完成时间图表 */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden flex flex-col h-full">
+            <BarChart
+              title="渲染平均完成时间统计"
+              subtitle="使用滚动条或鼠标滚轮缩放查看更多渲染"
+              xAxisName="平均耗时 (小时)"
+              yAxisData={renderCompletionTimeData.employeeIds}
+              seriesName="平均每单完成时间"
+              seriesData={renderCompletionTimeData.averageCompletionTimes}
+              tooltipFormatter={(params) => `${params[0].axisValue}<br/>平均耗时: ${params[0].value} 小时`}
+              colorGradient={['#60a5fa', '#2563eb']}
+              emphasisColorGradient={['#93c5fd', '#3b82f6']}
+              loading={loading.renderCompletionTimes}
+              error={error.renderCompletionTimes}
+              onRetry={() => window.location.reload()}
+              isEmpty={renderCompletionTimeData.employeeIds.length === 0}
+              onItemClick={handleBarClick}
+            />
+          </div>
+
+        </div>
+        )}
       </div>
     </div>
   );

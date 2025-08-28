@@ -231,7 +231,7 @@ async def get_readonly_monthly_commission_statistics(
     return api_response(success=True, data=monthly_sales_statistics)
 
 # 美工本月系数统计
-@router.get("/statistics/monthly-coefficient-statistics")
+@router.get("/statistics/art-monthly-coefficient-statistics")
 async def get_monthly_coefficient_statistics(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
@@ -241,7 +241,7 @@ async def get_monthly_coefficient_statistics(
     return api_response(success=True, data=monthly_coefficient_statistics)
 
 # 美工本月平均每单完成时间
-@router.get("/statistics/monthly-average-completion-time-statistics")
+@router.get("/statistics/art-monthly-average-completion-time-statistics")
 async def get_monthly_average_completion_time_statistics(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
@@ -249,6 +249,25 @@ async def get_monthly_average_completion_time_statistics(
     # 获取统计数据
     monthly_average_completion_time = await StatisticsService.get_monthly_average_completion_time_statistics(db)
     return api_response(success=True, data=monthly_average_completion_time)
+
+# 渲染本月系数统计
+@router.get("/statistics/render-monthly-coefficient-statistics")
+async def get_render_monthly_coefficient_statistics(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    monthly_coefficient_statistics = await StatisticsService.get_monthly_render_coefficient_statistics(db)
+    return api_response(success=True, data=monthly_coefficient_statistics)
+
+# 渲染本月平均每单完成时间
+@router.get("/statistics/render-monthly-average-completion-time-statistics")
+async def get_render_monthly_average_completion_time_statistics(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+) -> Dict[str, Any]:
+    monthly_average_completion_time = await StatisticsService.get_monthly_render_average_completion_time_statistics(db)
+    return api_response(success=True, data=monthly_average_completion_time)
+
 
 # 获取员工本月各周期销售额统计数据
 @router.get("/statistics/monthly-sales-amount-by-cycle")
