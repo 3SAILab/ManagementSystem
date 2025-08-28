@@ -36,8 +36,6 @@ const ArtDataPage = () => {
   const handleBarClick = useCallback((params) => {
     // 检查权限
     if (!hasTeamDashboardAccess()) {
-      // 如果没有权限，显示提示信息
-      toast.warning('您无需访问团队任务监控面板');
       return;
     }
     
