@@ -6,7 +6,6 @@ import { getSalesList } from "../services/authService";
 import DateUtils from "../utils/dateUtils";
 
 const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
-  if (!isOpen) return null;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -156,7 +155,8 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
     setErrors({});
     onClose();
   };
-
+  if (!isOpen) return null;
+  
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 animate-fade-in">
