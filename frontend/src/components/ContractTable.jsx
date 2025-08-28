@@ -70,7 +70,7 @@ const ContractTable = ({ contracts = [] }) => {
           <tr>
             <th className="p-4 text-sm font-semibold text-slate-600">合同金额</th>
             <th className="p-4 text-sm font-semibold text-slate-600">接入日期</th>
-            <th className="p-4 text-sm font-semibold text-slate-600">已付金额</th>
+            <th className="p-4 text-sm font-semibold text-slate-600">首付款</th>
             <th className="p-4 text-sm font-semibold text-slate-600">提点</th>
             <th className="p-4 text-sm font-semibold text-slate-600">类型</th>
             <th className="p-4 text-sm font-semibold text-slate-600">状态</th>
