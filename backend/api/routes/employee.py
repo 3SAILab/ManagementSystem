@@ -10,7 +10,6 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi import Query
 import logging
 from backend.config import settings
-from backend.api.deps.auth import require_departments
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -45,6 +44,14 @@ async def get_current_employee(
         )
     
     return await EmployeeService.get_current_employee(db, token)
+
+# 本地部门校验依赖，避免从deps.auth导入导致循环依赖
+def require_departments(*dept_names):
+    async def checker(current: Employee = Depends(get_current_employee)):
+        if current.department.name not in dept_names:
+            raise HTTPException(status_code=403, detail="仅限指定部门")
+        return current
+    return checker
 
 #员工登录
 @router.post("/token", response_model=Token)
