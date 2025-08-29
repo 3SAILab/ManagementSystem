@@ -210,7 +210,7 @@ const SalesDashboard = () => {
         commissionChartInstance.current = null;
       }
     };
-  }, [commissionChartData]); // 依赖于提点图表数据变化
+  }, [commissionChartData, commissionChartLabels]); // 依赖于提点图表数据变化
   // 获取销售额图表数据
   useEffect(() => {
     const fetchSalesAmountChartData = async () => {
@@ -303,7 +303,7 @@ const SalesDashboard = () => {
     };
 
     window.addEventListener('resize', handleResize);
-  }, [salesAmountChartData]); // 依赖于销售额图表数据变化
+  }, [salesAmountChartData,salesAmountChartLabels]); // 依赖于销售额图表数据变化
   // 合同列表
   const [contracts, setContracts] = useState([]);
   // 总条数
