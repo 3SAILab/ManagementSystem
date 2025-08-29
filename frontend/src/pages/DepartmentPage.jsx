@@ -20,6 +20,7 @@ export default function DepartmentPage() {
           toast.error('页面加载失败请重试');
         }
       } catch (error) {
+        console.error(error);
         toast.error('页面加载失败请重试');
       }
     }
@@ -39,6 +40,7 @@ export default function DepartmentPage() {
         toast.error('新增失败，请重试');
       }
     } catch (error) {
+      console.error(error);
       toast.error('系统错误，请重试')
     }
   };
@@ -64,6 +66,7 @@ export default function DepartmentPage() {
         toast.error(result.error);
       }
     } catch (error) {
+      console.error(error);
       toast.error('删除失败，请重试');
     }
   };

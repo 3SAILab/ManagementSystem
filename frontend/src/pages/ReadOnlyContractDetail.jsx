@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect ,useCallback} from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getContractDetail } from '../services/contractService';
 import { getTicketsByContractId } from '../services/ticketService';
@@ -22,7 +22,7 @@ const ReadOnlyContractDetail = () => {
   // 缓存所有工单的子任务数据
   const [subTasks, setSubTasks] = useState({});
   // 根据合同id刷新页面
-  const init = () => {
+  const init = useCallback(() => {
     getContractDetail(id).then(res => {
       setContractData({
         pendingDetails: res.pending_details,
@@ -33,18 +33,20 @@ const ReadOnlyContractDetail = () => {
         renderTasks: res.render_tasks,
       });
     }).catch(err => {
+      console.error(err);
       toast.error("加载合同详情失败");
     });
     getTicketsByContractId(id).then(res => {
       setTickets(res.data);
     }).catch(err => {
+      console.error(err);
       toast.error("加载工单列表失败");
     });
-  }
+  }, [id]);
 
   useEffect(() => {
     init();
-  }, [id]);
+  }, [init]);
   // 选中的工单id
   const [expandedTicketId, setExpandedTicketId] = useState(null);
   // 👇 新增：切换展开状态并获取合同数据的函数
