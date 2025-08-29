@@ -8,10 +8,10 @@ export const addContract = async (contract) => {
 };
 
 // 获取个人成交合同
-export const getContracts = async ({ name, status, contract_type, page, page_size }) => {
+export const getContracts = async ({ name, status, contract_type, source, page, page_size }) => {
     try {
         const response = await api.get('/contracts', {
-            params: { name, status, contract_type, page, page_size },
+            params: { name, status, contract_type, source, page, page_size },
             paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
         });
         return {success: true, data: response.data};
@@ -104,6 +104,9 @@ export const getReadonlyContracts = async (employeeId, filters = {}) => {
         }
         if (filters.contract_type && filters.contract_type.length > 0) {
             filters.contract_type.forEach(type => params.append('contract_type', type));
+        }
+        if (filters.source && filters.source.length > 0) {
+            filters.source.forEach(source => params.append('source', source));
         }
         if (filters.page) params.append('page', filters.page);
         if (filters.page_size) params.append('page_size', filters.page_size);

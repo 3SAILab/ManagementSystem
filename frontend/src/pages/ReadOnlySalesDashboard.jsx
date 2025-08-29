@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ArrowLeft } from 'lucide-react';
+import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ArrowLeft, Search, Filter } from 'lucide-react';
 import * as echarts from 'echarts';
 import { getReadonlyContracts } from '../services/contractService';
 import { getReadonlyMonthlySales, getReadonlyMonthlySalesStatistics, getReadonlyMonthlySalesByCycle, getReadonlyMonthlySalesAmountStatistics, getReadonlyMonthlySalesAmountByCycle } from '../services/statisticsService';
@@ -60,6 +60,7 @@ const ReadOnlySalesDashboard = () => {
     name: '',
     status: [],
     contract_type: [],
+    source: [],
     page: 1,
     page_size: 10
   });
@@ -77,6 +78,20 @@ const ReadOnlySalesDashboard = () => {
   const [currentSalesAmountView, setCurrentSalesAmountView] = useState('月度');
   const [salesAmountChartData, setSalesAmountChartData] = useState([]);
   const [salesAmountChartLabels, setSalesAmountChartLabels] = useState([]);
+
+  // 筛选下拉菜单状态
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // 点击外部关闭筛选菜单
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('#filter-btn') && !event.target.closest('#filter-dropdown')) {
+        setIsFilterOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   // 合同列表
   const [contracts, setContracts] = useState([]);
@@ -514,8 +529,158 @@ const ReadOnlySalesDashboard = () => {
       {/* 订单尾款跟踪表格 */}
       <div className="flex-grow flex flex-col bg-white rounded-xl shadow-sm border overflow-visible min-h-0">
         {/* 表格头部 */}
-        <div className="bg-white">
-          <h3 className="p-4 border-b border-slate-200 text-lg font-semibold">合同尾款跟踪</h3>
+        <div className="bg-white px-6 py-6 border-b border-slate-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-800 mb-2">合同尾款跟踪</h3>
+              <p className="text-sm text-slate-600">管理客户合同状态和付款情况</p>
+            </div>
+            {/* 搜索框和筛选按钮 */}
+            <div className="flex items-center gap-3">
+              {/* 筛选按钮 */}
+              <div className="relative">
+                <button
+                  id="filter-btn"
+                  className="bg-white border border-slate-300 text-slate-700 font-medium py-2 px-3 rounded-lg flex items-center gap-2 transition-colors hover:bg-slate-50"
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                >
+                  <Filter className="w-4 h-4" /> Filters
+                </button>
+
+                {/* 筛选下拉菜单 */}
+                {isFilterOpen && (
+                  <div
+                    id="filter-dropdown"
+                    className="absolute z-50 bg-white rounded-lg shadow-xl border border-slate-200 p-4 transition-all duration-300 w-max"
+                    style={{
+                      right: 0,
+                      top: '100%',
+                      marginTop: '5px',
+                      minWidth: '280px',
+                      maxWidth: '320px',
+                      maxHeight: '80vh',
+                      overflowY: 'auto',
+                    }}
+                  >
+                    {/* 状态筛选 */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-800 mb-3">按状态筛选</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['已结算', '待结算'].map((status) => (
+                          <div key={status} className="flex items-center space-x-2 text-sm">
+                            <input
+                              type="checkbox"
+                              value={status}
+                              className="form-checkbox h-4 w-4 rounded text-indigo-600"
+                              checked={filters.status.includes(status)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFilters({ ...filters, status: [...filters.status, status] });
+                                } else {
+                                  setFilters({ ...filters, status: filters.status.filter(s => s !== status) });
+                                }
+                              }}
+                            />
+                            <span>{status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 合同类型筛选 */}
+                    <div className="mt-4 border-t border-slate-200 pt-3">
+                      <h4 className="text-sm font-semibold text-slate-800 mb-3">按合同类型筛选</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['首单', '复购'].map((type) => (
+                          <div key={type} className="flex items-center space-x-2 text-sm">
+                            <input
+                              type="checkbox"
+                              value={type}
+                              className="form-checkbox h-4 w-4 rounded text-indigo-600"
+                              checked={filters.contract_type.includes(type)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFilters({ ...filters, contract_type: [...filters.contract_type, type] });
+                                } else {
+                                  setFilters({ ...filters, contract_type: filters.contract_type.filter(t => t !== type) });
+                                }
+                              }}
+                            />
+                            <span>{type}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 客户来源筛选 */}
+                    <div className="mt-4 border-t border-slate-200 pt-3">
+                      <h4 className="text-sm font-semibold text-slate-800 mb-3">按客户来源筛选</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['线上', '线下', '活动'].map((source) => (
+                          <div key={source} className="flex items-center space-x-2 text-sm">
+                            <input
+                              type="checkbox"
+                              value={source}
+                              className="form-checkbox h-4 w-4 rounded text-indigo-600"
+                              checked={filters.source && filters.source.includes(source)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFilters({ 
+                                    ...filters, 
+                                    source: [...(filters.source || []), source] 
+                                  });
+                                } else {
+                                  setFilters({ 
+                                    ...filters, 
+                                    source: (filters.source || []).filter(s => s !== source) 
+                                  });
+                                }
+                              }}
+                            />
+                            <span>{source}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 底部操作栏 */}
+                    <div className="mt-5 flex justify-between gap-2 border-t border-slate-200 pt-3">
+                      <button
+                        onClick={() => setFilters({ ...filters, status: [], contract_type: [], source: [] })}
+                        className="px-3 py-1.5 text-slate-600 hover:text-slate-700 text-sm font-medium border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                      >
+                        重置
+                      </button>
+                      <button
+                        onClick={() => setIsFilterOpen(false)}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors"
+                      >
+                        应用
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 搜索框 */}
+              <div className="relative w-full max-w-xs">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Search className="w-5 h-5 text-slate-400" />
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="搜索客户名称..." 
+                  className="form-input !pl-12 w-full bg-white border-slate-300 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                  value={filters.name}
+                  onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* 表格内容 */}
+        <div className="flex-grow overflow-y-auto">
           {contracts.length === 0 ? (
             <div className="p-4 text-center text-slate-500">
               {loadingStates.contracts ? (
