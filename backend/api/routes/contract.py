@@ -59,6 +59,7 @@ async def get_contracts(
     name: str = Query(None),
     status: List[str] = Query(None),
     contract_type: List[str] = Query(None),
+    source: List[str] = Query(None),
     page: int = Query(1),
     page_size: int = Query(10),
     db: AsyncSession = Depends(get_async_db),
@@ -69,7 +70,7 @@ async def get_contracts(
     查询合同列表，支持客户名称、状态、合同类型筛选与分页
     """
 
-    filter_params = ContractFilter(name=name, status=status, contract_type=contract_type, page=page, page_size=page_size)
+    filter_params = ContractFilter(name=name, status=status, contract_type=contract_type, source=source, page=page, page_size=page_size)
     contracts, total = await ContractService.get_contracts(db, filter_params, current_employee.id)
 
     total_pages = (total + page_size - 1) // page_size  # 正确的分页计算
@@ -87,7 +88,8 @@ async def get_contracts(
             transaction_time=contract.transaction_time,
             status=contract.status,
             is_recharged=contract.is_recharged,
-            settlement_time=contract.settlement_time
+            settlement_time=contract.settlement_time,
+            client_source=contract.client.source if contract.client else None
         ) 
         for contract in contracts
     ]
@@ -107,6 +109,7 @@ async def get_all_contracts(
     name: str = Query(None),
     status: List[str] = Query(['待结算']),
     contract_type: List[str] = Query(None),
+    source: List[str] = Query(None),
     page: int = Query(1),
     page_size: int = Query(10),
     db: AsyncSession = Depends(get_async_db),
@@ -116,7 +119,7 @@ async def get_all_contracts(
     查询所有待催收尾款合同列表，支持客户名称、状态、合同类型筛选与分页。
     用于管理端汇总视图。
     """
-    filter_params = ContractFilter(name=name, status=status, contract_type=contract_type, page=page, page_size=page_size)
+    filter_params = ContractFilter(name=name, status=status, contract_type=contract_type, source=source, page=page, page_size=page_size)
     contracts, total = await ContractService.get_contracts(db, filter_params, employee_id=0)
 
     total_pages = (total + page_size - 1) // page_size
@@ -308,6 +311,7 @@ async def get_readonly_contracts(
     name: str = Query(None),
     status: List[str] = Query(None),
     contract_type: List[str] = Query(None),
+    source: List[str] = Query(None),
     page: int = Query(1),
     page_size: int = Query(10),
     db: AsyncSession = Depends(get_async_db),
@@ -316,7 +320,7 @@ async def get_readonly_contracts(
     """只读模式获取指定销售人员的合同列表"""
     #权限认证
     
-    filter_params = ContractFilter(name=name, status=status, contract_type=contract_type, page=page, page_size=page_size)
+    filter_params = ContractFilter(name=name, status=status, contract_type=contract_type, source=source, page=page, page_size=page_size)
     contracts, total = await ContractService.get_contracts(db, filter_params, employee_id)
 
     total_pages = (total + page_size - 1) // page_size  # 正确的分页计算
@@ -334,7 +338,8 @@ async def get_readonly_contracts(
             transaction_time=contract.transaction_time,
             status=contract.status,
             is_recharged=contract.is_recharged,
-            settlement_time=contract.settlement_time
+            settlement_time=contract.settlement_time,
+            client_source=contract.client.source if contract.client else None
         ) 
         for contract in contracts
     ]

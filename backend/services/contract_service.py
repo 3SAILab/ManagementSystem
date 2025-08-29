@@ -54,9 +54,10 @@ class ContractService:
             )
 
         filters = []
+        needs_client_join = False
 
         if filter_params.name:
-            stmt = stmt.join(Client)
+            needs_client_join = True
             filters.append(Client.name.ilike(f"%{filter_params.name}%"))
 
         if filter_params.status:
@@ -68,6 +69,16 @@ class ContractService:
             # 将 Pydantic Enum 转为原始字符串值再过滤
             contract_type_values = [s.value if hasattr(s, 'value') else s for s in filter_params.contract_type]
             filters.append(Contract.contract_type.in_(contract_type_values))
+
+        if filter_params.source:
+            # 客户来源筛选
+            needs_client_join = True
+            source_values = filter_params.source
+            filters.append(Client.source.in_(source_values))
+
+        # 如果需要客户信息，则join Client表
+        if needs_client_join:
+            stmt = stmt.join(Client)
 
         if employee_id:
             filters.append(Contract.sales_id == employee_id)

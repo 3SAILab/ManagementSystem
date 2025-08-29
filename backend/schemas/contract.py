@@ -45,11 +45,13 @@ class ContractList(BaseModel):
     status: str
     is_recharged: bool
     settlement_time: Optional[datetime] = None
+    client_source: Optional[str] = None
 # 合同过滤
 class ContractFilter(BaseModel):
     name: Optional[str] = None
     status: Optional[List[str]] = None
     contract_type: Optional[List[str]] = None
+    source: Optional[List[str]] = None
     page: int = 1
     page_size: int = 10     
 
