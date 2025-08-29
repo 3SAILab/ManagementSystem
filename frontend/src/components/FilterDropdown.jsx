@@ -94,7 +94,7 @@ const FilterDropdown = ({ followUpStatusMap, filters, onFilterChange, onExport =
           <div>
             <h4 className="text-sm font-semibold text-slate-800 mb-3">按状态过滤</h4>
             <div className="grid grid-cols-2 gap-2">
-              {Object.entries(followUpStatusMap).map(([key, { text }]) => (
+              {Object.entries(followUpStatusMap).map(([, { text }]) => (
                 <div key={text} className="flex items-center space-x-2 text-sm">
                   <input
                     type="checkbox"
