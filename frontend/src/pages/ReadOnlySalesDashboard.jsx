@@ -81,6 +81,10 @@ const ReadOnlySalesDashboard = () => {
 
   // 筛选下拉菜单状态
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  // 临时筛选
+  const [tempStatus, setTempStatus] = useState([]);
+  const [tempContractType, setTempContractType] = useState([]);
+  const [tempSource, setTempSource] = useState([]);
 
   // 点击外部关闭筛选菜单
   useEffect(() => {
@@ -92,6 +96,15 @@ const ReadOnlySalesDashboard = () => {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  // 打开筛选时同步当前已应用的筛选到临时状态
+  useEffect(() => {
+    if (isFilterOpen) {
+      setTempStatus(filters.status || []);
+      setTempContractType(filters.contract_type || []);
+      setTempSource(filters.source || []);
+    }
+  }, [isFilterOpen, filters.status, filters.contract_type, filters.source]);
 
   // 合同列表
   const [contracts, setContracts] = useState([]);
@@ -572,12 +585,12 @@ const ReadOnlySalesDashboard = () => {
                               type="checkbox"
                               value={status}
                               className="form-checkbox h-4 w-4 rounded text-indigo-600"
-                              checked={filters.status.includes(status)}
+                              checked={tempStatus.includes(status)}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setFilters({ ...filters, status: [...filters.status, status] });
+                                  setTempStatus([...tempStatus, status]);
                                 } else {
-                                  setFilters({ ...filters, status: filters.status.filter(s => s !== status) });
+                                  setTempStatus(tempStatus.filter(s => s !== status));
                                 }
                               }}
                             />
@@ -597,12 +610,12 @@ const ReadOnlySalesDashboard = () => {
                               type="checkbox"
                               value={type}
                               className="form-checkbox h-4 w-4 rounded text-indigo-600"
-                              checked={filters.contract_type.includes(type)}
+                              checked={tempContractType.includes(type)}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setFilters({ ...filters, contract_type: [...filters.contract_type, type] });
+                                  setTempContractType([...tempContractType, type]);
                                 } else {
-                                  setFilters({ ...filters, contract_type: filters.contract_type.filter(t => t !== type) });
+                                  setTempContractType(tempContractType.filter(t => t !== type));
                                 }
                               }}
                             />
@@ -622,18 +635,12 @@ const ReadOnlySalesDashboard = () => {
                               type="checkbox"
                               value={source}
                               className="form-checkbox h-4 w-4 rounded text-indigo-600"
-                              checked={filters.source && filters.source.includes(source)}
+                              checked={tempSource.includes(source)}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setFilters({ 
-                                    ...filters, 
-                                    source: [...(filters.source || []), source] 
-                                  });
+                                  setTempSource([...(tempSource || []), source]);
                                 } else {
-                                  setFilters({ 
-                                    ...filters, 
-                                    source: (filters.source || []).filter(s => s !== source) 
-                                  });
+                                  setTempSource((tempSource || []).filter(s => s !== source));
                                 }
                               }}
                             />
@@ -646,13 +653,26 @@ const ReadOnlySalesDashboard = () => {
                     {/* 底部操作栏 */}
                     <div className="mt-5 flex justify-between gap-2 border-t border-slate-200 pt-3">
                       <button
-                        onClick={() => setFilters({ ...filters, status: [], contract_type: [], source: [] })}
+                        onClick={() => {
+                          setTempStatus([]);
+                          setTempContractType([]);
+                          setTempSource([]);
+                        }}
                         className="px-3 py-1.5 text-slate-600 hover:text-slate-700 text-sm font-medium border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                       >
                         重置
                       </button>
                       <button
-                        onClick={() => setIsFilterOpen(false)}
+                        onClick={() => {
+                          setFilters({
+                            ...filters,
+                            status: tempStatus,
+                            contract_type: tempContractType,
+                            source: tempSource,
+                            page: 1,
+                          });
+                          setIsFilterOpen(false);
+                        }}
                         className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors"
                       >
                         应用
