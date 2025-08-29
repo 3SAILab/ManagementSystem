@@ -170,6 +170,35 @@ const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
               </div>
             </div>
           </div>
+          
+          {/* 自动结算提示 */}
+          {formData.contractAmount > 0 && formData.paidAmount > 0 && (
+            <div className={`rounded-lg p-3 border ${
+              formData.contractAmount === formData.paidAmount 
+                ? 'bg-green-50 border-green-200' 
+                : 'bg-blue-50 border-blue-200'
+            }`}>
+              <div className="flex items-center space-x-2">
+                <svg className={`w-5 h-5 ${
+                  formData.contractAmount === formData.paidAmount 
+                    ? 'text-green-600' 
+                    : 'text-blue-600'
+                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className={`text-sm font-medium ${
+                  formData.contractAmount === formData.paidAmount 
+                    ? 'text-green-800' 
+                    : 'text-blue-800'
+                }`}>
+                  {formData.contractAmount === formData.paidAmount 
+                    ? '订单金额等于已付金额，合同将自动设置为已结算状态' 
+                    : '订单金额大于已付金额，合同将设置为待结算状态'
+                  }
+                </span>
+              </div>
+            </div>
+          )}
 
           <hr className="border-slate-200 my-6" />
 

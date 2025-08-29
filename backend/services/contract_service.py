@@ -22,13 +22,23 @@ class ContractService:
         client = result.scalar_one()
         if not client:
             raise HTTPException(status_code=404, detail="客户不存在")
+        
+        # 检查订单金额是否等于已付金额，如果相等则自动设置为已结算状态
+        current_time = datetime.now(timezone.utc)
+        if contract.total_amount == contract.paid_amount:
+            status = "已结算"
+            settlement_time = current_time
+        else:
+            status = "待结算"
+            settlement_time = None
+        
         contract = Contract(
             client_id=contract.client_id,
             sales_id=sales_id,
             prepayment_sales_id=sales_id,
             final_payment_sales_id=sales_id,
             contract_type=contract.contract_type,
-            status="待结算",
+            status=status,
             total_amount=contract.total_amount,
             paid_amount=contract.paid_amount,
             commission_rate=contract.commission_rate,
@@ -37,9 +47,10 @@ class ContractService:
             image_count=contract.image_count,
             workflow_count=contract.workflow_count,
             transaction_time=contract.transaction_time,
+            settlement_time=settlement_time,
             is_recharged=contract.is_recharged,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc)
+            created_at=current_time,
+            updated_at=current_time
         )
         db.add(contract)
         await db.flush()
