@@ -128,7 +128,7 @@ export const getReadonlyMonthlySalesStatistics = async (employeeId) => {
 };
 
 // 美工本月系数统计
-export const getMonthlyCoefficientStatistics = async () => {
+export const getArtMonthlyCoefficientStatistics = async () => {
     try {
         const response = await api.get('/statistics/art-monthly-coefficient-statistics');
         if (response.data.success) {
@@ -142,7 +142,7 @@ export const getMonthlyCoefficientStatistics = async () => {
 };
 
 // 本月美工平均每单完成时间
-export const getMonthlyAverageCompletionTimeStatistics = async () => {
+export const getArtMonthlyAverageCompletionTimeStatistics = async () => {
     try {
         const response = await api.get('/statistics/art-monthly-average-completion-time-statistics');
         if (response.data.success) {

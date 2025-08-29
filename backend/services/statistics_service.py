@@ -469,7 +469,7 @@ class StatisticsService:
 
     # 美工本月系数统计
     @staticmethod
-    async def get_monthly_coefficient_statistics(db: AsyncSession):
+    async def get_art_monthly_coefficient_statistics(db: AsyncSession):
         # 查询每个美工员工的 difficulty_score 总和
         result = await db.execute(
             select(
@@ -522,7 +522,7 @@ class StatisticsService:
 
     # 美工本月平均每单完成时间
     @staticmethod
-    async def get_monthly_average_completion_time_statistics(db: AsyncSession):
+    async def get_art_monthly_average_completion_time_statistics(db: AsyncSession):
         # 查询每个美工员工的平均每单完成时间
         result = await db.execute(
             select(
@@ -555,7 +555,7 @@ class StatisticsService:
 
     # 渲染本月系数统计（与美工不同的系数计算）
     @staticmethod
-    async def get_monthly_render_coefficient_statistics(db: AsyncSession):
+    async def get_render_monthly_coefficient_statistics(db: AsyncSession):
         result = await db.execute(
             select(
                 SubTask.charge_id,
@@ -596,7 +596,7 @@ class StatisticsService:
 
     # 渲染本月平均每单完成时间
     @staticmethod
-    async def get_monthly_render_average_completion_time_statistics(db: AsyncSession):
+    async def get_render_monthly_average_completion_time_statistics(db: AsyncSession):
         result = await db.execute(
             select(
                 SubTask.charge_id,
