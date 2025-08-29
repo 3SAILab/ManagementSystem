@@ -78,7 +78,7 @@ const PendingReceivables = () => {
               <tr className="bg-slate-50 text-left text-slate-600 text-sm">
                 <th className="p-3">客户</th>
                 <th className="p-3">总金额</th>
-                <th className="p-3">已支付金额</th>
+                <th className="p-3">首付款</th>
                 <th className="p-3">合同接入时间</th>
                 <th className="p-3">销售</th>
                 <th className="p-3">是否充值</th>
