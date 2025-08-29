@@ -687,6 +687,13 @@ const SalesDashboard = () => {
                           setTempStatus([]);
                           setTempContractType([]);
                           setTempSource([]);
+                          setFilters({
+                            ...filters,
+                            status: [],
+                            contract_type: [],
+                            source: [],
+                            page: 1,
+                          });
                         }}
                         className="px-3 py-1.5 text-slate-600 hover:text-slate-700 text-sm font-medium border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                       >
