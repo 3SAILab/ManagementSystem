@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // 如果使用 React Router 进行页面跳转
-import { sendVerificationCode, verifyCode, resetPassword } from '../services/authService';
+import { sendVerificationCode, resetPassword } from '../services/authService';
 const PasswordReset = ({ onSuccess, onError, className = '' }) => {
     const [email, setEmail] = useState('');
     const [verificationCode, setVerificationCode] = useState('');
