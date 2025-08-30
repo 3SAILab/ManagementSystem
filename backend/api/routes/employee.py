@@ -214,7 +214,7 @@ async def get_group_members(
     
 
 #获取销售列表
-@router.get("/employee/sales/list", response_model=api_response, dependencies=[Depends(require_departments("人事行政部"))])
+@router.get("/employee/sales/list", response_model=api_response)
 async def get_sales_list(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)

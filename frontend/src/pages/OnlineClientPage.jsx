@@ -300,9 +300,9 @@ const OnlineClientPage = () => {
 
                                     {/* 表体 */}
                                     <tbody className="bg-white divide-y divide-slate-200">
-                                        {clients.map((client) => (
+                                        {clients.map((client, index) => (
                                             <tr
-                                                key={client.id}
+                                                key={`${client.id || 'unknown'}-${index}`}
                                                 onClick={() => setClientLogId(client.id)}
                                                 className={`hover:bg-slate-50 cursor-pointer ${
                                                     clientLogId === client.id ? 'bg-indigo-50' : ''
