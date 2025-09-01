@@ -10,7 +10,7 @@ from backend.db.session import get_async_db
 from backend.schemas.client import ClientFilter
 from backend.models.client import Client
 from backend.models.employee import Employee
-from backend.utils.data_utils import to_datetime
+from backend.utils.date_utils import to_datetime
 from openpyxl import Workbook
 from io import BytesIO
 from backend.api.deps.auth import require_departments

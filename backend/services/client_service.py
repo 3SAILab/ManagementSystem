@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from datetime import datetime, timezone
 from backend.models.employee import Employee
 from sqlalchemy.orm import selectinload
-from backend.utils.data_utils import to_datetime
+from backend.utils.date_utils import to_datetime
 
 class ClientService:
 

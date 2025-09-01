@@ -9,7 +9,7 @@ from backend.services.sales_service import SalesService
 from backend.utils.response import api_response
 from typing import Dict, Any
 import asyncio
-from backend.utils.data_utils import get_now, get_current_month_range, get_last_month_range
+from backend.utils.date_utils import get_now, get_current_month_range, get_last_month_range
 
 router = APIRouter()
 
