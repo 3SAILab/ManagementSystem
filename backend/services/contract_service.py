@@ -27,7 +27,7 @@ class ContractService:
         current_time = datetime.now(timezone.utc)
         if contract.total_amount == contract.paid_amount:
             status = "已结算"
-            settlement_time = current_time
+            settlement_time = contract.transaction_time
         else:
             status = "待结算"
             settlement_time = None

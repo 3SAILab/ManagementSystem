@@ -397,7 +397,7 @@ export default function SalesDataPages() {
               ) : (
                 <ArrowDown className="w-4 h-4" />
               )}
-              {Math.abs(metrics.salesAmountChange).toFixed(1)}%
+              {(Math.abs(metrics.salesAmountChange)*100).toFixed(1)}%
             </p>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-md">
@@ -419,7 +419,7 @@ export default function SalesDataPages() {
               ) : (
                 <ArrowDown className="w-4 h-4" />
               )}
-              {Math.abs(metrics.totalOnlineReceivedChange).toFixed(1)}%
+              {(Math.abs(metrics.totalOnlineReceivedChange)*100).toFixed(1)}%
             </p>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-md relative">
@@ -435,7 +435,7 @@ export default function SalesDataPages() {
               ) : (
                 <ArrowDown className="w-4 h-4" />
               )}
-              {Math.abs(metrics.totalReceivedChange).toFixed(1)}%
+              {(Math.abs(metrics.totalReceivedChange)*100).toFixed(1)}%
             </p>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-md">
