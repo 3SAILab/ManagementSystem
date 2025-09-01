@@ -103,24 +103,22 @@ async def get_contracts(
     )
     return paginated.model_dump()
 
-# 获取所有待催收尾款合同（不限定当前登录销售）
+# 获取所有尾款未结算合同（不限定当前登录销售）
 @router.get("/contracts/pending")
 async def get_all_contracts(
     name: str = Query(None),
     status: List[str] = Query(['待结算']),
-    contract_type: List[str] = Query(None),
-    source: List[str] = Query(None),
     page: int = Query(1),
     page_size: int = Query(10),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
     """
-    查询所有待催收尾款合同列表，支持客户名称、状态、合同类型筛选与分页。
+    查询所有尾款未结算合同列表
     用于管理端汇总视图。
     """
-    filter_params = ContractFilter(name=name, status=status, contract_type=contract_type, source=source, page=page, page_size=page_size)
-    contracts, total = await ContractService.get_contracts(db, filter_params, employee_id=0)
+    filter_params = ContractFilter(name=name, status=status, page=page, page_size=page_size)
+    contracts, total = await ContractService.get_pending_contracts(db, filter_params, employee_id=0)
 
     total_pages = (total + page_size - 1) // page_size
 

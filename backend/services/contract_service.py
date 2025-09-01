@@ -56,7 +56,7 @@ class ContractService:
         await db.flush()
         return api_response(success=True, data={"msg": "合同添加成功"})
 
-    # 获取个人成交合同列表
+    # 获取合同列表
     @staticmethod
     async def get_contracts(db: AsyncSession, filter_params: ContractFilter, employee_id: int) -> Tuple[List[Contract], int]:
         stmt = select(Contract).options(
@@ -197,4 +197,48 @@ class ContractService:
         await db.flush()
         return api_response(success=True, data={"msg": "合同删除成功"})
     
+    # 获取尾款未结算合同列表（合同预付金额小于合同总金额且合同状态为待结算）
+    @staticmethod
+    async def get_pending_contracts(db: AsyncSession, filter_params: ContractFilter, employee_id: int) -> Tuple[List[Contract], int]:
+        stmt = select(Contract).options(
+            selectinload(Contract.client),
+            selectinload(Contract.sales)
+            )
 
+        filters = []
+        needs_client_join = False
+
+        if filter_params.name:
+            needs_client_join = True
+            filters.append(Client.name.ilike(f"%{filter_params.name}%"))
+
+        if filter_params.status:
+            # 将 Pydantic Enum 转为原始字符串值再过滤
+            status_values = [s.value if hasattr(s, 'value') else s for s in filter_params.status]
+            filters.append(Contract.status.in_(status_values))
+        filters.append(Contract.paid_amount < Contract.total_amount)
+        # 如果需要客户信息，则join Client表
+        if needs_client_join:
+            stmt = stmt.join(Client)
+
+        if employee_id:
+            filters.append(Contract.sales_id == employee_id)
+
+        if filters:
+            stmt = stmt.where(and_(*filters))
+        
+        # 按创建时间升序排序（最新的记录在前面）
+        stmt = stmt.order_by(Contract.created_at.desc())
+        
+        # 获取总数
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total_result = await db.execute(count_stmt)
+        total = total_result.scalar_one()
+
+        # 添加分页
+        stmt = stmt.offset((filter_params.page - 1) * filter_params.page_size).limit(filter_params.page_size)
+
+        # 执行查询
+        result = await db.execute(stmt)
+        contracts = list(result.scalars().all())
+        return contracts, total
