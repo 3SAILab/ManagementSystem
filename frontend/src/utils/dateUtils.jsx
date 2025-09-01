@@ -66,6 +66,23 @@ const DateUtils = {
     const mm = pad(d.getMinutes());
     return `${y}-${m}-${day} ${hh}:${mm}`;
   },
+
+  /**
+   * 获取当前月份和上个月份
+   * @returns {string[]}
+   */
+  getCurrentMonthAndLastMonth() {
+    const pad = (n) => String(n).padStart(2, '0');
+    const now = new Date();
+    
+    const thisMonth = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+    
+    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonth = `${lastMonthDate.getFullYear()}-${pad(lastMonthDate.getMonth() + 1)}`;
+  
+    return [thisMonth, lastMonth];
+  },
+  
 };
 
 export default DateUtils;

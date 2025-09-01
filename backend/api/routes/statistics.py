@@ -1,5 +1,5 @@
 import asyncio
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.employee import Employee
 from backend.db.session import get_async_db
@@ -9,7 +9,7 @@ from backend.services.sales_service import SalesService
 from backend.utils.response import api_response
 from typing import Dict, Any
 import asyncio
-from backend.utils.date_utils import get_now, get_current_month_range, get_last_month_range
+from backend.utils.date_utils import get_month_range, get_now, get_current_month_range, get_last_month_range
 
 router = APIRouter()
 
@@ -120,7 +120,8 @@ async def get_client_activity_log_statistics_by_sales_id(
 @router.get("/statistics/sales-data-statistics")
 async def get_sales_data_statistics(
     db: AsyncSession = Depends(get_async_db),
-    current_employee: Employee = Depends(get_current_employee)
+    current_employee: Employee = Depends(get_current_employee),
+    month: str = Query(None)
 ) -> Dict[str, Any]:
     """销售数据看板 - 获取本月销售数据统计
     
@@ -129,12 +130,17 @@ async def get_sales_data_statistics(
     - 线上订单数量、线下订单数量、线上销售额、线下销售额
     - 销售个人业绩(按照销售额统计)、销售个人业绩(按照实际到账金额统计)、产品类目分布
     """
-    #当前时间
-    current_date = get_now()
-    #当前月份的开始和结束时间
-    start_date, end_date = get_current_month_range()
-    # 上个月的开始和结束时间
-    last_month_start_date, last_month_end_date = get_last_month_range()
+    if month:
+        year, month_num = month.split('-')
+        start_date, end_date = get_month_range(int(year), int(month_num))
+        if int(month_num) == 1:
+            last_month_start_date, last_month_end_date = get_month_range(int(year) - 1, 12)
+        else:
+            last_month_start_date, last_month_end_date = get_month_range(int(year), int(month_num) - 1)
+    else:
+        start_date, end_date = get_current_month_range()
+        last_month_start_date, last_month_end_date = get_last_month_range()
+    
     # 获取销售数据统计
     result = await asyncio.gather(
         SalesService.get_sales_amount(db, start_date=start_date, end_date=end_date), # 本月销售额

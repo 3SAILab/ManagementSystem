@@ -71,10 +71,10 @@ export const getMonthlySalesByCycle = async () => {
 }
 
 
-// 本月销售数据
-export const getSalesData = async () => {
+// 月度销售数据
+export const getSalesData = async (month) => {
     try {
-        const response = await api.get('/statistics/sales-data-statistics');
+        const response = await api.get(`/statistics/sales-data-statistics?month=${month}`);
         if (response.data.success) {
             return {success: true, data: response.data.data};
         } else {
