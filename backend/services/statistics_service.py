@@ -15,14 +15,6 @@ CLIENT_STATUS_CONVERTED = ["已成交", "复购"]
 CONTRACT_TYPES_VALID = ["首单", "复购"]
 class StatisticsService:
 
-    #当前时间
-    current_date = get_now()
-    #当前月份的开始和结束时间
-    start_date, end_date = get_current_month_range()
-    # 上个月的开始和结束时间
-    last_month_start_date, last_month_end_date = get_last_month_range()
-
-
     # 获取客户数量和增长率
     """
     获取客户数量
@@ -113,11 +105,13 @@ class StatisticsService:
         """
         获取本月客户数量及环比增长率（双查询 + 公共方法）
         """
+        start_date, end_date = get_current_month_range()
+        last_month_start_date, last_month_end_date = get_last_month_range()
         # 获取当前月份客户数量
         current_month_count = await StatisticsService._count_clients(
             db=db,
-            start_date=StatisticsService.start_date,
-            end_date=StatisticsService.end_date,
+            start_date=start_date,
+            end_date=end_date,
             sales_id=sales_id,
             source=source
         )
@@ -125,8 +119,8 @@ class StatisticsService:
         # 获取上月客户数量
         last_month_count = await StatisticsService._count_clients(
             db=db,
-            start_date=StatisticsService.last_month_start_date,
-            end_date=StatisticsService.last_month_end_date,
+            start_date=last_month_start_date,
+            end_date=last_month_end_date,
             sales_id=sales_id,
             source=source
         )
@@ -151,19 +145,21 @@ class StatisticsService:
         """
         获取本月成交量（首单+复购）及环比增长率
         """
+        start_date, end_date = get_current_month_range()
+        last_month_start_date, last_month_end_date = get_last_month_range()
         # 本月成交量
         current_count = await StatisticsService._count_contracts(
             db=db,
-            start_date=StatisticsService.start_date,
-            end_date=StatisticsService.end_date,
+            start_date=start_date,
+            end_date=end_date,
             sales_id=sales_id,
             source=source
         )
         # 上月成交量
         last_count = await StatisticsService._count_contracts(
             db=db,
-            start_date=StatisticsService.last_month_start_date,
-            end_date=StatisticsService.last_month_end_date,
+            start_date=last_month_start_date,
+            end_date=last_month_end_date,
             sales_id=sales_id,
             source=source
         )
@@ -186,11 +182,13 @@ class StatisticsService:
         转化率 = (本月创建且已成交客户数) / (本月创建客户总数)
         变化率 = (本月转化率 - 上月转化率) / 上月转化率 * 100%
         """
+        start_date, end_date = get_current_month_range()
+        last_month_start_date, last_month_end_date = get_last_month_range()
         # 本月成交客户数
         current_converted = await StatisticsService._count_clients(
                 db=db,
-                start_date=StatisticsService.start_date,
-                end_date=StatisticsService.end_date,
+                start_date=start_date,
+                end_date=end_date,
                 sales_id=sales_id,
                 source=source,
                 status_in=CLIENT_STATUS_CONVERTED
@@ -198,16 +196,16 @@ class StatisticsService:
             # 本月客户总数
         current_total = await StatisticsService._count_clients(
                 db=db,
-                start_date=StatisticsService.start_date,
-                end_date=StatisticsService.end_date,
+                start_date=start_date,
+                end_date=end_date,
                 sales_id=sales_id,
                 source=source
             )
             # 上月成交客户数
         last_converted = await StatisticsService._count_clients(
                 db=db,
-                start_date=StatisticsService.last_month_start_date,
-                end_date=StatisticsService.last_month_end_date,
+                start_date=last_month_start_date,
+                end_date=last_month_end_date,
                 sales_id=sales_id,
                 source=source,
                 status_in=CLIENT_STATUS_CONVERTED
@@ -215,8 +213,8 @@ class StatisticsService:
             # 上月客户总数
         last_total = await StatisticsService._count_clients(
                 db=db,
-                start_date=StatisticsService.last_month_start_date,
-                end_date=StatisticsService.last_month_end_date,
+                start_date=last_month_start_date,
+                end_date=last_month_end_date,
                 sales_id=sales_id,
                 source=source
             )
@@ -243,7 +241,8 @@ class StatisticsService:
         获取平均成交周期（天）及环比变化率
         成交周期 = 首单合同 transaction_time - 客户创建时间 created_at
         """
-
+        start_date, end_date = get_current_month_range()
+        last_month_start_date, last_month_end_date = get_last_month_range()
         async def _get_avg_cycle(start_date: datetime, end_date: datetime) -> float:
             # 先计算每个客户的成交周期（天），再求平均
             # 1. 子查询：每个客户的成交周期
@@ -276,8 +275,8 @@ class StatisticsService:
             return float(result.scalar() or 0.0)
 
         # 并发获取本月和上月
-        current_avg = await _get_avg_cycle(StatisticsService.start_date, StatisticsService.end_date)
-        last_avg = await _get_avg_cycle(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date)
+        current_avg = await _get_avg_cycle(start_date, end_date)
+        last_avg = await _get_avg_cycle(last_month_start_date, last_month_end_date)
         # 计算环比变化时间
         change_time = (
             (current_avg - last_avg)
@@ -289,10 +288,12 @@ class StatisticsService:
     @staticmethod
     async def get_monthly_sales(db: AsyncSession, employee_id: int):
         # 获取当前月份的销售额(坏单只统计预付金额其余正常统计)
+        start_date, end_date = get_current_month_range()
+        last_month_start_date, last_month_end_date = get_last_month_range()
         # 统计坏单
         bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount)).where(
             and_(
-                Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
+                Contract.transaction_time.between(start_date, end_date),
                 Contract.sales_id == employee_id,
                 Contract.status == "坏单"
             )
@@ -301,7 +302,7 @@ class StatisticsService:
         # 统计正常单
         result = await db.execute(select(func.sum(Contract.total_amount)).where(
             and_(
-                Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
+                Contract.transaction_time.between(start_date, end_date),
                 Contract.sales_id == employee_id,
                 Contract.status != "坏单"
             )
@@ -312,7 +313,7 @@ class StatisticsService:
         # 统计坏单
         bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount)).where(
             and_(
-                Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                Contract.transaction_time.between(last_month_start_date, last_month_end_date),
                 Contract.sales_id == employee_id,
                 Contract.status == "坏单"
             )
@@ -321,7 +322,7 @@ class StatisticsService:
         # 统计正常单
         result = await db.execute(select(func.sum(Contract.total_amount)).where(
             and_(
-                Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                Contract.transaction_time.between(last_month_start_date, last_month_end_date),
                 Contract.sales_id == employee_id,
                 Contract.status != "坏单"
             )
@@ -338,9 +339,11 @@ class StatisticsService:
     @staticmethod
     async def get_monthly_commission(db: AsyncSession, employee_id: int):
         # 获取当前月份的提点
-        current_month_commission = await SalesService.get_sales_commission(db, sales_id=employee_id, start_date=StatisticsService.start_date, end_date=StatisticsService.end_date)
+        start_date, end_date = get_current_month_range()
+        last_month_start_date, last_month_end_date = get_last_month_range()
+        current_month_commission = await SalesService.get_sales_commission(db, sales_id=employee_id, start_date=start_date, end_date=end_date)
         # 获取上个月的提点  
-        last_month_commission = await SalesService.get_sales_commission(db, sales_id=employee_id, start_date=StatisticsService.last_month_start_date, end_date=StatisticsService.last_month_end_date)
+        last_month_commission = await SalesService.get_sales_commission(db, sales_id=employee_id, start_date=last_month_start_date, end_date=last_month_end_date)
         # 计算提点变化
         if last_month_commission > 0:
             return current_month_commission, (current_month_commission - last_month_commission) / last_month_commission * 100
@@ -351,9 +354,11 @@ class StatisticsService:
     @staticmethod
     async def get_monthly_order_count(db: AsyncSession, employee_id: int):
         # 获取当前月份的订单数
+        start_date, end_date = get_current_month_range()
+        last_month_start_date, last_month_end_date = get_last_month_range()
         result = await db.execute(select(func.count(Contract.id)).where(
             and_(
-                Contract.transaction_time.between(StatisticsService.start_date, StatisticsService.end_date),
+                Contract.transaction_time.between(start_date, end_date),
                 Contract.sales_id == employee_id
             )
         ))
@@ -361,7 +366,7 @@ class StatisticsService:
         # 获取上个月的订单数
         result = await db.execute(select(func.count(Contract.id)).where(
             and_(
-                Contract.transaction_time.between(StatisticsService.last_month_start_date, StatisticsService.last_month_end_date),
+                Contract.transaction_time.between(last_month_start_date, last_month_end_date),
                 Contract.sales_id == employee_id
             )
         ))
@@ -391,7 +396,7 @@ class StatisticsService:
         monthly_sales_statistics = []
         # 获取员工今年各月度销售统计数据(其中坏单只统计预付金额其余正常统计)
         for month in range(1, 13):
-            start_date = datetime(StatisticsService.current_date.year, month, 1)
+            start_date = datetime(get_now().year, month, 1)
             end_date = start_date + timedelta(days=31)
             monthly_sales = await SalesService.get_sales_commission(db, sales_id=employee_id, start_date=start_date, end_date=end_date)
             # 格式化为两位小数
@@ -471,6 +476,7 @@ class StatisticsService:
     @staticmethod
     async def get_art_monthly_coefficient_statistics(db: AsyncSession):
         # 查询每个美工员工的 difficulty_score 总和
+        start_date, end_date = get_current_month_range()
         result = await db.execute(
             select(
                 SubTask.charge_id,
@@ -480,7 +486,7 @@ class StatisticsService:
             .join(Employee, SubTask.charge_id == Employee.id)  # 关联员工表
             .where(
                 and_(
-                    SubTask.started_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    SubTask.started_at.between(start_date, end_date),
                     SubTask.difficulty_score.is_not(None),
                     SubTask.task_type == "美工",
                     SubTask.status == "已完成"
@@ -524,6 +530,7 @@ class StatisticsService:
     @staticmethod
     async def get_art_monthly_average_completion_time_statistics(db: AsyncSession):
         # 查询每个美工员工的平均每单完成时间
+        start_date, end_date = get_current_month_range()
         result = await db.execute(
             select(
                 SubTask.charge_id,
@@ -533,7 +540,7 @@ class StatisticsService:
             .join(Employee, SubTask.charge_id == Employee.id)
             .where(
                 and_(
-                    SubTask.started_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    SubTask.started_at.between(start_date, end_date),
                     SubTask.task_type == "美工",
                     SubTask.status == "已完成"
                 )
@@ -556,6 +563,7 @@ class StatisticsService:
     # 渲染本月系数统计（与美工不同的系数计算）
     @staticmethod
     async def get_render_monthly_coefficient_statistics(db: AsyncSession):
+        start_date, end_date = get_current_month_range()
         result = await db.execute(
             select(
                 SubTask.charge_id,
@@ -565,7 +573,7 @@ class StatisticsService:
             .join(Employee, SubTask.charge_id == Employee.id)
             .where(
                 and_(
-                    SubTask.started_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    SubTask.started_at.between(start_date, end_date),
                     SubTask.difficulty_score.is_not(None),
                     SubTask.task_type == "渲染",
                     SubTask.status == "已完成"
@@ -597,6 +605,7 @@ class StatisticsService:
     # 渲染本月平均每单完成时间
     @staticmethod
     async def get_render_monthly_average_completion_time_statistics(db: AsyncSession):
+        start_date, end_date = get_current_month_range()
         result = await db.execute(
             select(
                 SubTask.charge_id,
@@ -606,7 +615,7 @@ class StatisticsService:
             .join(Employee, SubTask.charge_id == Employee.id)
             .where(
                 and_(
-                    SubTask.started_at.between(StatisticsService.start_date, StatisticsService.end_date),
+                    SubTask.started_at.between(start_date, end_date),
                     SubTask.task_type == "渲染",
                     SubTask.status == "已完成"
                 )
@@ -632,7 +641,7 @@ class StatisticsService:
         monthly_sales_amount_statistics = []
         # 获取员工今年各月度销售额统计数据(其中坏单只统计预付金额其余正常统计)
         for month in range(1, 13):
-            start_date = datetime(StatisticsService.current_date.year, month, 1)
+            start_date = datetime(get_now().year, month, 1)
             end_date = start_date + timedelta(days=31)
             # 统计坏单
             bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount)).where(
@@ -676,7 +685,7 @@ class StatisticsService:
             ...
         ]
         """
-        today = date.today()
+        today = get_now()
         year, month = today.year, today.month
 
         # 获取本月天数

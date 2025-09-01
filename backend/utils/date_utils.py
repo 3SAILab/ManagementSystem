@@ -51,7 +51,7 @@ def get_current_month_range() -> Tuple[datetime, datetime]:
         Tuple[datetime, datetime]: (本月开始时间, 本月结束时间)
         使用左闭右开区间 [start, end)
     """
-    now = datetime.now()
+    now = get_now()
     start_date = datetime(now.year, now.month, 1)
     
     # 计算下个月第一天
@@ -71,7 +71,7 @@ def get_last_month_range() -> Tuple[datetime, datetime]:
         Tuple[datetime, datetime]: (上月开始时间, 上个月结束时间)
         使用左闭右开区间 [start, end)
     """
-    now = datetime.now()
+    now = get_now()
     
     # 计算上个月
     if now.month == 1:
@@ -95,7 +95,7 @@ def get_current_quarter_range() -> Tuple[datetime, datetime]:
         Tuple[datetime, datetime]: (本季度开始时间, 本季度结束时间)
         使用左闭右开区间 [start, end)
     """
-    now = datetime.now()
+    now = get_now()
     quarter = (now.month - 1) // 3 + 1
     start_month = (quarter - 1) * 3 + 1
     
@@ -118,7 +118,7 @@ def get_last_quarter_range() -> Tuple[datetime, datetime]:
         Tuple[datetime, datetime]: (上季度开始时间, 上季度结束时间)
         使用左闭右开区间 [start, end)
     """
-    now = datetime.now()
+    now = get_now()
     quarter = (now.month - 1) // 3 + 1
     
     if quarter == 1:
@@ -147,7 +147,7 @@ def get_current_year_range() -> Tuple[datetime, datetime]:
         Tuple[datetime, datetime]: (本年开始时间, 本年结束时间)
         使用左闭右开区间 [start, end)
     """
-    now = datetime.now()
+    now = get_now()
     start_date = datetime(now.year, 1, 1)
     end_date = datetime(now.year + 1, 1, 1)
     
@@ -162,7 +162,7 @@ def get_last_year_range() -> Tuple[datetime, datetime]:
         Tuple[datetime, datetime]: (上年开始时间, 上年结束时间)
         使用左闭右开区间 [start, end)
     """
-    now = datetime.now()
+    now = get_now()
     start_date = datetime(now.year - 1, 1, 1)
     end_date = datetime(now.year, 1, 1)
     
@@ -177,7 +177,7 @@ def get_current_week_range() -> Tuple[datetime, datetime]:
         Tuple[datetime, datetime]: (本周开始时间, 本周结束时间)
         使用左闭右开区间 [start, end)
     """
-    now = datetime.now()
+    now = get_now()
     # 获取本周一
     days_since_monday = now.weekday()
     monday = now - timedelta(days=days_since_monday)
@@ -197,7 +197,7 @@ def get_last_week_range() -> Tuple[datetime, datetime]:
         Tuple[datetime, datetime]: (上周开始时间, 上周结束时间)
         使用左闭右开区间 [start, end)
     """
-    now = datetime.now()
+    now = get_now()
     # 获取本周一
     days_since_monday = now.weekday()
     monday = now - timedelta(days=days_since_monday)
@@ -229,7 +229,7 @@ def get_custom_date_range(
         Tuple[datetime, datetime]: (开始时间, 结束时间)
         使用左闭右开区间 [start, end)
     """
-    now = datetime.now()
+    now = get_now()
     
     if days is not None:
         # 从今天往前推days天
