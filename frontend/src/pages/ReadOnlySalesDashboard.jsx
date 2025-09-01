@@ -64,7 +64,16 @@ const ReadOnlySalesDashboard = () => {
     page: 1,
     page_size: 10
   });
+  // 初始化页码
+  useEffect(() => {
+    const saved = sessionStorage.getItem('salesDashboardPage');
+    if (saved) setFilters(prev => ({...prev, page: parseInt(saved)}));
+  }, []);
 
+  // 保存页码到sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem('salesDashboardPage', filters.page);
+  }, [filters.page]);
   // 提点图表
   const commissionChartRef = useRef(null);
   const commissionChartInstance = useRef(null);
