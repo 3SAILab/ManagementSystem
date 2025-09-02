@@ -51,7 +51,7 @@ const PendingReceivables = () => {
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate('/sales_data')}
+              onClick={() => navigate(-1)} 
               className="flex items-center justify-center w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all duration-200 text-slate-600"
             >
               <ArrowLeft size={20} />
