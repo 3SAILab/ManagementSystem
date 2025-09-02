@@ -165,10 +165,9 @@ async def get_group_members_with_task_count(
     #判断当前用户身份
     if current_employee.department.name == "生产部":
         if current_employee.role == EmployeeRole.owner:
-            # 获取生产部全体（美工+渲染）成员及工作负载
-            art_emps = await EmployeeService.get_production_employees_with_task_count(db, "美工")
-            render_emps = await EmployeeService.get_production_employees_with_task_count(db, "渲染")
-            return [art_emps, render_emps]
+            # 获取全体美工成员及工作负载
+            employee = await EmployeeService.get_production_employees_with_task_count(db, "美工")
+            return employee
         else:
             #获取组内成员以及工作负载(成员未完成的任务个数)
             employees = await EmployeeService.get_group_members_with_task_count(db, current_employee.id)
@@ -202,9 +201,8 @@ async def get_group_members(
     #判断当前用户身份
     if current_employee.role == EmployeeRole.owner:
         if current_employee.department.name == "生产部":
-            art_emps = await EmployeeService.get_production_employees_with_task_count(db, "美工")
-            render_emps = await EmployeeService.get_production_employees_with_task_count(db, "渲染")
-            return [art_emps, render_emps]
+            employee = await EmployeeService.get_production_employees_with_task_count(db, "美工")
+            return employee
         else:
             employees = await EmployeeService.get_employee_list_by_filter(db, position_name=current_employee.position.name)
             return employees
