@@ -56,7 +56,17 @@ export default function SalesDataPages() {
   const monthOptions = useMemo(() => {
     return DateUtils.getCurrentMonthAndLastMonth();
   }, []);
-  const [selectedMonth, setSelectedMonth] = useState(monthOptions[0]);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const saved = sessionStorage.getItem('salesDataSelectedMonth');
+    return saved && monthOptions.includes(saved) ? saved : monthOptions[0];
+  });
+
+  // 持久化选择的月份，返回页面时保持
+  useEffect(() => {
+    if (selectedMonth) {
+      sessionStorage.setItem('salesDataSelectedMonth', selectedMonth);
+    }
+  }, [selectedMonth]);
 
   // 获取销售数据
   useEffect(() => {
