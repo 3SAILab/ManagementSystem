@@ -56,24 +56,21 @@ const ReadOnlySalesDashboard = () => {
   });
 
   // 过滤条件
-  const [filters, setFilters] = useState({
-    name: '',
-    status: [],
-    contract_type: [],
-    source: [],
-    page: 1,
-    page_size: 10
+  const [filters, setFilters] = useState(() => {
+    const savedPage = sessionStorage.getItem(`readonlySalesDashboardPage_${id}`);
+    return {
+      name: '',
+      status: [],
+      contract_type: [],
+      source: [],
+      page: savedPage ? parseInt(savedPage, 10) : 1,
+      page_size: 10
+    };
   });
-  // 初始化页码
-  useEffect(() => {
-    const saved = sessionStorage.getItem('salesDashboardPage');
-    if (saved) setFilters(prev => ({...prev, page: parseInt(saved)}));
-  }, []);
-
   // 保存页码到sessionStorage
   useEffect(() => {
-    sessionStorage.setItem('salesDashboardPage', filters.page);
-  }, [filters.page]);
+    sessionStorage.setItem(`readonlySalesDashboardPage_${id}`, filters.page);
+  }, [filters.page, id]);
   // 提点图表
   const commissionChartRef = useRef(null);
   const commissionChartInstance = useRef(null);
