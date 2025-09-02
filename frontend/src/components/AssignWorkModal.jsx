@@ -214,7 +214,7 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
                 if (formData.estimated_completion_time === '' || formData.estimated_completion_time === null) {
                   toast.error('预计所需时间不能为空');
                   return;
-                } else if (formData.estimated_completion_time <= 0) {
+                } else if (formData.estimated_completion_time < 0) {
                   toast.error('预计所需时间必须大于0');
                   return;
                 }
@@ -223,7 +223,7 @@ const AssignWorkModal = ({ id, groupMembers, onClose, onSave }) => {
                 if (formData.difficulty_score === '' || formData.difficulty_score === null) {
                   toast.error('系数不能为空');
                   return;
-                } else if (formData.difficulty_score <= 0) {
+                } else if (formData.difficulty_score < 0) {
                   toast.error('系数必须大于0');
                   return;
                 }
