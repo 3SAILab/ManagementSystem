@@ -153,11 +153,12 @@ async def get_sales_data_statistics(
         SalesService.get_received_final_amount(db, start_date=start_date, end_date=end_date), # 本月尾款到账金额
         SalesService.get_pending_receivable(db, end_date=end_date), # 待催收尾款金额
         SalesService.get_channel_stats(db, start_date=start_date, end_date=end_date), # 线上/线下订单数量与销售额
+        SalesService.get_sales_order_count(db, start_date=start_date, end_date=end_date), # 各销售线上/线下订单数量
         SalesService.get_sales_performance_by_sales(db, start_date=start_date, end_date=end_date), # 销售个人业绩(按照销售额统计)
         SalesService.get_sales_performance_by_received(db, start_date=start_date, end_date=end_date), # 销售个人业绩(按照实际到账金额统计)
         SalesService.get_category_stats(db, start_date=start_date, end_date=end_date) # 产品类目销售额分布
     )
-    sales_amount, last_month_sales_amount, total_received_by_last, total_online_received, last_month_total_online_received, total_received, last_month_total_received, total_final_paid, pending_receivable, channel_stats, sales_performance_by_sales, sales_performance_by_received, category_stats = result
+    sales_amount, last_month_sales_amount, total_received_by_last, total_online_received, last_month_total_online_received, total_received, last_month_total_received, total_final_paid, pending_receivable, channel_stats, order_count, sales_performance_by_sales, sales_performance_by_received, category_stats = result
     # 计算本月销售额环比
     sales_amount_change = (sales_amount - last_month_sales_amount) / last_month_sales_amount if last_month_sales_amount != 0 else 0
     # 计算本月线上销售额环比
@@ -176,8 +177,7 @@ async def get_sales_data_statistics(
             "total_received_change": total_received_change,
             "total_final_paid": total_final_paid,
             "pending_receivable": pending_receivable,
-            "online_orders": channel_stats["online_orders"] if channel_stats else 0,
-            "offline_orders": channel_stats["offline_orders"] if channel_stats else 0,
+            "order_count": order_count,
             "online_sales": channel_stats["online_sales"] if channel_stats else 0,
             "offline_sales": channel_stats["offline_sales"] if channel_stats else 0,
             "sales_performance_by_sales": sales_performance_by_sales,

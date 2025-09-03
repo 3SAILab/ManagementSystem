@@ -698,3 +698,66 @@ class SalesService:
             total_received = await SalesService.get_total_received(db, start_date=start_date, end_date=end_date, sales_id=sales_id)
         commission_rate = calculate_commission_rate(source,total_received)
         return commission_rate
+    
+    
+    """
+    统计销售个人线上和线下成交订单数
+    start_date 开始时间（可选）
+    end_date 结束时间（可选）
+    """
+    @staticmethod
+    async def get_sales_order_count(
+        db: AsyncSession,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+    ) -> Dict[str, Dict[str, int]]:
+        """
+        统计销售个人线上和线下成交订单数
+        规则：
+        - 订单 transaction_time 在 [start_date, end_date) 内计入
+        - 根据 Client.source 区分线上/线下
+        返回：
+            {
+                "张三": { "online": 5, "offline": 3 },
+                "李四": { "online": 20, "offline": 2 },
+                ...
+            }
+        """
+        online_condition = Client.source.in_(["线上"])
+        offline_condition = Client.source.in_(["线下", "活动"])
+
+        stmt = (
+            select(
+                Contract.sales_id,
+                func.coalesce(Employee.name, "未知").label("sales_name"),
+                func.sum(
+                    case((online_condition, 1), else_=0)
+                ).label("online_count"),
+                func.sum(
+                    case((offline_condition, 1), else_=0)
+                ).label("offline_count"),
+            )
+            .select_from(Contract)
+            .join(Client, Contract.client_id == Client.id)
+            .join(Employee, Contract.sales_id == Employee.id, isouter=True)
+            .where(
+                and_(
+                    (start_date is None or Contract.transaction_time >= start_date),
+                    (end_date is None or Contract.transaction_time < end_date),
+                )
+            )
+            .group_by(Contract.sales_id, Employee.name)
+        )
+
+        result = await db.execute(stmt)
+        rows = result.all()
+
+        order_count = {}
+        for row in rows:
+            name = row.sales_name or "未知"
+            order_count[name] = {
+                "online": row.online_count or 0,
+                "offline": row.offline_count or 0
+            }
+
+        return order_count

@@ -104,10 +104,12 @@ export default function SalesDataPages() {
   const sourceStats = useMemo(() => {
     if (!data) return {};
     return {
-      '线上': { sales: data.online_sales || 0, count: data.online_orders || 0 },
-      '线下': { sales: data.offline_sales || 0, count: data.offline_orders || 0 }
+      '线上': { sales: data.online_sales || 0 },
+      '线下': { sales: data.offline_sales || 0 }
     };
   }, [data]);
+  // 销售人员线上和线下成交订单数
+  const orderCount = useMemo(() => (data ? data.order_count || {} : {}), [data]);
   // 销售人员业绩以及id
   const salesStats = useMemo(() => (data ? data.sales_performance_by_sales || {} : {}), [data]);
   const categoryStats = useMemo(() => (data ? data.category_stats || {} : {}), [data]);
@@ -163,45 +165,137 @@ export default function SalesDataPages() {
       chartInstances.current.chart2 = echarts.init(chartRef2.current);
     }
     if (chartInstances.current.chart2) {
+      const names = Object.keys(orderCount);
+      const onlineData = names.map(name => orderCount[name].online);
+      const offlineData = names.map(name => orderCount[name].offline);
+    
+      // 计算总数
+      const totalOnline = onlineData.reduce((a, b) => a + b, 0);
+      const totalOffline = offlineData.reduce((a, b) => a + b, 0);
+    
       chartInstances.current.chart2.setOption({
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: { type: 'shadow' },
-          formatter: function(params) {
-            const data = params[0];
-            return `${data.name}<br/>订单数量: ${data.value} 单`;
+        animationEasing: 'quartOut',
+        animationDuration: 600,
+        title: {
+          subtext: `线上总订单: ${totalOnline} 单，线下总订单: ${totalOffline} 单`,
+          left: 'center',
+          top: '4%',
+          subtextStyle: {
+            fontSize: 14,
+            color: '#6b7280'
           }
         },
-        grid: { left: '10%', right: '5%', bottom: '15%', top: '10%', containLabel: true },
+
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow'
+          },
+          borderRadius: 8,
+          formatter: function(params) {
+            const online = params[0];
+            const offline = params[1];
+            const total = (online?.value || 0) + (offline?.value || 0);
+            const pctOnline = total ? Math.round((online.value / total) * 100) : 0;
+            const pctOffline = total ? 100 - pctOnline : 0;
+            return `${online.name}<br/>`
+              + `🟣 ${online.seriesName}: ${online.value} 单（${pctOnline}%）<br/>`
+              + `🟠 ${offline.seriesName}: ${offline.value} 单（${pctOffline}%）<br/>`
+              + `合计: ${total} 单</span>`;
+          }
+        },
+
+        legend: {
+          data: ['线上订单数', '线下订单数'],
+          bottom: '8%',
+          left: 'center',
+          itemWidth: 12,
+          itemHeight: 8,
+          textStyle: { fontSize: 11 }
+        },
+
+        grid: {
+          left: '8%',
+          right: '4%',
+          bottom: '18%',
+          top: '24%',
+          containLabel: true
+        },
+
         xAxis: {
           type: 'category',
-          data: Object.keys(sourceStats),
+          data: names,
           axisTick: { alignWithLabel: true },
-          axisLabel: { fontSize: 12 }
+          axisLine: { lineStyle: { color: '#e5e7eb' } },
+          axisLabel: {
+            fontSize: 12,
+            color: '#6b7280',
+            interval: 0,
+            margin: 12,
+            formatter: function(value) {
+              return value.length > 8 ? value.slice(0, 8) + '\n' + value.slice(8) : value;
+            }
+          }
         },
-        yAxis: { 
-          type: 'value', 
+
+        yAxis: {
+          type: 'value',
           min: 0,
-          axisLabel: { fontSize: 11 }
+          axisLine: { lineStyle: { color: '#e5e7eb' } },
+          splitLine: { show: true, lineStyle: { color: '#f3f4f6' } },
+          axisLabel: { fontSize: 11, color: '#6b7280', }
         },
+
         series: [
           {
-            name: '订单数量',
+            name: '线上订单数',
             type: 'bar',
-            barWidth: '50%',
+            barMaxWidth: 28,
+            barGap: '15%',
+            barCategoryGap: '40%',
             label: {
               show: true,
               position: 'top',
-              fontSize: 11,
-              color: '#374151'
+              fontSize: 10,
+              color: '#374151',
+              formatter: '{c}'
             },
             itemStyle: {
+              borderRadius: [6, 6, 0, 0],
               color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                { offset: 0, color: '#8b5cf6' },
-                { offset: 1, color: '#c084fc' }
+                { offset: 0, color: '#6366f1' },
+                { offset: 1, color: '#8b5cf6' }
               ])
             },
-            data: Object.values(sourceStats).map(s => s.count)
+            emphasis: {
+              itemStyle: { shadowBlur: 8, shadowColor: 'rgba(99,102,241,0.45)' }
+            },
+            data: onlineData
+          },
+          {
+            name: '线下订单数',
+            type: 'bar',
+            barMaxWidth: 28,
+            barGap: '15%',
+            barCategoryGap: '40%',
+            label: {
+              show: true,
+              position: 'top',
+              fontSize: 10,
+              color: '#374151',
+              formatter: '{c}'
+            },
+            itemStyle: {
+              borderRadius: [6, 6, 0, 0],
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#f97316' },
+                { offset: 1, color: '#fb923c' }
+              ])
+            },
+            emphasis: {
+              itemStyle: { shadowBlur: 8, shadowColor: 'rgba(249,115,22,0.45)' }
+            },
+            data: offlineData
           }
         ]
       });
@@ -351,7 +445,7 @@ export default function SalesDataPages() {
       });
       chartInstances.current = {};
     };
-  }, [data, sourceStats, salesStats, categoryStats, navigate, userInfo.id]);
+  }, [data, sourceStats, orderCount, salesStats, categoryStats, navigate, userInfo.id]);
 
   // 加载状态
   if (loading) {
@@ -508,7 +602,7 @@ export default function SalesDataPages() {
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-md">
-          <h2 className="text-lg font-semibold text-gray-700 mb-3">线上 vs 线下订单数量对比</h2>
+          <h2 className="text-lg font-semibold text-gray-700 mb-3">销售订单数</h2>
           <div className="h-80">
             <div ref={chartRef2} style={{ width: '100%', height: '100%' }}></div>
           </div>
