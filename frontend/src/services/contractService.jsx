@@ -2,8 +2,22 @@ import api from "./api";
 import Qs from 'qs';
 
 // 添加合同
-export const addContract = async (contract) => {
-    const response = await api.post("/contracts", contract);
+export const addContract = async (contract, attachment) => {
+    const formData = new FormData();
+  
+    // 添加 contract 字段
+    formData.append("contract_data", JSON.stringify(contract));
+    
+    // 添加文件
+    console.log(attachment)
+    if (attachment?.file) {
+        formData.append("file", attachment.file);
+    }
+    const response = await api.post("/contracts", formData, {
+        headers: {
+        "Content-Type": "multipart/form-data", 
+        },
+    });
     return response.data;
 };
 

@@ -27,6 +27,7 @@ class Contract(Base):
     video_count = Column(Integer, nullable=False) #视频数
     image_count = Column(Integer, nullable=False) #图片数
     workflow_count = Column(Integer, nullable=False) #工作流数
+    file_resource_id = Column(Integer, ForeignKey("file_resource.id", ondelete="SET NULL"), nullable=True) #文件资源ID
     transfer_date = Column(DateTime(timezone=True), nullable=True)  # 转移日期
     transaction_time = Column(DateTime(timezone=True), nullable=False) #合同成交时间
     settlement_time = Column(DateTime(timezone=True), nullable=True) #合同已结算时间
@@ -42,3 +43,5 @@ class Contract(Base):
     final_payment_sales = relationship("Employee",foreign_keys=[final_payment_sales_id], back_populates="final_payment_contracts")
     # 关联到 Ticket 表
     tickets = relationship("Ticket", back_populates="contract")
+    # 关联到 FileResource 表
+    file_resource = relationship("FileResource", foreign_keys=[file_resource_id], back_populates="contract")

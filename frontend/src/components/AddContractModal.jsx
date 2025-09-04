@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ModalCloseButton from "./ModalCloseButton";
 
 const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
@@ -14,6 +14,12 @@ const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
     isRecharged: false, // 新增：客户是否充值
   });
   
+  // 单文件附件
+  const [attachment, setAttachment] = useState(null);
+  const [uploadError, setUploadError] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounter = useRef(0);
+
   // 修正后的输入处理函数
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -27,12 +33,59 @@ const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
   };
   
   const handleClose = () => {
+    // 清理对象URL
+    if (attachment?.preview) URL.revokeObjectURL(attachment.preview);
     onClose();
+  };
+
+  const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+  const ACCEPTED_TYPES = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "image/jpeg",
+    "image/png",
+    "application/zip",
+    "application/x-zip-compressed"
+  ];
+
+  const formatFileSize = (bytes) => {
+    if (!bytes && bytes !== 0) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  };
+
+  const handleFileSelect = (fileList) => {
+    setUploadError("");
+    const file = Array.from(fileList)[0];
+    if (!file) return;
+    if (file.size > MAX_FILE_SIZE) {
+      setUploadError("单文件大小不能超过 100MB");
+      return;
+    }
+    if (!ACCEPTED_TYPES.includes(file.type) && !file.name.toLowerCase().endsWith('.zip')) {
+      setUploadError("不支持的文件类型");
+      return;
+    }
+    // 生成预览（仅图片）
+    const preview = file.type.startsWith("image/") ? URL.createObjectURL(file) : null;
+    // 替换已有文件
+    if (attachment?.preview) URL.revokeObjectURL(attachment.preview);
+    setAttachment({ file, name: file.name, size: file.size, type: file.type, preview });
+  };
+
+  const removeAttachment = () => {
+    if (attachment?.preview) URL.revokeObjectURL(attachment.preview);
+    setAttachment(null);
+    setUploadError("");
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onAdd(formData);
+    console.log(attachment);
+    onAdd(formData, attachment);
     onClose();
   };
 
@@ -49,8 +102,8 @@ const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl animate-fade-in transform transition-all duration-300 scale-100">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl animate-fade-in transform transition-all duration-300 scale-100 max-h-[90vh] overflow-y-auto">
         <div className="border-b border-slate-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -301,7 +354,97 @@ const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
           </div>
           
           <hr className="border-slate-200 my-6" />
-          
+          {/* 合同文件上传 */}
+          <div className="space-y-4">
+            <label className="block text-sm font-semibold text-slate-800 items-center">
+              <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              合同附件
+            </label>
+
+            {/* 上传区域（只在未选择文件时显示） */}
+            {!attachment && (
+              <div
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; setIsDragging(true); }}
+                onDragEnter={(e) => { e.preventDefault(); dragCounter.current += 1; setIsDragging(true); }}
+                onDragLeave={(e) => { e.preventDefault(); dragCounter.current -= 1; if (dragCounter.current <= 0) { setIsDragging(false); dragCounter.current = 0; } }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  dragCounter.current = 0;
+                  setIsDragging(false);
+                  handleFileSelect(e.dataTransfer.files);
+                }}
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 cursor-pointer group ${
+                  isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300'
+                }`}
+                onClick={() => document.getElementById("file-upload-input").click()}
+              >
+                <input
+                  id="file-upload-input"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip"
+                  className="sr-only"
+                  onChange={(e) => handleFileSelect(e.target.files)}
+                />
+                <svg className={`w-12 h-12 mx-auto transition-colors duration-200 ${isDragging ? 'text-indigo-500' : 'text-slate-400 group-hover:text-indigo-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p className="mt-2 text-sm text-slate-600">
+                  {isDragging ? (
+                    <span className="font-medium text-indigo-600">松开鼠标即可上传</span>
+                  ) : (
+                    <>
+                      <span className="font-medium text-indigo-600">点击上传</span> 或拖拽文件到这里
+                    </>
+                  )}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  支持 PDF、Word、图片、ZIP，单文件不超过 100MB
+                </p>
+                {uploadError && (
+                  <p className="text-xs text-red-500 mt-2">{uploadError}</p>
+                )}
+              </div>
+            )}
+
+            {/* 已上传文件 */}
+            {attachment && (
+              <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+                <h4 className="text-sm font-medium text-slate-700">已选择文件</h4>
+                <div className="flex items-center justify-between p-2 bg-white rounded border border-slate-200">
+                  <div className="flex items-center space-x-3 flex-1">
+                    {attachment.type?.startsWith("image/") && attachment.preview ? (
+                      <img src={attachment.preview} className="w-10 h-10 object-cover rounded" alt="preview" />
+                    ) : (
+                      <div className="w-10 h-10 bg-slate-100 rounded flex items-center justify-center">
+                        <span className="text-xs text-slate-500">
+                          {attachment.name.split(".").pop()?.toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">{attachment.name}</p>
+                      <p className="text-xs text-slate-500">{formatFileSize(attachment.size)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-green-500">已选择</span>
+                    <button
+                      type="button"
+                      onClick={removeAttachment}
+                      className="text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* 成交时间 (恢复为原始样式) */}
           <div className="space-y-2">
               <label htmlFor="transaction-time" className="block text-sm font-medium text-slate-700">

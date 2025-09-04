@@ -75,3 +75,5 @@ class Employee(Base):
     activity_logs = relationship("ClientActivityLog", back_populates="sales")
     # 定义与 Client 的一对多关系（一个员工可以有多个客户）
     clients = relationship("Client", back_populates="sales")
+    # 定义与 FileResource 的一对多关系（一个员工可以有多个文件资源）
+    file_resources = relationship("FileResource", back_populates="employee")

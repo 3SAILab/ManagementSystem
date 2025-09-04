@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Body, Query, Path
+from fastapi import APIRouter, Depends, Body, Query, Path, File, UploadFile, Form
 from backend.models.employee import Employee
 from backend.models.sub_task import SubTask
 from backend.schemas.contract import ContractCreate, ContractFilter, ContractList, PaginatedContract
@@ -6,6 +6,7 @@ from backend.db.session import get_async_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api.routes.employee import get_current_employee
 from typing import List
+from backend.services.file_upload_services import FileUploadService
 from backend.services.sub_task_service import SubTaskService
 from backend.services.ticket_service import TicketService
 from backend.services.contract_service import ContractService
@@ -21,7 +22,8 @@ router = APIRouter()
 # 添加合同
 @router.post("/contracts")
 async def add_contract(
-    contract: ContractCreate = Body(...),
+    file: UploadFile = File(None),
+    contract_data: str = Form(...),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
@@ -34,6 +36,7 @@ async def add_contract(
     5万-10万 12%
     10万以上 15%
     """
+    contract = ContractCreate.model_validate_json(contract_data)
     async def get_commission_rate(client_source: str):
         if client_source == "线上":
             return 4
@@ -51,6 +54,9 @@ async def add_contract(
     client = await ClientService.get_client_info(db, contract.client_id)
     commission_rate = await get_commission_rate(client["source"])    
     contract.commission_rate = commission_rate
+    if file:
+        file_resource = await FileUploadService.upload_file(db, file, client["name"])
+        contract.file_resource_id = file_resource.id
     return await ContractService.add_contract(db, contract, current_employee.id)
 
 # 获取个人成交合同

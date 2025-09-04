@@ -22,7 +22,8 @@ from backend.models import (
     ticket,
     sub_task,
     client_activity_log,
-    progress_log
+    progress_log,
+    file_resource
 )
 
 # this is the Alembic Config object, which provides

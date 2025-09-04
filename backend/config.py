@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings
 from pydantic import ConfigDict
 from pathlib import Path
 
+ROOT_DIR = Path(__file__).parent.parent.resolve()
 class Settings(BaseSettings):
     # JWT配置
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")
@@ -32,7 +33,10 @@ class Settings(BaseSettings):
     # 应用配置
     CODE_EXPIRE_MINUTES: int = int(os.getenv("CODE_EXPIRE_MINUTES", "10"))
     CODE_LENGTH: int = int(os.getenv("CODE_LENGTH", "6"))
-    
+
+    # 文件上传存放目录
+    FILE_UPLOAD_DIR: str = os.path.join(ROOT_DIR, os.getenv("FILE_UPLOAD_DIR","uploads"))
+
     # 前端地址
     CORS_ORIGINS: list[str] = []
     # Pydantic V2 配置方式

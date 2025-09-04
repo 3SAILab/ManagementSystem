@@ -73,7 +73,8 @@ const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
   }, []);
 
   // 处理合同表单提交
-  const onAddContract = async (contract) => {
+  const onAddContract = async (contract, attachment) => {
+    console.log(attachment);
     let contractType = null;
     if(clientActivityLog.status === "已成交"){
       contractType = "首单";
@@ -94,7 +95,7 @@ const AddClientActivityLogModal = ({isOpen, clientId, onClose, onAdd }) => {
       transaction_time: contract.transactionTime,
       is_recharged: contract.isRecharged
     };
-    const response = await addContract(payload);
+    const response = await addContract(payload, attachment);
     await handleSaveLog();
     if (response.success) {
       toast.success("合同保存成功");

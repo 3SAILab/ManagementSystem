@@ -31,7 +31,8 @@ class ContractCreate(BaseModel):
     workflow_count: int
     transaction_time: datetime
     is_recharged: bool
-
+    file_resource_id: Optional[int] = None
+    
 # 合同列表
 class ContractList(BaseModel):
     id: int

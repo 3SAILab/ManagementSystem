@@ -149,3 +149,5 @@ alembic/versions/*.py
 
 # Application specific
 app.log
+
+uploads/
