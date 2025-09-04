@@ -10,6 +10,7 @@ from backend.utils.response import api_response
 from typing import Dict, Any
 import asyncio
 from backend.utils.date_utils import get_month_range, get_now, get_current_month_range, get_last_month_range
+from dateutil.relativedelta import relativedelta
 
 router = APIRouter()
 
@@ -127,29 +128,51 @@ async def get_sales_data_statistics(
     
     返回数据包括：
     - 销售额、往月到账金额、尾款已支付金额、尾款未支付金额、总到款金额
-    - 线上订单数量、线下订单数量、线上销售额、线下销售额
+    - 线上订单数量、线下订单数量、线上销售额、线下销售额、总销售额环比、线上销售额环比、总到账环比
     - 销售个人业绩(按照销售额统计)、销售个人业绩(按照实际到账金额统计)、产品类目分布
     """
-    if month:
-        year, month_num = month.split('-')
-        start_date, end_date = get_month_range(int(year), int(month_num))
-        if int(month_num) == 1:
-            last_month_start_date, last_month_end_date = get_month_range(int(year) - 1, 12)
-        else:
-            last_month_start_date, last_month_end_date = get_month_range(int(year), int(month_num) - 1)
-    else:
+    # 当前时间
+    now = get_now()
+    current_date = now.date()
+    current_year = current_date.year
+    current_month = current_date.month
+    # 解析入参
+    try:
+        target_year_str, target_month_str = month.split('-')
+        target_year = int(target_year_str)
+        target_month = int(target_month_str)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="month 格式应为 YYYY-MM")
+
+    # 判断是否为当前月
+    is_current_month = (target_year == current_year and target_month == current_month)
+    if is_current_month:
         start_date, end_date = get_current_month_range()
         last_month_start_date, last_month_end_date = get_last_month_range()
+        # 获取上月同期时间
+        last_now = now - relativedelta(months=1)
+
+        # 转为当天的开始时间（00:00:00），然后加一天 → 就是“下一天 00:00:00”
+        last_now_date = last_now.replace(hour=0, minute=0, second=0, microsecond=0)
+        last_now_end = last_now_date + relativedelta(days=1)
+        
+    else:
+        start_date, end_date = get_month_range(int(target_year), int(target_month))
+        if int(target_month) == 1:
+            last_month_start_date, last_month_end_date = get_month_range(int(target_year) - 1, 12)
+        else:
+            last_month_start_date, last_month_end_date = get_month_range(int(target_year), int(target_month) - 1)
+        last_now_end = last_month_end_date
     
     # 获取销售数据统计
     result = await asyncio.gather(
         SalesService.get_sales_amount(db, start_date=start_date, end_date=end_date), # 本月销售额
-        SalesService.get_sales_amount(db, start_date=last_month_start_date, end_date=last_month_end_date), # 上个月销售额
-        SalesService.get_total_received_by_last(db, last_end=last_month_end_date, start_date=start_date, end_date=end_date), # 合同成交时间不在本月，但是尾款结算时间在本月的总到账金额
+        SalesService.get_sales_amount(db, start_date=last_month_start_date, end_date=last_now_end), # 上个月同期销售额
+        SalesService.get_total_received_by_last(db, last_end=start_date, start_date=start_date, end_date=end_date), # 合同成交时间不在本月，但是尾款结算时间在本月的总到账金额
         SalesService.get_total_received(db, start_date=start_date, end_date=end_date, source="线上"), # 线上总到账金额
-        SalesService.get_total_received(db, start_date=last_month_start_date, end_date=last_month_end_date, source="线上"), # 上个月线上总到账金额
+        SalesService.get_total_received(db, start_date=last_month_start_date, end_date=last_now_end, source="线上"), # 上个月同期线上总到账金额
         SalesService.get_total_received(db, start_date=start_date, end_date=end_date), # 本月总到账金额
-        SalesService.get_total_received(db, start_date=last_month_start_date, end_date=last_month_end_date), # 上个月总到账金额
+        SalesService.get_total_received(db, start_date=last_month_start_date, end_date=last_now_end), # 上个月同期总到账金额
         SalesService.get_received_final_amount(db, start_date=start_date, end_date=end_date), # 本月尾款到账金额
         SalesService.get_pending_receivable(db, end_date=end_date), # 待催收尾款金额
         SalesService.get_channel_stats(db, start_date=start_date, end_date=end_date), # 线上/线下订单数量与销售额
@@ -158,7 +181,22 @@ async def get_sales_data_statistics(
         SalesService.get_sales_performance_by_received(db, start_date=start_date, end_date=end_date), # 销售个人业绩(按照实际到账金额统计)
         SalesService.get_category_stats(db, start_date=start_date, end_date=end_date) # 产品类目销售额分布
     )
-    sales_amount, last_month_sales_amount, total_received_by_last, total_online_received, last_month_total_online_received, total_received, last_month_total_received, total_final_paid, pending_receivable, channel_stats, order_count, sales_performance_by_sales, sales_performance_by_received, category_stats = result
+    (
+        sales_amount, 
+        last_month_sales_amount, 
+        total_received_by_last, 
+        total_online_received, 
+        last_month_total_online_received, 
+        total_received, 
+        last_month_total_received, 
+        total_final_paid, 
+        pending_receivable, 
+        channel_stats, 
+        order_count, 
+        sales_performance_by_sales, 
+        sales_performance_by_received, 
+        category_stats
+     ) = result
     # 计算本月销售额环比
     sales_amount_change = (sales_amount - last_month_sales_amount) / last_month_sales_amount if last_month_sales_amount != 0 else 0
     # 计算本月线上销售额环比
