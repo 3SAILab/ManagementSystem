@@ -56,9 +56,13 @@ export const getContractDetail = async (id) => {
 // 更改合同状态
 export const updateContractStatus = async (id, status, settlement_time) => {
     try {
+        let formattedSettlementTime = null;
+        if (settlement_time && settlement_time.trim() !== '') {
+            formattedSettlementTime = settlement_time; // "2025-04-05T10:30"
+        }
         const payload = {
             status: status,
-            settlement_time: settlement_time
+            settlement_time: formattedSettlementTime
         }
         const response = await api.put(`/contracts/${id}/status`, payload);
         return {success: true, data: response.data};

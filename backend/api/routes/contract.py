@@ -5,7 +5,7 @@ from backend.schemas.contract import ContractCreate, ContractFilter, ContractLis
 from backend.db.session import get_async_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api.routes.employee import get_current_employee
-from typing import List
+from typing import List, Optional
 from backend.services.file_upload_services import FileUploadService
 from backend.services.sub_task_service import SubTaskService
 from backend.services.ticket_service import TicketService
@@ -187,7 +187,7 @@ async def get_contracts_by_client_id(
 async def update_contract_status(
     id: int,
     status: str = Body(..., embed=True),
-    settlement_time: datetime = Body(None, embed=True),
+    settlement_time: Optional[datetime] = Body(None, embed=True),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):

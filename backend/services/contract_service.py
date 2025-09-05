@@ -4,7 +4,7 @@ from backend.models.ticket import Ticket
 from backend.schemas.contract import ContractCreate, ContractFilter
 from fastapi import HTTPException
 from datetime import datetime, timezone
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import selectinload
 from backend.models.client import Client
@@ -128,7 +128,7 @@ class ContractService:
 
     # 更新合同状态
     @staticmethod
-    async def update_contract_status(db: AsyncSession, contract_id: int, status: str, settlement_time: datetime):
+    async def update_contract_status(db: AsyncSession, contract_id: int, status: str, settlement_time: Optional[datetime] = None):
         # 使用 with_for_update() 锁定合同行
         result = await db.execute(
             select(Contract).where(Contract.id == contract_id).with_for_update()
@@ -140,7 +140,7 @@ class ContractService:
         contract.status = status
         contract.updated_at = datetime.now(timezone.utc)
         if status == '已结算':
-            contract.settlement_time = settlement_time
+            contract.settlement_time = settlement_time if settlement_time else datetime.now(timezone.utc)
         else:
             contract.settlement_time = None
         await db.flush()
