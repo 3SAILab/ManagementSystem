@@ -55,7 +55,7 @@ async def add_contract(
     commission_rate = await get_commission_rate(client["source"])    
     contract.commission_rate = commission_rate
     if file:
-        file_resource = await FileUploadService.upload_file(db, file, client["name"])
+        file_resource = await FileUploadService.upload_file(db, file, client["name"],current_employee.id)
         contract.file_resource_id = file_resource.id
     return await ContractService.add_contract(db, contract, current_employee.id)
 
