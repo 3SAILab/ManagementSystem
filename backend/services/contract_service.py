@@ -50,7 +50,8 @@ class ContractService:
             settlement_time=settlement_time,
             is_recharged=contract.is_recharged,
             created_at=current_time,
-            updated_at=current_time
+            updated_at=current_time,
+            file_resource_id=contract.file_resource_id,
         )
         db.add(contract)
         await db.flush()
