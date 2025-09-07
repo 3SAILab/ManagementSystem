@@ -36,6 +36,36 @@ const ArtDataPage = () => {
     return false;
   }, [employee]);
 
+  // 检查用户是否为生产总负责人（只能看美工数据）
+  const isProductionManager = useCallback(() => {
+    if (!employee) return false;
+    
+    const { role, department_name } = employee;
+    
+    // 生产总负责人权限（owner角色 + 生产部）
+    return role === 'owner' && department_name === '生产部';
+  }, [employee]);
+
+  // 检查用户是否有权限查看渲染数据
+  const canViewRenderData = useCallback(() => {
+    if (!employee) return false;
+    
+    const { role, department_name } = employee;
+    
+    // 生产总负责人不能查看渲染数据
+    if (role === 'owner' && department_name === '生产部') return false;
+    
+    // 其他有权限的用户可以查看
+    return hasTeamDashboardAccess();
+  }, [employee, hasTeamDashboardAccess]);
+
+  // 确保生产总负责人只能看到美工数据
+  useEffect(() => {
+    if (isProductionManager() && activePanel === 'render') {
+      setActivePanel('art');
+    }
+  }, [isProductionManager, activePanel]);
+
   const handleBarClick = useCallback((params) => {
     // 检查权限
     if (!hasTeamDashboardAccess()) {
@@ -157,12 +187,14 @@ const ArtDataPage = () => {
             >
               美工数据
             </button>
-            <button
-              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${activePanel === 'render' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-              onClick={() => setActivePanel('render')}
-            >
-              渲染数据
-            </button>
+            {canViewRenderData() && (
+              <button
+                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${activePanel === 'render' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                onClick={() => setActivePanel('render')}
+              >
+                渲染数据
+              </button>
+            )}
           </div>
         </div>
 
@@ -212,7 +244,7 @@ const ArtDataPage = () => {
         </div>
         )}
 
-        {activePanel === 'render' && (
+        {activePanel === 'render' && canViewRenderData() && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
           {/* 渲染系数图表 */}
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden flex flex-col h-full">
