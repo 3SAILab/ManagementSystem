@@ -1,5 +1,6 @@
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from ..db.session import Base
 
 
@@ -13,4 +14,5 @@ class ProductType(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
-    # 与Ticket的关系将在后续阶段添加外键字段后定义
+    # 关联工单
+    tickets = relationship("Ticket", back_populates="product_type")

@@ -223,7 +223,7 @@ class Phase1DataPopulator:
                     "detail": "科技园南区1号楼"
                 },
                 "source": "线上",
-                "product_type": "家电",
+                "product_type": "家电1",
                 "scale": ClientScale.中,
                 "status": ClientStatus.跟进中,
                 "access_time": datetime(2024, 1, 1, 10, 0, 0)
@@ -240,7 +240,7 @@ class Phase1DataPopulator:
                     "detail": "文三路100号"
                 },
                 "source": "线下",
-                "product_type": "服装",
+                "product_type": "服装1",
                 "scale": ClientScale.大,
                 "status": ClientStatus.已成交,
                 "access_time": datetime(2024, 1, 2, 14, 0, 0)
@@ -257,7 +257,7 @@ class Phase1DataPopulator:
                     "detail": "陆家嘴金融中心"
                 },
                 "source": "线上",
-                "product_type": "文具",
+                "product_type": "文具1",
                 "scale": ClientScale.小,
                 "status": ClientStatus.试单中,
                 "access_time": datetime(2024, 1, 5, 9, 30, 0)
@@ -274,7 +274,7 @@ class Phase1DataPopulator:
                     "detail": "三里屯商业街"
                 },
                 "source": "活动",
-                "product_type": "化妆品",
+                "product_type": "化妆品1",
                 "scale": ClientScale.大,
                 "status": ClientStatus.复购,
                 "access_time": datetime(2024, 1, 10, 16, 20, 0)
@@ -291,7 +291,7 @@ class Phase1DataPopulator:
                     "detail": "工业园区B栋"
                 },
                 "source": "线下",
-                "product_type": "玩具",
+                "product_type": "玩具111",
                 "scale": ClientScale.中,
                 "status": ClientStatus.客户流失,
                 "access_time": datetime(2024, 1, 15, 11, 45, 0)
