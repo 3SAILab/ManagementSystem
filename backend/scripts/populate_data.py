@@ -22,6 +22,7 @@ from backend.models.sub_task import SubTask
 from backend.models.file_resource import FileResource
 from backend.models.client_activity_log import ClientActivityLog
 from backend.models.progress_log import ProgressLog
+from backend.models.product_type import ProductType
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
@@ -56,6 +57,37 @@ class Phase1DataPopulator:
             print(f"  创建部门: {dept_data['name']}")
         
         print("部门数据填充完成\n")
+        session.commit()
+    
+    def populate_product_types(self, session):
+        """填充产品类型数据"""
+        product_types_data = [
+            {"name": "文具", "sort_order": 1},
+            {"name": "家电", "sort_order": 2},
+            {"name": "服装", "sort_order": 3},
+            {"name": "鞋类", "sort_order": 4},
+            {"name": "家具", "sort_order": 5},
+            {"name": "厨具", "sort_order": 6},
+            {"name": "饰品", "sort_order": 7},
+            {"name": "食品", "sort_order": 8},
+            {"name": "箱包", "sort_order": 9},
+            {"name": "图书", "sort_order": 10},
+            {"name": "保健品", "sort_order": 11},
+            {"name": "情趣", "sort_order": 12},
+            {"name": "化妆品", "sort_order": 13},
+            {"name": "玩具", "sort_order": 14},
+            {"name": "床上用品", "sort_order": 15},
+            {"name": "宠物用品", "sort_order": 16},
+            {"name": "其他", "sort_order": 999}
+        ]
+        
+        print("填充产品类型数据...")
+        for product_type_data in product_types_data:
+            product_type = ProductType(**product_type_data)
+            session.add(product_type)
+            print(f"  创建产品类型: {product_type_data['name']} (排序: {product_type_data['sort_order']})")
+        
+        print("产品类型数据填充完成\n")
         session.commit()
     
     def populate_positions(self, session):
@@ -498,6 +530,7 @@ class Phase1DataPopulator:
         
         tables = [
             (Department, "部门"),
+            (ProductType, "产品类型"),
             (Position, "职位"),
             (Employee, "员工"),
             (Client, "客户"),
@@ -531,6 +564,7 @@ class Phase1DataPopulator:
             session = self.SessionLocal()
             try:
                 self.populate_departments(session)
+                self.populate_product_types(session)
                 self.populate_positions(session)
                 self.populate_employees(session)
                 self.populate_clients(session)

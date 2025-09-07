@@ -23,7 +23,8 @@ from backend.models import (
     sub_task,
     client_activity_log,
     progress_log,
-    file_resource
+    file_resource,
+    product_type
 )
 
 # this is the Alembic Config object, which provides
