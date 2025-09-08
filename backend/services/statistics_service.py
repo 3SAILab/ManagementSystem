@@ -287,11 +287,19 @@ class StatisticsService:
     # 根据员工id获取本月销售额和环比增长率
     @staticmethod
     async def get_monthly_sales(db: AsyncSession, employee_id: int, month: str = None):
-        # 获取指定月份的销售额
-        ty, tm = month.split('-')
-        target_year, target_month = int(ty), int(tm)
-        start_date, end_date = get_month_range(target_year, target_month)       
-        last_month_start_date, last_month_end_date = get_last_month_range()
+        # 计算目标月份与上月的起止时间
+        if month is None:
+            start_date, end_date = get_current_month_range()
+            last_month_start_date, last_month_end_date = get_last_month_range()
+        else:
+            ty, tm = month.split('-')
+            target_year, target_month = int(ty), int(tm)
+            start_date, end_date = get_month_range(target_year, target_month)
+            if target_month == 1:
+                last_year, last_month = target_year - 1, 12
+            else:
+                last_year, last_month = target_year, target_month - 1
+            last_month_start_date, last_month_end_date = get_month_range(last_year, last_month)
         # 统计坏单
         bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount)).where(
             and_(
@@ -340,11 +348,19 @@ class StatisticsService:
     # 根据员工id获取本月提点和增长率
     @staticmethod
     async def get_monthly_commission(db: AsyncSession, employee_id: int, month: str = None):
-        # 获取指定月份的提点
-        ty, tm = month.split('-')
-        target_year, target_month = int(ty), int(tm)
-        start_date, end_date = get_month_range(target_year, target_month)
-        last_month_start_date, last_month_end_date = get_last_month_range()
+        # 计算目标月份与上月的起止时间
+        if month is None:
+            start_date, end_date = get_current_month_range()
+            last_month_start_date, last_month_end_date = get_last_month_range()
+        else:
+            ty, tm = month.split('-')
+            target_year, target_month = int(ty), int(tm)
+            start_date, end_date = get_month_range(target_year, target_month)
+            if target_month == 1:
+                last_year, last_month = target_year - 1, 12
+            else:
+                last_year, last_month = target_year, target_month - 1
+            last_month_start_date, last_month_end_date = get_month_range(last_year, last_month)
         current_month_commission = await SalesService.get_sales_commission(db, sales_id=employee_id, start_date=start_date, end_date=end_date)
         # 获取上个月的提点  
         last_month_commission = await SalesService.get_sales_commission(db, sales_id=employee_id, start_date=last_month_start_date, end_date=last_month_end_date)
@@ -357,11 +373,19 @@ class StatisticsService:
     # 根据员工id获取本月订单数和增长率
     @staticmethod
     async def get_monthly_order_count(db: AsyncSession, employee_id: int, month: str = None):
-        # 获取指定月份的订单数
-        ty, tm = month.split('-')
-        target_year, target_month = int(ty), int(tm)
-        start_date, end_date = get_month_range(target_year, target_month)
-        last_month_start_date, last_month_end_date = get_last_month_range()
+        # 计算目标月份与上月的起止时间
+        if month is None:
+            start_date, end_date = get_current_month_range()
+            last_month_start_date, last_month_end_date = get_last_month_range()
+        else:
+            ty, tm = month.split('-')
+            target_year, target_month = int(ty), int(tm)
+            start_date, end_date = get_month_range(target_year, target_month)
+            if target_month == 1:
+                last_year, last_month = target_year - 1, 12
+            else:
+                last_year, last_month = target_year, target_month - 1
+            last_month_start_date, last_month_end_date = get_month_range(last_year, last_month)
         result = await db.execute(select(func.count(Contract.id)).where(
             and_(
                 Contract.transaction_time.between(start_date, end_date),
