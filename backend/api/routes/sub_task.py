@@ -375,14 +375,11 @@ async def get_sub_tasks(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
-    # 总负责人：同时查看美工与渲染任务
+    # 总负责人：只查看查看美工任务
     filter_params = SubTaskFilter(task_name=task_name, charge_name=charge_name, page=page, page_size=page_size)
     art_tasks, art_total = await SubTaskService.get_sub_tasks(db, filter_params, "美工")
-    render_tasks, render_total = await SubTaskService.get_sub_tasks(db, filter_params, "渲染")
-    sub_tasks = [*art_tasks, *render_tasks]
-    total = art_total + render_total
     sub_tasks_out = []  # 存储带警告信息的任务（可选输出）
-    for task in sub_tasks:
+    for task in art_tasks:
         warning = "正常"
 
         if task.status == "进行中":
@@ -413,26 +410,20 @@ async def get_sub_tasks(
 
         })
 
-    # 汇总两类任务状态数量（本月完成数按当月统计）
+    # 汇总美工任务状态数量（本月完成数按当月统计）
     art_yellow, art_red, art_completed, art_in_progress = await asyncio.gather(
         SubTaskService.get_sub_tasks_count(db, task_type="美工", warning_status=["黄色预警"]),
         SubTaskService.get_sub_tasks_count(db, task_type="美工", warning_status=["红色预警"]),
         SubTaskService.get_sub_tasks_count(db, task_type="美工", status=["已完成"], start_time=datetime.now(ZoneInfo("Asia/Shanghai")).replace(day=1, hour=0, minute=0, second=0)),
         SubTaskService.get_sub_tasks_count(db, task_type="美工", status=["进行中"]) 
     )
-    render_yellow, render_red, render_completed, render_in_progress = await asyncio.gather(
-        SubTaskService.get_sub_tasks_count(db, task_type="渲染", warning_status=["黄色预警"]),
-        SubTaskService.get_sub_tasks_count(db, task_type="渲染", warning_status=["红色预警"]),
-        SubTaskService.get_sub_tasks_count(db, task_type="渲染", status=["已完成"], start_time=datetime.now(ZoneInfo("Asia/Shanghai")).replace(day=1, hour=0, minute=0, second=0)),
-        SubTaskService.get_sub_tasks_count(db, task_type="渲染", status=["进行中"]) 
-    )
-    yellow_count = (art_yellow or 0) + (render_yellow or 0)
-    red_count = (art_red or 0) + (render_red or 0)
-    completed_count = (art_completed or 0) + (render_completed or 0)
-    in_progress_count = (art_in_progress or 0) + (render_in_progress or 0)
+    yellow_count = art_yellow or 0
+    red_count = art_red or 0
+    completed_count = art_completed or 0
+    in_progress_count = art_in_progress or 0
     return {
         "sub_tasks": sub_tasks_out,
-        "total": total,
+        "total": art_total,
         "task_status": {
             "yellow_count": yellow_count,
             "red_count": red_count,
