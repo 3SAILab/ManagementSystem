@@ -135,9 +135,10 @@ const ReadOnlySalesDashboard = () => {
         }));
         
         // 只获取合同列表和统计数据
+        const month = sessionStorage.getItem('salesDataSelectedMonth');
         const [contractsRes, statisticsRes] = await Promise.all([
           getReadonlyContracts(id, filters),
-          getReadonlyMonthlySales(id)
+          getReadonlyMonthlySales(id, month)
         ]);
 
         // 分别处理结果

@@ -8,7 +8,7 @@ from typing import List, Dict
 from backend.models.employee import Employee
 from backend.models.sub_task import SubTask
 from backend.services.sales_service import SalesService
-from backend.utils.date_utils import get_current_month_range, get_last_month_range,get_now
+from backend.utils.date_utils import get_current_month_range, get_last_month_range, get_now, get_month_range
 
 # 业务常量（避免魔法字符串）
 CLIENT_STATUS_CONVERTED = ["已成交", "复购"]
@@ -286,9 +286,11 @@ class StatisticsService:
         return round(current_avg, 2), round(change_time, 2)
     # 根据员工id获取本月销售额和环比增长率
     @staticmethod
-    async def get_monthly_sales(db: AsyncSession, employee_id: int):
-        # 获取当前月份的销售额(坏单只统计预付金额其余正常统计)
-        start_date, end_date = get_current_month_range()
+    async def get_monthly_sales(db: AsyncSession, employee_id: int, month: str = None):
+        # 获取指定月份的销售额
+        ty, tm = month.split('-')
+        target_year, target_month = int(ty), int(tm)
+        start_date, end_date = get_month_range(target_year, target_month)       
         last_month_start_date, last_month_end_date = get_last_month_range()
         # 统计坏单
         bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount)).where(
@@ -337,9 +339,11 @@ class StatisticsService:
         
     # 根据员工id获取本月提点和增长率
     @staticmethod
-    async def get_monthly_commission(db: AsyncSession, employee_id: int):
-        # 获取当前月份的提点
-        start_date, end_date = get_current_month_range()
+    async def get_monthly_commission(db: AsyncSession, employee_id: int, month: str = None):
+        # 获取指定月份的提点
+        ty, tm = month.split('-')
+        target_year, target_month = int(ty), int(tm)
+        start_date, end_date = get_month_range(target_year, target_month)
         last_month_start_date, last_month_end_date = get_last_month_range()
         current_month_commission = await SalesService.get_sales_commission(db, sales_id=employee_id, start_date=start_date, end_date=end_date)
         # 获取上个月的提点  
@@ -352,9 +356,11 @@ class StatisticsService:
         
     # 根据员工id获取本月订单数和增长率
     @staticmethod
-    async def get_monthly_order_count(db: AsyncSession, employee_id: int):
-        # 获取当前月份的订单数
-        start_date, end_date = get_current_month_range()
+    async def get_monthly_order_count(db: AsyncSession, employee_id: int, month: str = None):
+        # 获取指定月份的订单数
+        ty, tm = month.split('-')
+        target_year, target_month = int(ty), int(tm)
+        start_date, end_date = get_month_range(target_year, target_month)
         last_month_start_date, last_month_end_date = get_last_month_range()
         result = await db.execute(select(func.count(Contract.id)).where(
             and_(

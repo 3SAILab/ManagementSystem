@@ -86,9 +86,9 @@ export const getSalesData = async (month) => {
 }
 
 // 只读销售看板 - 获取指定销售人员的本月销售统计数据
-export const getReadonlyMonthlySales = async (employeeId) => {
+export const getReadonlyMonthlySales = async (employeeId, month) => {
     try {
-        const response = await api.get(`/statistics/readonly-monthly-sales/${employeeId}`);
+        const response = await api.get(`/statistics/readonly-monthly-sales/${employeeId}`, { params: month ? { month } : {} });
         if (response.data.success) {
             return {success: true, data: response.data.data};
         } else {
