@@ -41,6 +41,10 @@ class ClientService:
         if filter_params.endTime:
             filters.append(Client.access_time <= to_datetime(filter_params.endTime))
 
+        if filter_params.product_type_ids:
+            # 使用数组重叠操作符检查产品类型数组是否有交集
+            filters.append(Client.product_type_ids.op('&&')(filter_params.product_type_ids))
+
         if filters:
             stmt = stmt.where(and_(*filters))
 
@@ -114,7 +118,7 @@ class ClientService:
             "activity_name": client.activity_name,
             "source": client.source.value,
             "online_source": client.online_source,
-            "product_type": client.product_type,
+            "product_type_ids": client.product_type_ids,
             "scale": client.scale.value,
             "status": client.status.value,
             "access_time": client.access_time,
@@ -151,7 +155,7 @@ class ClientService:
             "online_source": client.online_source,
             "activity_name": client.activity_name,
             "source": client.source.value,
-            "product_type": client.product_type,
+            "product_type_ids": client.product_type_ids,
             "scale": client.scale.value,
             "status": client.status.value,
             "access_time": client.access_time,  # 这里已经是datetime对象，不需要转换
@@ -201,6 +205,10 @@ class ClientService:
 
         if filter_params.endTime:
             filters.append(Client.access_time <= to_datetime(filter_params.endTime))
+
+        if filter_params.product_type_ids:
+            # 使用数组重叠操作符检查产品类型数组是否有交集
+            filters.append(Client.product_type_ids.op('&&')(filter_params.product_type_ids))
 
         if filters:
             stmt = stmt.where(and_(*filters))
