@@ -383,7 +383,7 @@ const SalesDashboard = () => {
   };
   const handleConfirmStatusChange = async () => {
     // 如果状态是已结算，结算时间不能为空
-    if(newStatus === '已结算' && settlementTime === undefined){
+    if(newStatus === '已结算' && !settlementTime){
       toast.error('结算时间不能为空');
       return;
     }
