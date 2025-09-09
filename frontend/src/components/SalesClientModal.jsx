@@ -3,6 +3,7 @@ import AddressSelector from "./AddressSelector";
 import ModalCloseButton from "./ModalCloseButton";
 import { getClientInfo } from "../services/clientService";
 import { getSalesList } from "../services/authService";
+import { getActiveProductTypes } from "../services/productTypeService";
 import DateUtils from "../utils/dateUtils";
 
 const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
@@ -14,7 +15,7 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
     source: "线上", // 固定为线上
     online_source: "",
     activity_name: "", // 保留字段
-    product_type: "",
+    product_type_ids: [],
     scale: "",
     address: null,
     sales_id: "",
@@ -25,6 +26,8 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
   const [loading, setLoading] = useState(false); // 统一加载状态
   const [loadingSales, setLoadingSales] = useState(false);
   const [salesOptions, setSalesOptions] = useState([]);
+  const [productTypes, setProductTypes] = useState([]);
+  const [loadingProductTypes, setLoadingProductTypes] = useState(false);
 
   // 加载销售列表
   useEffect(() => {
@@ -43,6 +46,25 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
       }
     };
     loadSales();
+  }, []);
+
+  // 加载产品类型列表
+  useEffect(() => {
+    const loadProductTypes = async () => {
+      setLoadingProductTypes(true);
+      try {
+        const res = await getActiveProductTypes();
+        if (res.success) {
+          setProductTypes(res.data);
+        }
+      } catch (error) {
+        console.error("加载产品类型失败", error);
+        setProductTypes([]);
+      } finally {
+        setLoadingProductTypes(false);
+      }
+    };
+    loadProductTypes();
   }, []);
 
   // 根据 id 加载客户数据
@@ -83,7 +105,7 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
         source: "线上",
         online_source: "",
         activity_name: "",
-        product_type: "",
+        product_type_ids: [],
         scale: "",
         address: null,
         sales_id: "",
@@ -91,6 +113,28 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
       });
     }
   }, [id]); // 依赖 id 变化触发
+
+  // 产品类型多选处理
+  const handleProductTypeChange = (e) => {
+    const { value, checked } = e.target;
+    const numValue = parseInt(value);
+    
+    setFormData(prev => {
+      if (checked) {
+        // 添加到数组中
+        return {
+          ...prev,
+          product_type_ids: [...prev.product_type_ids, numValue]
+        };
+      } else {
+        // 从数组中移除
+        return {
+          ...prev,
+          product_type_ids: prev.product_type_ids.filter(id => id !== numValue)
+        };
+      }
+    });
+  };
 
   // 输入变化处理
   const handleInputChange = (e) => {
@@ -146,7 +190,7 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
       source: "线上",
       online_source: "",
       activity_name: "",
-      product_type: "",
+      product_type_ids: [],
       scale: "",
       address: null,
       sales_id: "",
@@ -227,18 +271,31 @@ const SalesClientModal = ({ isOpen, id = null, onClose, onSave }) => {
               </div>
 
               <div>
-                <label htmlFor="product-type" className="block text-sm font-medium text-slate-700">
+                <label className="block text-sm font-medium text-slate-700">
                   产品类型 <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  id="product-type"
-                  name="product_type"
-                  value={formData.product_type}
-                  onChange={handleInputChange}
-                  className="form-input block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
-                  required
-                />
+                {loadingProductTypes ? (
+                  <p className="text-sm text-slate-500 mt-1">加载中...</p>
+                ) : (
+                  <div className="mt-2 space-y-2 max-h-32 overflow-y-auto border rounded-md p-3 bg-gray-50">
+                    {productTypes.length > 0 ? (
+                      productTypes.map((productType) => (
+                        <label key={productType.id} className="flex items-center space-x-2 text-sm">
+                          <input
+                            type="checkbox"
+                            value={productType.id}
+                            checked={formData.product_type_ids.includes(productType.id)}
+                            onChange={handleProductTypeChange}
+                            className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200"
+                          />
+                          <span className="text-slate-700">{productType.name}</span>
+                        </label>
+                      ))
+                    ) : (
+                      <p className="text-sm text-slate-500">暂无产品类型</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* 线上来源类型 */}

@@ -64,6 +64,9 @@ export const updateTicketInfo = async (ticketId, ticket) => {
         notes: ticket.notes,
         priority: ticket.priority,
         platform: ticket.platform,
+        product_type_id: ticket.product_type_id,
+        product_name: ticket.product_name,
+        price: ticket.price,
     }
     try {
         const response = await api.put(`/tickets/${ticketId}`, params);
