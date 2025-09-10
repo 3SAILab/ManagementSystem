@@ -22,20 +22,22 @@ export const addContract = async (contract, attachment) => {
 };
 
 // 获取个人成交合同
-export const getContracts = async ({ name, status, contract_type, source, start_date, end_date, page, page_size }) => {
+export const getContracts = async ({ name, status, contract_type, source, start_date, end_date, include_subordinates, page, page_size }) => {
     try {
+        const params = {
+            name,
+            status,
+            contract_type,
+            source,
+            include_subordinates,
+            page,
+            page_size
+        };
+        if (start_date) params.start_date = start_date;
+        if (end_date) params.end_date = end_date;
         const response = await api.get('/contracts', {
-            params: {
-                name,
-                status,
-                contract_type,
-                source,
-                start_date,
-                end_date,
-                page,
-                page_size
-            },
-            paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat', skipNulls: true })
+            params,
+            paramsSerializer: p => Qs.stringify(p, { arrayFormat: 'repeat', skipNulls: true })
         });
         return {success: true, data: response.data};
     } catch (error) {
