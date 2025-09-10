@@ -22,14 +22,13 @@ export const addContract = async (contract, attachment) => {
 };
 
 // 获取个人成交合同
-export const getContracts = async ({ name, status, contract_type, source, start_date, end_date, include_subordinates, page, page_size }) => {
+export const getContracts = async ({ name, status, contract_type, source, start_date, end_date, page, page_size }) => {
     try {
         const params = {
             name,
             status,
             contract_type,
             source,
-            include_subordinates,
             page,
             page_size
         };
