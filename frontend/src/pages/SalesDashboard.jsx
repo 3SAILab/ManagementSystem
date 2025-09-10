@@ -70,6 +70,8 @@ const SalesDashboard = () => {
       status: [],
       contract_type: [],
       source: [],
+      start_date: '',
+      end_date: '',
       page: savedPage ? parseInt(savedPage, 10) : 1,
       page_size: 10
     };
@@ -100,6 +102,8 @@ const SalesDashboard = () => {
   const [tempStatus, setTempStatus] = useState([]);
   const [tempContractType, setTempContractType] = useState([]);
   const [tempSource, setTempSource] = useState([]);
+  const [tempStartDate, setTempStartDate] = useState('');
+  const [tempEndDate, setTempEndDate] = useState('');
   
   // 点击外部关闭筛选菜单
   useEffect(() => {
@@ -118,8 +122,10 @@ const SalesDashboard = () => {
       setTempStatus(filters.status || []);
       setTempContractType(filters.contract_type || []);
       setTempSource(filters.source || []);
+      setTempStartDate(filters.start_date || '');
+      setTempEndDate(filters.end_date || '');
     }
-  }, [isFilterOpen, filters.status, filters.contract_type, filters.source]);
+  }, [isFilterOpen, filters.status, filters.contract_type, filters.source, filters.start_date, filters.end_date]);
   
   // 加载状态
   const [loadingStates, setLoadingStates] = useState({
@@ -575,13 +581,13 @@ const SalesDashboard = () => {
         </div>
       </div>
       
-      {/* 订单尾款跟踪表格 */}
+      {/* 合同尾款跟踪表格 */}
       <div className="flex-grow flex flex-col bg-white rounded-xl shadow-sm border overflow-visible min-h-0">
         {/* 表格头部 */}
         <div className="bg-white px-6 py-6 border-b border-slate-200">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-slate-800 mb-2">订单尾款跟踪</h3>
+              <h3 className="text-lg font-semibold text-slate-800 mb-2">合同尾款跟踪</h3>
               <p className="text-sm text-slate-600">管理客户合同状态和付款情况</p>
             </div>
             {/* 搜索框和筛选按钮 */}
@@ -686,6 +692,31 @@ const SalesDashboard = () => {
                       </div>
                     </div>
 
+                    {/* 合同时间段筛选 */}
+                    <div className="mt-4 border-t border-slate-200 pt-3">
+                      <h4 className="text-sm font-semibold text-slate-800 mb-3">按合同时间筛选</h4>
+                      <div className="grid grid-cols-1 gap-3">
+                        <div>
+                          <label className="block text-xs text-slate-600 mb-1">开始时间</label>
+                          <input
+                            type="datetime-local"
+                            value={tempStartDate}
+                            onChange={(e) => setTempStartDate(e.target.value)}
+                            className="w-full p-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-slate-600 mb-1">结束时间</label>
+                          <input
+                            type="datetime-local"
+                            value={tempEndDate}
+                            onChange={(e) => setTempEndDate(e.target.value)}
+                            className="w-full p-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     {/* 底部操作栏 */}
                     <div className="mt-5 flex justify-between gap-2 border-t border-slate-200 pt-3">
                       <button
@@ -693,11 +724,15 @@ const SalesDashboard = () => {
                           setTempStatus([]);
                           setTempContractType([]);
                           setTempSource([]);
+                          setTempStartDate('');
+                          setTempEndDate('');
                           setFilters({
                             ...filters,
                             status: [],
                             contract_type: [],
                             source: [],
+                            start_date: '',
+                            end_date: '',
                             page: 1,
                           });
                         }}
@@ -712,6 +747,8 @@ const SalesDashboard = () => {
                             status: tempStatus,
                             contract_type: tempContractType,
                             source: tempSource,
+                            start_date: tempStartDate,
+                            end_date: tempEndDate,
                             page: 1,
                           });
                           setIsFilterOpen(false);

@@ -63,6 +63,8 @@ const ReadOnlySalesDashboard = () => {
       status: [],
       contract_type: [],
       source: [],
+      start_date: '',
+      end_date: '',
       page: savedPage ? parseInt(savedPage, 10) : 1,
       page_size: 10
     };
@@ -91,6 +93,8 @@ const ReadOnlySalesDashboard = () => {
   const [tempStatus, setTempStatus] = useState([]);
   const [tempContractType, setTempContractType] = useState([]);
   const [tempSource, setTempSource] = useState([]);
+  const [tempStartDate, setTempStartDate] = useState('');
+  const [tempEndDate, setTempEndDate] = useState('');
 
   // 点击外部关闭筛选菜单
   useEffect(() => {
@@ -109,8 +113,10 @@ const ReadOnlySalesDashboard = () => {
       setTempStatus(filters.status || []);
       setTempContractType(filters.contract_type || []);
       setTempSource(filters.source || []);
+      setTempStartDate(filters.start_date || '');
+      setTempEndDate(filters.end_date || '');
     }
-  }, [isFilterOpen, filters.status, filters.contract_type, filters.source]);
+  }, [isFilterOpen, filters.status, filters.contract_type, filters.source, filters.start_date, filters.end_date]);
 
   // 合同列表
   const [contracts, setContracts] = useState([]);
@@ -546,7 +552,7 @@ const ReadOnlySalesDashboard = () => {
         </div>
       </div>
 
-      {/* 订单尾款跟踪表格 */}
+      {/* 合同尾款跟踪表格 */}
       <div className="flex-grow flex flex-col bg-white rounded-xl shadow-sm border overflow-visible min-h-0">
         {/* 表格头部 */}
         <div className="bg-white px-6 py-6 border-b border-slate-200">
@@ -657,6 +663,31 @@ const ReadOnlySalesDashboard = () => {
                       </div>
                     </div>
 
+                    {/* 合同时间筛选 */}
+                    <div className="mt-4 border-t border-slate-200 pt-3">
+                      <h4 className="text-sm font-semibold text-slate-800 mb-3">按合同时间筛选</h4>
+                      <div className="grid grid-cols-1 gap-3">
+                        <div>
+                          <label className="block text-xs text-slate-600 mb-1">开始时间</label>
+                          <input
+                            type="datetime-local"
+                            value={tempStartDate}
+                            onChange={(e) => setTempStartDate(e.target.value)}
+                            className="w-full p-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-slate-600 mb-1">结束时间</label>
+                          <input
+                            type="datetime-local"
+                            value={tempEndDate}
+                            onChange={(e) => setTempEndDate(e.target.value)}
+                            className="w-full p-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     {/* 底部操作栏 */}
                     <div className="mt-5 flex justify-between gap-2 border-t border-slate-200 pt-3">
                       <button
@@ -664,11 +695,15 @@ const ReadOnlySalesDashboard = () => {
                           setTempStatus([]);
                           setTempContractType([]);
                           setTempSource([]);
+                          setTempStartDate('');
+                          setTempEndDate('');
                           setFilters({
                             ...filters,
                             status: [],
                             contract_type: [],
                             source: [],
+                            start_date: '',
+                            end_date: '',
                             page: 1,
                           });
                         }}
@@ -683,6 +718,8 @@ const ReadOnlySalesDashboard = () => {
                             status: tempStatus,
                             contract_type: tempContractType,
                             source: tempSource,
+                            start_date: tempStartDate,
+                            end_date: tempEndDate,
                             page: 1,
                           });
                           setIsFilterOpen(false);

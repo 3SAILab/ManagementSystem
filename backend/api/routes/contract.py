@@ -66,6 +66,8 @@ async def get_contracts(
     status: List[str] = Query(None),
     contract_type: List[str] = Query(None),
     source: List[str] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
     page: int = Query(1),
     page_size: int = Query(10),
     db: AsyncSession = Depends(get_async_db),
@@ -76,7 +78,16 @@ async def get_contracts(
     查询合同列表，支持客户名称、状态、合同类型筛选与分页
     """
 
-    filter_params = ContractFilter(name=name, status=status, contract_type=contract_type, source=source, page=page, page_size=page_size)
+    filter_params = ContractFilter(
+        name=name, 
+        status=status, 
+        contract_type=contract_type, 
+        source=source, 
+        start_date=start_date,
+        end_date=end_date,
+        page=page, 
+        page_size=page_size
+    )
     contracts, total = await ContractService.get_contracts(db, filter_params, current_employee.id)
 
     total_pages = (total + page_size - 1) // page_size  # 正确的分页计算
@@ -316,6 +327,8 @@ async def get_readonly_contracts(
     status: List[str] = Query(None),
     contract_type: List[str] = Query(None),
     source: List[str] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
     page: int = Query(1),
     page_size: int = Query(10),
     db: AsyncSession = Depends(get_async_db),
@@ -324,7 +337,16 @@ async def get_readonly_contracts(
     """只读模式获取指定销售人员的合同列表"""
     #权限认证
     
-    filter_params = ContractFilter(name=name, status=status, contract_type=contract_type, source=source, page=page, page_size=page_size)
+    filter_params = ContractFilter(
+        name=name, 
+        status=status, 
+        contract_type=contract_type, 
+        source=source, 
+        start_date=start_date,
+        end_date=end_date,
+        page=page, 
+        page_size=page_size
+    )
     contracts, total = await ContractService.get_contracts(db, filter_params, employee_id)
 
     total_pages = (total + page_size - 1) // page_size  # 正确的分页计算

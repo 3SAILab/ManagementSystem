@@ -88,6 +88,17 @@ class ContractService:
             source_values = filter_params.source
             filters.append(Client.source.in_(source_values))
 
+        # 时间范围优先：按成交时间区间筛选
+        if filter_params.start_date and filter_params.end_date:
+                filters.append(and_(
+                    Contract.transaction_time >= filter_params.start_date,
+                    Contract.transaction_time <= filter_params.end_date
+                ))
+        elif filter_params.start_date:
+            filters.append(Contract.transaction_time >= filter_params.start_date)
+        elif filter_params.end_date:
+            filters.append(Contract.transaction_time <= filter_params.end_date)
+
         # 如果需要客户信息，则join Client表
         if needs_client_join:
             stmt = stmt.join(Client)
