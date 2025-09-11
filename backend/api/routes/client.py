@@ -50,7 +50,7 @@ async def read_clients(
             name=client.name, 
             status=client.status.value, 
             source=client.source.value, 
-            product_type=client.product_type, 
+            product_type_ids=client.product_type_ids, 
             scale=client.scale.value, 
             created_at=client.access_time
         ) 
@@ -137,6 +137,7 @@ async def get_clients_with_sales_name(
     status: List[str] = Query(None),
     sales_name: str = Query(None),
     source: List[str] = Query(None),
+    product_type_ids: List[int] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     startTime: str = Query(None),
@@ -145,7 +146,7 @@ async def get_clients_with_sales_name(
     """
     查询客户列表，支持名称、状态、来源筛选与分页
     """
-    filter_params = ClientFilter(name=name, status=status, source=source,sales_name=sales_name, page=page, page_size=page_size, startTime=startTime, endTime=endTime)
+    filter_params = ClientFilter(name=name, status=status, source=source, product_type_ids=product_type_ids, sales_name=sales_name, page=page, page_size=page_size, startTime=startTime, endTime=endTime)
     clients, total = await ClientService.get_clients_with_sales_name(db, filter_params)
 
     total_pages = (total + page_size - 1) // page_size  # 正确的分页计算
@@ -157,7 +158,7 @@ async def get_clients_with_sales_name(
             name=client.name, 
             status=client.status.value, 
             source=client.source.value, 
-            product_type=client.product_type, 
+            product_type_ids=client.product_type_ids, 
             scale=client.scale.value, 
             created_at=client.access_time,
             sales_name=client.sales.name
@@ -205,6 +206,7 @@ async def get_online_clients(
     status: List[str] = Query(None),
     sales_name: str = Query(None),
     source: List[str] = Query(None),
+    product_type_ids: List[int] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     startTime: str = Query(None),
@@ -212,7 +214,7 @@ async def get_online_clients(
 ):
     # 验证权限
     source = ["线上"]
-    filter_params = ClientFilter(name=name, status=status, source=source,sales_name=sales_name, page=page, page_size=page_size, startTime=startTime, endTime=endTime)
+    filter_params = ClientFilter(name=name, status=status, source=source, product_type_ids=product_type_ids, sales_name=sales_name, page=page, page_size=page_size, startTime=startTime, endTime=endTime)
     clients, total = await ClientService.get_clients_with_sales_name(db, filter_params)
 
     total_pages = (total + page_size - 1) // page_size  # 正确的分页计算
@@ -222,7 +224,7 @@ async def get_online_clients(
             id=client.id, 
             name=client.name, 
             status=client.status.value, 
-            product_type=client.product_type, 
+            product_type_ids=client.product_type_ids, 
             scale=client.scale.value, 
             created_at=client.access_time,
             sales_name=client.sales.name,

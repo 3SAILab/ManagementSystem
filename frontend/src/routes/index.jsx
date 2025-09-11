@@ -21,6 +21,7 @@ import ReadOnlyContractDetail from '../pages/ReadOnlyContractDetail'
 import ArtDataPage from '../pages/ArtDataPage'
 import OnlineClientPage from '../pages/OnlineClientPage'
 import SalaryDataPage from '../pages/SalaryData'
+import ProductTypeManagePage from '../pages/ProductTypeManagePage'
 
 const router = createBrowserRouter([
   {
@@ -190,6 +191,15 @@ const router = createBrowserRouter([
               </PrivateRoute>
             ),
             handle: { title: '薪资数据' }
+          },
+          {
+            path: 'product_type_management',
+            element: (
+              <PrivateRoute currentPath='product_type_management'>
+                <ProductTypeManagePage />
+              </PrivateRoute>
+            ),
+            handle: { title: '产品类型管理' }
           }
         ],
       },

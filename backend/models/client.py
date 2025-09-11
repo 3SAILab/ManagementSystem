@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import JSON, TIMESTAMP, Column, DateTime, Integer, String, ForeignKey
+from sqlalchemy import JSON, TIMESTAMP, Column, DateTime, Integer, String, ForeignKey, ARRAY
 from sqlalchemy.types import Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -36,7 +36,7 @@ class Client(Base):
     source = Column(SQLEnum(ClientSource, name="client_source_enum", native_enum=False), nullable=False) #来源
     online_source = Column(String(100)) #线上来源
     activity_name = Column(String(100)) #活动名称
-    product_type = Column(String(100)) #产品类型
+    product_type_ids = Column(ARRAY(Integer), nullable=False, default=[]) #产品类型ID数组
     scale = Column(SQLEnum(ClientScale, name="client_scale_enum", native_enum=False), nullable=False) #规模
     status = Column(SQLEnum(ClientStatus, name="client_status_enum", native_enum=False), nullable=False) #状态
     access_time = Column(DateTime(timezone=True), nullable=False) # 客户接入时间
