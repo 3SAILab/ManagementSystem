@@ -109,7 +109,7 @@ const TeamRecordPage = () => {
                     <span
                         key={productType.id}
                         className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"
-                        title={productType.description || productType.name}
+                        title={productType.name}
                     >
                         {productType.name}
                     </span>

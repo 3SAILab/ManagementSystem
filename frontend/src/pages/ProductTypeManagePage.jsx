@@ -18,7 +18,6 @@ const ProductTypeManagePage = () => {
   const [editingProductType, setEditingProductType] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
     is_active: true
   });
   const [draggedIndex, setDraggedIndex] = useState(null);
@@ -62,7 +61,7 @@ const ProductTypeManagePage = () => {
       if (response.success) {
         toast.success('创建产品类型成功！');
         setIsCreateModalOpen(false);
-        setFormData({ name: '', description: '', is_active: true });
+        setFormData({ name: '', is_active: true });
         loadProductTypes();
       } else {
         toast.error(response.error || '创建产品类型失败');
@@ -82,7 +81,7 @@ const ProductTypeManagePage = () => {
         toast.success('更新产品类型成功！');
         setIsEditModalOpen(false);
         setEditingProductType(null);
-        setFormData({ name: '', description: '', is_active: true });
+        setFormData({ name: '', is_active: true });
         loadProductTypes();
       } else {
         toast.error(response.error || '更新产品类型失败');
@@ -133,7 +132,6 @@ const ProductTypeManagePage = () => {
     setEditingProductType(productType);
     setFormData({
       name: productType.name,
-      description: productType.description || '',
       is_active: productType.is_active
     });
     setIsEditModalOpen(true);
@@ -236,9 +234,6 @@ const ProductTypeManagePage = () => {
                   产品类型名称
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  描述
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   状态
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -267,9 +262,6 @@ const ProductTypeManagePage = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {productType.name}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {productType.description || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
@@ -333,19 +325,6 @@ const ProductTypeManagePage = () => {
               required
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              描述
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows="3"
-              className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="请输入产品类型描述"
-            />
-          </div>
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -395,19 +374,6 @@ const ProductTypeManagePage = () => {
               onChange={handleInputChange}
               className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              描述
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows="3"
-              className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="请输入产品类型描述"
             />
           </div>
           <div className="flex items-center">
