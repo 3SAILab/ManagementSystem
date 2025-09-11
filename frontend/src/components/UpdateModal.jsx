@@ -1,15 +1,26 @@
 import { useEffect, useState } from 'react';
 import { marked } from 'marked';
 import ModalCloseButton from './ModalCloseButton';
+import DateUtils from '../utils/dateUtils';
 
 export function UpdateModal({ isOpen, onClose }) {
   const [content, setContent] = useState('');
+  const [lastModified, setLastModified] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
       fetch('/updates/update.md?t=' + Date.now())
         .then((res) => {
           if (!res.ok) throw new Error('Failed to fetch');
+
+          // 尝试从响应头获取最后修改时间
+          const lastMod = res.headers.get('Last-Modified');
+          if (lastMod) {
+            setLastModified(DateUtils.formatDateTime(new Date(lastMod)));
+          } else {
+            setLastModified(null); // 或者设为 new Date() 作为 fallback
+          }
+
           return res.text();
         })
         .then((text) => {
@@ -35,7 +46,13 @@ export function UpdateModal({ isOpen, onClose }) {
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-5 border-b border-slate-200 bg-gradient-to-r bg-indigo-100">
           <h2 className="text-xl sm:text-2xl font-bold text-slate-800">更新日志</h2>
-          <ModalCloseButton onClose={onClose} />
+          <div className="flex items-center gap-4">
+            {/* 时间标签 */}
+            <span className="text-xs sm:text-sm text-indigo-600 font-medium bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 shadow-sm">
+              {lastModified}
+            </span>
+            <ModalCloseButton onClose={onClose} />
+          </div>
         </div>
 
         {/* Scrollable Content */}
