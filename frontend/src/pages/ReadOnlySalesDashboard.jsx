@@ -771,17 +771,13 @@ const ReadOnlySalesDashboard = () => {
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {contracts.map((contract) => {                 
-                  // 计算首付提点
-                const prepaymentCommission = Math.round(contract.paid_amount * contract.commission_rate / 100 * 100) / 100;
+                  // 使用后端返回的提点金额
+                const prepaymentCommission = contract.prepayment_commission || 0;
+                const finalPaymentCommission = contract.final_payment_commission || 0;
 
                 // 尾款金额
                 const remainingAmount = contract.total_amount - contract.paid_amount;
 
-                // 计算尾款提点（仅已结算显示）
-                let finalPaymentCommission = 0;
-                if (contract.status === '已结算' && remainingAmount > 0) {
-                  finalPaymentCommission = Math.round(remainingAmount * contract.commission_rate / 100 * 100) / 100;
-                }
                 // 提点合计
                 const totalCommission = prepaymentCommission + finalPaymentCommission;
                 

@@ -106,7 +106,11 @@ async def get_contracts(
             status=contract.status,
             is_recharged=contract.is_recharged,
             settlement_time=contract.settlement_time,
-            client_source=contract.client.source if contract.client else None
+            client_source=contract.client.source if contract.client else None,
+            prepayment_commission=round(float(contract.paid_amount) * float(contract.commission_rate) / 100, 2),
+            final_payment_commission=round(
+                float((contract.total_amount - contract.paid_amount) if contract.status == "已结算" and 
+                (contract.total_amount - contract.paid_amount) > 0 else 0)* float(contract.commission_rate) / 100, 2)
         ) 
         for contract in contracts
     ]
