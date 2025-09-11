@@ -27,6 +27,7 @@ class ClientFilter(BaseModel):
     name: Optional[str] = None
     status: Optional[List[ClientStatus]] = None
     source: Optional[List[ClientSource]] = None
+    product_type_ids: Optional[List[int]] = None
     sales_name:Optional[str] = None
     page: int = 1
     page_size: int = 10
@@ -43,7 +44,7 @@ class ClientCreate(BaseModel):
     online_source: Optional[str] = None
     activity_name: Optional[str] = None
     source: ClientSource
-    product_type: str
+    product_type_ids: List[int] = Field(default_factory=list)
     scale: ClientScale
     status: ClientStatus = ClientStatus.刚开始跟进
     access_time: datetime
@@ -66,7 +67,7 @@ class ClientOut(BaseModel):
     name: str
     source: Optional[ClientSource] = None
     status: ClientStatus
-    product_type: str
+    product_type_ids: List[int] = Field(default_factory=list)
     scale: ClientScale
     created_at: datetime
     sales_name: Optional[str] = None

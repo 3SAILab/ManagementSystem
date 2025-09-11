@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Boolean, Column, DateTime, Integer, String, Text, TIMESTAMP, ForeignKey, func
+    Boolean, Column, DateTime, Integer, String, Text, TIMESTAMP, ForeignKey, func, Numeric
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -21,6 +21,9 @@ class Ticket(Base):
     notes = Column(Text, nullable=True) #备注
     priority = Column(String(100), nullable=False)  # 高、中、低
     platform = Column(String(100), nullable=False)  # 国内、国外
+    product_type_id = Column(Integer, ForeignKey('product_type.id'), nullable=True) #产品类型ID
+    product_name = Column(String(200), nullable=True) #产品名称
+    price = Column(Numeric(12, 2), nullable=True) #价格
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False) #创建时间
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) #更新时间
 
@@ -29,3 +32,6 @@ class Ticket(Base):
     
     # 关联合同
     contract = relationship("Contract", back_populates="tickets")
+    
+    # 关联产品类型
+    product_type = relationship("ProductType", back_populates="tickets")

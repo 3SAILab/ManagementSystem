@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ModalCloseButton from "./ModalCloseButton";
 import { getRemainingRequirements } from "../services/contractService";
+import { getActiveProductTypes } from "../services/productTypeService";
 import { toast } from "react-toastify";
 
 const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
@@ -10,6 +11,8 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
     image_count: 0,
     workflow_count: 0,
   });
+  
+  const [productTypes, setProductTypes] = useState([]);
   
   // 添加错误状态管理
   const [errors, setErrors] = useState({
@@ -26,7 +29,23 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
         setRemainingRequirements(result.data);
       }
     };
-    fetchRemainingRequirements();
+    
+    const loadProductTypes = async () => {
+      try {
+        const res = await getActiveProductTypes();
+        if (res.success) {
+          setProductTypes(res.data);
+        }
+      } catch (error) {
+        console.error('加载产品类型失败', error);
+        setProductTypes([]);
+      }
+    };
+    
+    if (isOpen) {
+      fetchRemainingRequirements();
+      loadProductTypes();
+    }
   },[isOpen, contractId]);
 
   const [formData, setFormData] = useState({
@@ -44,6 +63,9 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
     priority: "高", // 优先级
     platform: "国内", // 平台
     contract_id: contractId || 0, // 合同ID
+    product_type_id: null, // 产品类型ID
+    product_name: "", // 产品名称
+    price: "", // 价格
   });
 
   // 验证输入值的函数
@@ -129,6 +151,9 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
       priority: "高", // 优先级
       platform: "国内", // 平台
       contract_id: contractId || 0, // 合同ID
+      product_type_id: null, // 产品类型ID
+      product_name: "", // 产品名称
+      price: "", // 价格
     })
     handleClose();
   };
@@ -283,6 +308,59 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
                 <option value="国内">国内</option>
                 <option value="国外">国外</option>
               </select>
+            </div>
+          </div>
+
+          {/* 产品信息 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="product-type" className="block text-sm font-medium text-slate-700 mb-1">
+                产品类型
+              </label>
+              <select
+                id="product-type"
+                name="product_type_id"
+                value={formData.product_type_id || ""}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">请选择产品类型</option>
+                {productTypes.map((productType) => (
+                  <option key={productType.id} value={productType.id}>
+                    {productType.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="product-name" className="block text-sm font-medium text-slate-700 mb-1">
+                产品名称
+              </label>
+              <input
+                type="text"
+                id="product-name"
+                name="product_name"
+                value={formData.product_name}
+                onChange={handleInputChange}
+                placeholder="请输入产品名称"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="price" className="block text-sm font-medium text-slate-700 mb-1">
+                价格 (元)
+              </label>
+              <input
+                type="number"
+                id="price"
+                name="price"
+                value={formData.price}
+                onChange={handleInputChange}
+                placeholder="请输入价格"
+                step="0.01"
+                min="0"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
             </div>
           </div>
 

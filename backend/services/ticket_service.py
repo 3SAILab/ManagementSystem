@@ -25,7 +25,10 @@ class TicketService:
             wechat_group=ticket.wechatGroup,
             notes=ticket.notes or '',
             priority=ticket.priority,
-            platform=ticket.platform
+            platform=ticket.platform,
+            product_type_id=ticket.product_type_id,
+            product_name=ticket.product_name,
+            price=ticket.price
         )
         db.add(new_ticket)
         await db.flush()
@@ -127,6 +130,9 @@ class TicketService:
         ticket.notes = ticket_update.notes
         ticket.priority = ticket_update.priority
         ticket.platform = ticket_update.platform
+        ticket.product_type_id = ticket_update.product_type_id
+        ticket.product_name = ticket_update.product_name
+        ticket.price = ticket_update.price
         await db.flush()
         await db.refresh(ticket)
         return ticket

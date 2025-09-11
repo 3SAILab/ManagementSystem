@@ -2,10 +2,10 @@ import api from './api';
 import Qs from 'qs';
 
 // 查询客户列表，接收一个 filters 对象
-export const getClients = async ({ name, status, source, page, page_size, startTime, endTime }) => {
+export const getClients = async ({ name, status, source, product_type_ids, page, page_size, startTime, endTime }) => {
     try {
         const response = await api.get('/clients', {
-            params: { name, status, source, page, page_size, startTime, endTime },
+            params: { name, status, source, product_type_ids, page, page_size, startTime, endTime },
             paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
         });
         return {success: true, data: response.data};
@@ -25,7 +25,7 @@ export const addClient = async (client) => {
             source: client.source,
             online_source: client.online_source,
             activity_name: client.activity_name,
-            product_type: client.product_type,
+            product_type_ids: client.product_type_ids,
             scale: client.scale,
             status: "刚开始跟进",
             access_time: client.access_time,
@@ -73,10 +73,10 @@ export const updateClientStatus = async (clientId, status) => {
 };
 
 // 获取客户列表包括销售名称
-export const getClientsWithSalesName = async ({ name, status, source, sales_name, page, page_size, startTime, endTime }) => {
+export const getClientsWithSalesName = async ({ name, status, source, product_type_ids, sales_name, page, page_size, startTime, endTime }) => {
     try {
         const response = await api.get('/client/get_clients_with_sales_name', {
-            params: { name, status, source, sales_name, page, page_size, startTime, endTime },
+            params: { name, status, source, product_type_ids, sales_name, page, page_size, startTime, endTime },
             paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
         });
         return {success: true, data: response.data};
@@ -97,10 +97,10 @@ export const updateClientSales = async (clientId, salesId, notes) =>{
 }
 
 // 获取线上客户列表
-export const getOnlineClients = async ({ name, status, source, sales_name, page, page_size, startTime, endTime }) => {
+export const getOnlineClients = async ({ name, status, source, product_type_ids, sales_name, page, page_size, startTime, endTime }) => {
     try {
         const response = await api.get('/client/get_online_clients', {
-            params: { name, status, source, sales_name, page, page_size, startTime, endTime },
+            params: { name, status, source, product_type_ids, sales_name, page, page_size, startTime, endTime },
             paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
         });
         return {success: true, data: response.data};
@@ -119,7 +119,7 @@ export const addOnlineClient = async (client) => {
             source: "线上",
             online_source: client.online_source,
             activity_name: client.activity_name,
-            product_type: client.product_type,
+            product_type_ids: client.product_type_ids,
             scale: client.scale,
             address: client.address,
             access_time: client.access_time,

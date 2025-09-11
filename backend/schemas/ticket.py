@@ -1,4 +1,6 @@
 from pydantic import BaseModel
+from typing import Optional
+from decimal import Decimal
 
 
 class TicketCreate(BaseModel):
@@ -16,6 +18,9 @@ class TicketCreate(BaseModel):
     notes: str = ''
     priority: str
     platform: str
+    product_type_id: Optional[int] = None
+    product_name: Optional[str] = None
+    price: Optional[Decimal] = None
 
 class TicketUpdate(BaseModel):
     name: str
@@ -27,3 +32,6 @@ class TicketUpdate(BaseModel):
     notes: str = ''
     priority: str
     platform: str
+    product_type_id: Optional[int] = None
+    product_name: Optional[str] = None
+    price: Optional[Decimal] = None

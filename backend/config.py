@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     FILE_UPLOAD_DIR: str = os.path.join(ROOT_DIR, os.getenv("FILE_UPLOAD_DIR","uploads"))
 
     # 前端地址
-    CORS_ORIGINS: list[str] = []
+    CORS_ORIGINS: list[str] = ["http://localhost:5175", "http://192.168.10.36:5175"]
     # Pydantic V2 配置方式
     model_config = ConfigDict(
         env_file = Path(__file__).parent / '.env',         # 指定环境变量文件

@@ -12,6 +12,7 @@ import ClientSidePanel from '../components/ClientSidePanel';
 import CustomerSalesModal from '../components/CustomerSalesModal';
 import { toast } from 'react-toastify';
 import ContractTable from '../components/ContractTable';
+import { getActiveProductTypes } from '../services/productTypeService';
 
 const TeamRecordPage = () => {
     // 客户跟进记录ID (用于侧边栏)
@@ -59,9 +60,63 @@ const TeamRecordPage = () => {
     // 👇 新增：用于可展开行的状态
     const [expandedClientId, setExpandedClientId] = useState(null); // 记录当前展开的客户ID
     const [clientContracts, setClientContracts] = useState({}); // 缓存所有客户的合同数据
+    const [productTypes, setProductTypes] = useState([]); // 产品类型列表
 
     // 刷新客户信息
     const [refresh, setRefresh] = useState(false);
+
+    // 加载产品类型列表
+    useEffect(() => {
+        const loadProductTypes = async () => {
+            try {
+                const res = await getActiveProductTypes();
+                if (res.success) {
+                    setProductTypes(res.data);
+                }
+            } catch (error) {
+                console.error('加载产品类型失败', error);
+                setProductTypes([]);
+            }
+        };
+        loadProductTypes();
+    }, []);
+
+    // 渲染产品类型标签
+    const renderProductTypeTags = (productTypeIds) => {
+        if (!productTypeIds || productTypeIds.length === 0) {
+            return (
+                <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-500">
+                    未分类
+                </span>
+            );
+        }
+        
+        const validTypes = productTypeIds
+            .map(id => productTypes.find(pt => pt.id === id))
+            .filter(pt => pt !== undefined);
+        
+        if (validTypes.length === 0) {
+            return (
+                <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-500">
+                    未分类
+                </span>
+            );
+        }
+        
+        return (
+            <div className="flex flex-wrap gap-1">
+                {validTypes.map((productType, index) => (
+                    <span
+                        key={productType.id}
+                        className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"
+                        title={productType.name}
+                    >
+                        {productType.name}
+                    </span>
+                ))}
+            </div>
+        );
+    };
 
     // 获取客户活动日志统计数据
     useEffect(() => {
@@ -337,9 +392,7 @@ const TeamRecordPage = () => {
                                                         </span>
                                                     </td>
                                                     <td className="p-4">
-                                                        <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
-                                                            {client.product_type || '未分类'}
-                                                        </span>
+                                                        {renderProductTypeTags(client.product_type_ids)}
                                                     </td>
                                                     <td className="p-4">
                                                         <span
