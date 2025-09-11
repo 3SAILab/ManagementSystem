@@ -8,6 +8,9 @@ from typing import List, Tuple, Optional
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import selectinload
 from backend.models.client import Client
+from backend.services.sales_service import SalesService
+from backend.utils.contract_utils import calculate_commission_rate
+from backend.utils.date_utils import get_month_range
 
 from backend.utils.response import api_response
 
@@ -32,6 +35,13 @@ class ContractService:
             status = "待结算"
             settlement_time = None
         
+        # 计算提点比例：按合同所在月份的总销售额
+        start_date, end_date = get_month_range(contract.transaction_time.year, contract.transaction_time.month)
+        monthly_total_amount = await SalesService.get_sales_amount(db, start_date=start_date, end_date=end_date, sales_id=sales_id)
+        # 加上本单已支付金额
+        monthly_total_amount = monthly_total_amount + contract.paid_amount
+        commission_rate = calculate_commission_rate(client.source, monthly_total_amount)
+
         contract = Contract(
             client_id=contract.client_id,
             sales_id=sales_id,
@@ -41,7 +51,7 @@ class ContractService:
             status=status,
             total_amount=contract.total_amount,
             paid_amount=contract.paid_amount,
-            commission_rate=contract.commission_rate,
+            commission_rate=commission_rate,
             detail_pages=contract.detail_pages,
             video_count=contract.video_count,
             image_count=contract.image_count,

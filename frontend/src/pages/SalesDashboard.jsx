@@ -21,14 +21,6 @@ const getTrendIndicator = (change) => {
   );
 };
 
-// 根据客户来源与当月总金额计算提点比例
-const calculateCommissionRateByMonthlyTotal = (clientSource, monthlyTotalAmount) => {
-  if (clientSource === '线上') return 4;
-  if (monthlyTotalAmount < 50000) return 10;
-  if (monthlyTotalAmount < 100000) return 12;
-  return 15;
-};
-
 const statusBadgeClass = (status) => {
   switch (status) {
     case '已结算':
@@ -791,10 +783,8 @@ const SalesDashboard = () => {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {contracts.map((contract) => {
-                // 基于当月总金额计算本月提点比例（线上固定4%）
-                const commissionRate = calculateCommissionRateByMonthlyTotal(contract.client_source, statistics.monthlySales || 0);
                 // 计算首付提点
-                const prepaymentCommission = Math.round(contract.paid_amount * commissionRate / 100 * 100) / 100;
+                const prepaymentCommission = Math.round(contract.paid_amount * contract.commission_rate / 100 * 100) / 100;
 
                 // 尾款金额
                 const remainingAmount = contract.total_amount - contract.paid_amount;
@@ -802,7 +792,7 @@ const SalesDashboard = () => {
                 // 计算尾款提点（仅已结算显示）
                 let finalPaymentCommission = 0;
                 if (contract.status === '已结算' && remainingAmount > 0) {
-                  finalPaymentCommission = Math.round(remainingAmount * commissionRate / 100 * 100) / 100;
+                  finalPaymentCommission = Math.round(remainingAmount * contract.commission_rate / 100 * 100) / 100;
                 }
                 // 提点合计
                 const totalCommission = prepaymentCommission + finalPaymentCommission;
