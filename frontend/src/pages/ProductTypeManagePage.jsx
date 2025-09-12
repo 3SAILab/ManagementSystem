@@ -10,6 +10,24 @@ import {
   reorderProductTypes
 } from '../services/productTypeService';
 
+// 模态框组件
+const Modal = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium text-slate-800">{title}</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            <X size={20} />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+};
 const ProductTypeManagePage = () => {
   const [productTypes, setProductTypes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -184,25 +202,6 @@ const ProductTypeManagePage = () => {
       toast.error('排序更新失败');
       loadProductTypes(); // 失败时恢复原始数据
     }
-  };
-
-  // 模态框组件
-  const Modal = ({ isOpen, onClose, title, children }) => {
-    if (!isOpen) return null;
-    
-    return (
-      <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium text-slate-800">{title}</h2>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-              <X size={20} />
-            </button>
-          </div>
-          {children}
-        </div>
-      </div>
-    );
   };
 
   return (
