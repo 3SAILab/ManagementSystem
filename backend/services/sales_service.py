@@ -437,7 +437,7 @@ class SalesService:
             产品类目销售额分布（Dict）
         """
         stmt = select(
-            func.coalesce(Client.product_type, "其他"),
+            func.coalesce(Client.product_type_ids, []),
             func.sum(
                 case(
                     (Contract.status == "坏单", func.coalesce(Contract.paid_amount, 0)),
@@ -452,15 +452,35 @@ class SalesService:
                 (end_date is None or Contract.transaction_time < end_date)
             )
         )\
-        .group_by(Client.product_type)
+        .group_by(Client.product_type_ids)
 
         result = await db.execute(stmt)
         rows = result.all()
 
-        return {
-            category: round(float(amount or 0.0), 2)
-            for category, amount in rows
-        }
+        # 获取所有产品类型ID到名字的映射
+        from backend.services.product_type_service import ProductTypeService
+        all_product_types = await ProductTypeService.get_active_product_types(db)
+        product_type_map = {pt.id: pt.name for pt in all_product_types}
+        
+        # 处理 product_type_ids 数组，将数组转换为产品类型名字
+        category_stats = {}
+        for product_type_ids, amount in rows:
+            if product_type_ids:
+                # 将ID数组转换为产品类型名字数组
+                type_names = []
+                for type_id in sorted(product_type_ids):
+                    type_name = product_type_map.get(type_id, f"未知类型({type_id})")
+                    type_names.append(type_name)
+                key = ','.join(type_names)
+            else:
+                key = "其他"
+            
+            if key in category_stats:
+                category_stats[key] += round(float(amount or 0.0), 2)
+            else:
+                category_stats[key] = round(float(amount or 0.0), 2)
+
+        return category_stats
     
 
     """
