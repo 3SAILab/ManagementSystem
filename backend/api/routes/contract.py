@@ -122,13 +122,6 @@ async def get_contracts(
             final_payment_commission = round(
                 float(contract.total_amount - contract.paid_amount) * float(final_payment_commission_rate) / 100, 2)
         
-        # 如果首付款和尾款都存在，使用首付款提点
-        # 如果只有其中一种，使用存在的那个
-        if prepayment_commission_rate > 0:
-            main_commission_rate = prepayment_commission_rate
-        else:
-            main_commission_rate = final_payment_commission_rate
-        
         contracts_out.append(ContractList(
             id=contract.id,
             client_name=contract.client.name,
@@ -136,7 +129,6 @@ async def get_contracts(
             contract_type=contract.contract_type.value,
             total_amount=contract.total_amount,
             paid_amount=contract.paid_amount,
-            commission_rate=main_commission_rate,
             transaction_time=contract.transaction_time,
             status=contract.status,
             is_recharged=contract.is_recharged,
@@ -416,13 +408,6 @@ async def get_readonly_contracts(
             final_payment_commission = round(
                 float(contract.total_amount - contract.paid_amount) * float(final_payment_commission_rate) / 100, 2)
         
-        # 如果首付款和尾款都存在，使用首付款提点
-        # 如果只有其中一种，使用存在的那个
-        if prepayment_commission_rate > 0:
-            main_commission_rate = prepayment_commission_rate
-        else:
-            main_commission_rate = final_payment_commission_rate
-        
         contracts_out.append(ContractList(
             id=contract.id,
             client_name=contract.client.name,
@@ -430,7 +415,6 @@ async def get_readonly_contracts(
             contract_type=contract.contract_type.value,
             total_amount=contract.total_amount,
             paid_amount=contract.paid_amount,
-            commission_rate=main_commission_rate,
             transaction_time=contract.transaction_time,
             status=contract.status,
             is_recharged=contract.is_recharged,
