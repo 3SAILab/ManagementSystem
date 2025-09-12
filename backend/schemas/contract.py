@@ -47,6 +47,8 @@ class ContractList(BaseModel):
     is_recharged: bool
     settlement_time: Optional[datetime] = None
     client_source: Optional[str] = None
+    prepayment_commission: float
+    final_payment_commission: float
 # 合同过滤
 class ContractFilter(BaseModel):
     name: Optional[str] = None
