@@ -426,12 +426,8 @@ class StatisticsService:
         monthly_sales_statistics = []
         # 获取员工今年各月度销售统计数据(其中坏单只统计预付金额其余正常统计)
         for month in range(1, 13):
-            start_date = datetime(get_now().year, month, 1)
-            # 计算下个月的第一天，然后减去1秒作为结束时间
-            if month == 12:
-                end_date = datetime(get_now().year + 1, 1, 1)
-            else:
-                end_date = datetime(get_now().year, month + 1, 1)
+            year, month = get_now().year, month
+            start_date, end_date = get_month_range(year, month)
             monthly_sales = await SalesService.get_sales_commission(db, sales_id=employee_id, start_date=start_date, end_date=end_date)
             # 格式化为两位小数
             monthly_sales = round(float(monthly_sales), 2)
@@ -675,12 +671,8 @@ class StatisticsService:
         monthly_sales_amount_statistics = []
         # 获取员工今年各月度销售额统计数据(其中坏单只统计预付金额其余正常统计)
         for month in range(1, 13):
-            start_date = datetime(get_now().year, month, 1)
-            # 计算下个月的第一天，然后减去1秒作为结束时间
-            if month == 12:
-                end_date = datetime(get_now().year + 1, 1, 1)
-            else:
-                end_date = datetime(get_now().year, month + 1, 1)
+            year, month = get_now().year, month
+            start_date, end_date = get_month_range(year, month)
             # 统计坏单
             bad_contract_result = await db.execute(select(func.sum(Contract.paid_amount)).where(
                 and_(

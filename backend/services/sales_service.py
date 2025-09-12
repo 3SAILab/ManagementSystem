@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy import and_, case, func, null, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date, datetime, timedelta, timezone
@@ -24,7 +24,7 @@ class SalesService:
         db: AsyncSession,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        source: Optional[str] = None,
+        source: Optional[List[str]] = None,
         sales_id: Optional[int] = None
     ) -> float:
         """
@@ -38,7 +38,7 @@ class SalesService:
             db: AsyncSession
             start_date: 开始时间（可选）
             end_date: 结束时间（可选），使用左闭右开 [start, end)
-            source: 客户来源（可选）
+            source: 客户来源列表（可选）
             sales_id: 销售员ID（可选）
 
         返回：
@@ -83,7 +83,7 @@ class SalesService:
         where_clauses = []
 
         if source is not None:
-            where_clauses.append(Client.source == source)
+            where_clauses.append(Client.source.in_(source))
 
         # 优化：只考虑可能产生进账的合同（至少有一个时间字段非空）
         relevant_time = or_(
@@ -132,8 +132,8 @@ class SalesService:
         total_amount = 0
         for month in month_list:
             start_date, end_date = month
-            offline_total = await SalesService.get_total_received(db, sales_id=sales_id, start_date=start_date, end_date=end_date, source="线下")
-            online_total = await SalesService.get_total_received(db, sales_id=sales_id, start_date=start_date, end_date=end_date, source="线上")
+            offline_total = await SalesService.get_total_received(db, sales_id=sales_id, start_date=start_date, end_date=end_date, source=["线下","活动"])
+            online_total = await SalesService.get_total_received(db, sales_id=sales_id, start_date=start_date, end_date=end_date, source=["线上"])
             offline_commission_rate = await SalesService.get_commission_rate(db, year=start_date.year, month=start_date.month, sales_id=sales_id, source="线下")
             online_commission_rate = await SalesService.get_commission_rate(db, year=start_date.year, month=start_date.month, sales_id=sales_id, source="线上")
             offline_amount = offline_total * offline_commission_rate/100
@@ -689,7 +689,7 @@ class SalesService:
     year: 年份
     month 月份
     sales_id 销售id
-    source 客户来源
+    source 客户来源线上/线下
     """
     @staticmethod
     async def get_commission_rate(
@@ -706,7 +706,7 @@ class SalesService:
             year: 年份
             month: 月份
             sales_id: 销售员ID
-            source: 客户来源
+            source: 客户来源线上/线下
         返回：
             指定时间区间的提点比例（float）
         """

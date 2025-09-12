@@ -104,7 +104,7 @@ async def get_contracts(
                 year=contract.transaction_time.year,
                 month=contract.transaction_time.month,
                 sales_id=contract.sales_id,
-                source=contract.client.source
+                source=contract.client.source.value
             )
             prepayment_commission = round(float(contract.paid_amount) * float(prepayment_commission_rate) / 100, 2)
         
@@ -117,7 +117,7 @@ async def get_contracts(
                 year=contract.settlement_time.year,
                 month=contract.settlement_time.month,
                 sales_id=contract.sales_id,
-                source=contract.client.source
+                source=contract.client.source.value
             )
             final_payment_commission = round(
                 float(contract.total_amount - contract.paid_amount) * float(final_payment_commission_rate) / 100, 2)
@@ -390,7 +390,7 @@ async def get_readonly_contracts(
                 year=contract.transaction_time.year,
                 month=contract.transaction_time.month,
                 sales_id=contract.sales_id,
-                source=contract.client.source
+                source=contract.client.source.value
             )
             prepayment_commission = round(float(contract.paid_amount) * float(prepayment_commission_rate) / 100, 2)
         
@@ -403,7 +403,7 @@ async def get_readonly_contracts(
                 year=contract.settlement_time.year,
                 month=contract.settlement_time.month,
                 sales_id=contract.sales_id,
-                source=contract.client.source
+                source=contract.client.source.value
             )
             final_payment_commission = round(
                 float(contract.total_amount - contract.paid_amount) * float(final_payment_commission_rate) / 100, 2)
