@@ -41,14 +41,14 @@ class ContractList(BaseModel):
     contract_type: ContractType
     total_amount: float
     paid_amount: float
-    commission_rate: float
+    commission_rate: Optional[float] = None
     transaction_time: datetime
     status: str
     is_recharged: bool
     settlement_time: Optional[datetime] = None
     client_source: Optional[str] = None
-    prepayment_commission: float
-    final_payment_commission: float
+    prepayment_commission: Optional[float] = None
+    final_payment_commission: Optional[float] = None
 # 合同过滤
 class ContractFilter(BaseModel):
     name: Optional[str] = None
