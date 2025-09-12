@@ -93,23 +93,50 @@ async def get_contracts(
     total_pages = (total + page_size - 1) // page_size  # 正确的分页计算
 
     #将Contract对象转换为ContractList对象
-    contracts_out = [
-        ContractList(
+    contracts_out = []
+    for contract in contracts:
+        # 计算首付款提点（基于成交时间所在月份）
+        prepayment_commission_rate = 0
+        prepayment_commission = 0
+        if contract.transaction_time and contract.paid_amount > 0:
+            prepayment_commission_rate = await SalesService.get_commission_rate(
+                db=db,
+                year=contract.transaction_time.year,
+                month=contract.transaction_time.month,
+                sales_id=contract.sales_id,
+                source=contract.client.source
+            )
+            prepayment_commission = round(float(contract.paid_amount) * float(prepayment_commission_rate) / 100, 2)
+        
+        # 计算尾款提点（基于结算时间所在月份）
+        final_payment_commission_rate = 0
+        final_payment_commission = 0
+        if (contract.status == "已结算" and contract.settlement_time and (contract.total_amount - contract.paid_amount) > 0):
+            final_payment_commission_rate = await SalesService.get_commission_rate(
+                db=db,
+                year=contract.settlement_time.year,
+                month=contract.settlement_time.month,
+                sales_id=contract.sales_id,
+                source=contract.client.source
+            )
+            final_payment_commission = round(
+                float(contract.total_amount - contract.paid_amount) * float(final_payment_commission_rate) / 100, 2)
+        
+        contracts_out.append(ContractList(
             id=contract.id,
             client_name=contract.client.name,
             sales_name=contract.sales.name if contract.sales else '',
             contract_type=contract.contract_type.value,
             total_amount=contract.total_amount,
             paid_amount=contract.paid_amount,
-            commission_rate=contract.commission_rate,
             transaction_time=contract.transaction_time,
             status=contract.status,
             is_recharged=contract.is_recharged,
             settlement_time=contract.settlement_time,
-            client_source=contract.client.source if contract.client else None
-        ) 
-        for contract in contracts
-    ]
+            client_source=contract.client.source if contract.client else None,
+            prepayment_commission=prepayment_commission,
+            final_payment_commission=final_payment_commission
+        ))
     # 构造分页响应并导出为 dict
     paginated = PaginatedContract(
         contracts=contracts_out, 
@@ -352,23 +379,50 @@ async def get_readonly_contracts(
     total_pages = (total + page_size - 1) // page_size  # 正确的分页计算
 
     #将Contract对象转换为ContractList对象
-    contracts_out = [
-        ContractList(
+    contracts_out = []
+    for contract in contracts:
+        # 计算首付款提点（基于成交时间所在月份）
+        prepayment_commission_rate = 0
+        prepayment_commission = 0
+        if contract.transaction_time and contract.paid_amount > 0:
+            prepayment_commission_rate = await SalesService.get_commission_rate(
+                db=db,
+                year=contract.transaction_time.year,
+                month=contract.transaction_time.month,
+                sales_id=contract.sales_id,
+                source=contract.client.source
+            )
+            prepayment_commission = round(float(contract.paid_amount) * float(prepayment_commission_rate) / 100, 2)
+        
+        # 计算尾款提点（基于结算时间所在月份）
+        final_payment_commission_rate = 0
+        final_payment_commission = 0
+        if (contract.status == "已结算" and contract.settlement_time and (contract.total_amount - contract.paid_amount) > 0):
+            final_payment_commission_rate = await SalesService.get_commission_rate(
+                db=db,
+                year=contract.settlement_time.year,
+                month=contract.settlement_time.month,
+                sales_id=contract.sales_id,
+                source=contract.client.source
+            )
+            final_payment_commission = round(
+                float(contract.total_amount - contract.paid_amount) * float(final_payment_commission_rate) / 100, 2)
+        
+        contracts_out.append(ContractList(
             id=contract.id,
             client_name=contract.client.name,
             sales_name=contract.sales.name if contract.sales else '',
             contract_type=contract.contract_type.value,
             total_amount=contract.total_amount,
             paid_amount=contract.paid_amount,
-            commission_rate=contract.commission_rate,
             transaction_time=contract.transaction_time,
             status=contract.status,
             is_recharged=contract.is_recharged,
             settlement_time=contract.settlement_time,
-            client_source=contract.client.source if contract.client else None
-        ) 
-        for contract in contracts
-    ]
+            client_source=contract.client.source if contract.client else None,
+            prepayment_commission=prepayment_commission,
+            final_payment_commission=final_payment_commission
+        ))
     # 构造分页响应并导出为 dict
     paginated = PaginatedContract(
         contracts=contracts_out, 

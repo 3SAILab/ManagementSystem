@@ -29,16 +29,6 @@ const statusBadgeClass = (status) => {
   }
 };
 
-const typeBadgeClass = (type) => {
-  switch (type) {
-    case '首单':
-      return 'bg-blue-100 text-blue-800';
-    case '复购':
-      return 'bg-green-100 text-green-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
 
 const ReadOnlySalesDashboard = () => {
   const navigate = useNavigate();
@@ -771,46 +761,42 @@ const ReadOnlySalesDashboard = () => {
                   <th className="p-4 text-sm font-semibold text-slate-600">合同金额</th>
                   <th className="p-4 text-sm font-semibold text-slate-600">接入日期</th>
                   <th className="p-4 text-sm font-semibold text-slate-600">首付款</th>
-                  <th className="p-4 text-sm font-semibold text-slate-600">提点</th>
-                  <th className="p-4 text-sm font-semibold text-slate-600">类型</th>
+                  <th className="p-4 text-sm font-semibold text-slate-600">首付提点</th>
+                  <th className="p-4 text-sm font-semibold text-slate-600">尾款</th>
+                  <th className="p-4 text-sm font-semibold text-slate-600">结算日期</th>
+                  <th className="p-4 text-sm font-semibold text-slate-600">尾款提点</th>
+                  <th className="p-4 text-sm font-semibold text-slate-600">提点合计</th>
                   <th className="p-4 text-sm font-semibold text-slate-600">状态</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {contracts.map((contract) => {
-                  // 提点保留两位小数
-                  //如果是坏单，提点为预付金额*提点
-                  //如果是待结算，提点为预付金额*提点
-                  //如果是已结算，提点为合同金额*提点
-                  let commission = 0;
-                  if(contract.status === '坏单'){
-                    commission = Math.round(contract.paid_amount * contract.commission_rate / 100 * 100) / 100;
-                  }else if(contract.status === '待结算'){
-                    commission = Math.round(contract.paid_amount * contract.commission_rate / 100 * 100) / 100;
-                  }else if(contract.status === '已结算'){
-                    commission = Math.round(contract.total_amount * contract.commission_rate / 100 * 100) / 100;
-                  }
+                {contracts.map((contract) => {                 
+                  // 使用后端返回的提点金额
+                const prepaymentCommission = contract.prepayment_commission || 0;
+                const finalPaymentCommission = contract.final_payment_commission || 0;
+
+                // 尾款金额
+                const remainingAmount = contract.total_amount - contract.paid_amount;
+
+                // 提点合计
+                const totalCommission = prepaymentCommission + finalPaymentCommission;
+                
                   return (
                     <tr
                       key={contract.id}
                       onClick={() => navigate(`/readonly_contract_detail/${contract.id}`)}
-                      className={`hover:bg-slate-50 cursor-pointer`}
+                      className={`hover:bg-slate-50 cursor-pointer transition-colors`}
                     >
                       <td className="p-4 font-medium text-slate-800">{contract.client_name || '未知客户'}</td>
-                      <td className="p-4 text-slate-600">¥{contract.total_amount.toLocaleString()}</td>
+                      <td className="p-4 text-slate-600 font-medium">¥{contract.total_amount.toLocaleString()}</td>
                       <td className="p-4 text-slate-600">{new Date(contract.transaction_time).toLocaleDateString()}</td>
-                      <td className="p-4 text-slate-600">¥{contract.paid_amount.toLocaleString()}</td>
-                      <td className="p-4 text-slate-600">¥{commission.toLocaleString()}</td>
-                      <td className="p-4">
-                        <span className={`inline-block px-2 py-1 text-xs rounded-full ${typeBadgeClass(contract.contract_type)}`}>
-                          {contract.contract_type}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <span className={`inline-block px-2 py-1 text-xs rounded-full ${statusBadgeClass(contract.status)}`}>
-                          {contract.status}
-                        </span>
-                      </td>
+                      <td className="p-4 text-slate-600 font-medium">¥{contract.paid_amount.toLocaleString()}</td>
+                      <td className="p-4 text-slate-600 font-medium">¥{prepaymentCommission.toLocaleString()}</td>
+                      <td className="p-4 text-slate-600 font-medium">¥{remainingAmount.toLocaleString()}</td>
+                      <td className="p-4 text-slate-600">{contract.settlement_time ? new Date(contract.settlement_time).toLocaleDateString() : '-'}</td>
+                      <td className="p-4 text-slate-600 font-medium">¥{finalPaymentCommission.toLocaleString()}</td>
+                      <td className="p-4 text-slate-800 font-bold text-lg">¥{totalCommission.toLocaleString()}</td>
+                      <td className="p-4"><span className={`inline-block px-3 py-1 text-xs rounded-full font-medium ${statusBadgeClass(contract.status)}`}>{contract.status}</span></td>
                     </tr>
                   );
                 })}
