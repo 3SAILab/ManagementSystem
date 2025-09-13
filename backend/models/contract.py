@@ -28,6 +28,9 @@ class Contract(Base):
     image_count = Column(Integer, nullable=False) #图片数
     workflow_count = Column(Integer, nullable=False) #工作流数
     file_resource_id = Column(Integer, ForeignKey("file_resource.id", ondelete="SET NULL"), nullable=True) #文件资源ID
+    parent_contract_id = Column(Integer, ForeignKey("contract.id"), nullable=True)  # 主合同ID
+    notes = Column(Text, nullable=True)  # 合同备注信息
+    is_appendix = Column(Boolean, nullable=False, default=False)  # 是否为附属合同
     transfer_date = Column(DateTime(timezone=True), nullable=True)  # 转移日期
     transaction_time = Column(DateTime(timezone=True), nullable=False) #合同成交时间
     settlement_time = Column(DateTime(timezone=True), nullable=True) #合同已结算时间
@@ -45,3 +48,7 @@ class Contract(Base):
     tickets = relationship("Ticket", back_populates="contract")
     # 关联到 FileResource 表
     file_resource = relationship("FileResource", foreign_keys=[file_resource_id], back_populates="contract")
+    
+    # 合同自引用关系
+    parent_contract = relationship("Contract", remote_side=[id], back_populates="appendix_contracts")
+    appendix_contracts = relationship("Contract", back_populates="parent_contract")

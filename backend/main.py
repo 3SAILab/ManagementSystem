@@ -59,6 +59,14 @@ async def init_db():
         pos_result = await conn.execute(pos_skip_stmt)
         logger.info(f"人事专员职位插入完成，受影响行数: {pos_result.rowcount}")
 
+        # 插入生产部（存在就跳过）
+        production_dept_stmt = insert(Department).values(name="生产部")
+        production_dept_skip_stmt = production_dept_stmt.on_conflict_do_nothing(
+            index_elements=[Department.name]
+        )
+        production_dept_result = await conn.execute(production_dept_skip_stmt)
+        logger.info(f"生产部插入完成，受影响行数: {production_dept_result.rowcount}")
+
         # 插入营销职位（存在就跳过）
         marketing_dept_id = await conn.scalar(select(Department.id).where(Department.name == "营销管理部"))
         marketing_pos_stmt = insert(Position).values(name="销售专员", department_id=marketing_dept_id)
@@ -75,6 +83,25 @@ async def init_db():
         )
         sales_manager_pos_result = await conn.execute(sales_manager_pos_skip_stmt)
         logger.info(f"销售经理职位插入完成，受影响行数: {sales_manager_pos_result.rowcount}")
+
+        # 获取生产部ID并插入生产部职位
+        production_dept_id = await conn.scalar(select(Department.id).where(Department.name == "生产部"))
+        
+        # 插入美工职位（存在就跳过）
+        art_pos_stmt = insert(Position).values(name="美工", department_id=production_dept_id)
+        art_pos_skip_stmt = art_pos_stmt.on_conflict_do_nothing(
+            index_elements=[Position.name]
+        )
+        art_pos_result = await conn.execute(art_pos_skip_stmt)
+        logger.info(f"美工职位插入完成，受影响行数: {art_pos_result.rowcount}")
+        
+        # 插入渲染职位（存在就跳过）
+        render_pos_stmt = insert(Position).values(name="渲染", department_id=production_dept_id)
+        render_pos_skip_stmt = render_pos_stmt.on_conflict_do_nothing(
+            index_elements=[Position.name]
+        )
+        render_pos_result = await conn.execute(render_pos_skip_stmt)
+        logger.info(f"渲染职位插入完成，受影响行数: {render_pos_result.rowcount}")
 
         # 插入员工（email 唯一冲突时跳过）
         pos_id = await conn.scalar(select(Position.id).where(Position.name == "人事专员"))
@@ -106,7 +133,7 @@ async def init_db():
         logger.info("管理员账号: admin@example.com, 密码: 123456qwerty")
 
         # 插入营销部门员工（email 唯一冲突时跳过）
-        sales_pos_id = await conn.scalar(select(Position.id).where(Position.name == "销售"))
+        sales_pos_id = await conn.scalar(select(Position.id).where(Position.name == "销售专员"))
         sales_emp_stmt = insert(Employee).values(
             name="销售张三",
             email="sales@example.com",
@@ -133,7 +160,7 @@ async def init_db():
         logger.info("销售账号: sales@example.com, 密码: 123456qwerty")
         
         # 插入销售经理（email 唯一冲突时跳过）  
-        sales_manager_pos_id = await conn.scalar(select(Position.id).where(Position.name == "销售"))
+        sales_manager_pos_id = await conn.scalar(select(Position.id).where(Position.name == "销售经理"))
         manager_emp_stmt = insert(Employee).values(
             name="经理李四",
             email="manager@example.com", 
