@@ -9,8 +9,10 @@ import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
 import SubTaskTable from '../components/SubTaskTable';
 import EditTicketModal from '../components/EditTicketModal';
+import { useEmployeePermissionStore } from '../store/employee';
 
 const ContractDetailPage = () => {
+  const { employee } = useEmployeePermissionStore();
   // 创建工单模态框是否显示
   const [createOrderModal, setCreateOrderModal] = useState(false);
   const { id } = useParams();
@@ -163,15 +165,16 @@ const ContractDetailPage = () => {
           />
           <span className="text-lg font-medium">返回销售看板</span>
         </Link>
-        {/* 创建工单 */}
-        {/* 添加客户按钮 */}
-        <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
-          onClick={() => {
-            setCreateOrderModal(true);
-          }}
-        >
-          <Plus className="w-4 h-4" /> 创建工单
-        </button>
+        {/* 创建工单按钮 - 仅生产部门可见 */}
+        {employee.department_name === '生产部' && (
+          <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
+            onClick={() => {
+              setCreateOrderModal(true);
+            }}
+          >
+            <Plus className="w-4 h-4" /> 创建工单
+          </button>
+        )}
 
       </div>
       {/* Cards */}

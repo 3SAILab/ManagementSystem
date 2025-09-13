@@ -81,6 +81,7 @@ export const menuItems = [
       positions: ['美工'],
     },
     children: [
+      { label: '合同管理', path: '/contract_management', icon: 'file-text' },  // 新增合同管理
       { label: '工单分配', path: '/work_assignment', icon: 'check-square' },
       { label: '团队任务监控', path: '/team_dashboard', icon: 'contact' },
       { label: '生产数据', path: '/production_data', icon: 'bar-chart-3' },
