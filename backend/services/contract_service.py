@@ -303,3 +303,147 @@ class ContractService:
         stmt = select(Contract).where(Contract.id == contract_id)
         result = await db.execute(stmt)
         return result.scalar_one_or_none()
+
+    # 获取聚合后的合同列表（主合同+附属合同）
+    @staticmethod
+    async def get_aggregated_contracts(db: AsyncSession, employee_id: int, filter_params=None):
+        """获取聚合后的合同列表（主合同+附属合同）"""
+        # 只查询主合同（非附属合同）
+        stmt = select(Contract).where(
+            Contract.sales_id == employee_id,
+            Contract.parent_contract_id.is_(None)  # 只查询主合同
+        ).options(
+            selectinload(Contract.client),
+            selectinload(Contract.sales),
+            selectinload(Contract.appendix_contracts).selectinload(Contract.client)
+        ).order_by(Contract.created_at.desc())
+        
+        # 应用过滤条件
+        if filter_params:
+            filters = []
+            needs_client_join = False
+            
+            if filter_params.name:
+                needs_client_join = True
+                filters.append(Client.name.ilike(f"%{filter_params.name}%"))
+            
+            if filter_params.status:
+                status_values = [s.value if hasattr(s, 'value') else s for s in filter_params.status]
+                filters.append(Contract.status.in_(status_values))
+            
+            if filter_params.contract_type:
+                contract_type_values = [s.value if hasattr(s, 'value') else s for s in filter_params.contract_type]
+                filters.append(Contract.contract_type.in_(contract_type_values))
+            
+            if filter_params.source:
+                needs_client_join = True
+                filters.append(Client.source.in_(filter_params.source))
+            
+            # 时间范围过滤
+            if filter_params.start_date and filter_params.end_date:
+                filters.append(and_(
+                    Contract.transaction_time >= filter_params.start_date,
+                    Contract.transaction_time <= filter_params.end_date
+                ))
+            elif filter_params.start_date:
+                filters.append(Contract.transaction_time >= filter_params.start_date)
+            elif filter_params.end_date:
+                filters.append(Contract.transaction_time <= filter_params.end_date)
+            
+            # 如果需要客户信息，则join Client表
+            if needs_client_join:
+                stmt = stmt.join(Client)
+            
+            if filters:
+                stmt = stmt.where(and_(*filters))
+        
+        result = await db.execute(stmt)
+        main_contracts = result.scalars().all()
+        
+        # 构建聚合数据
+        aggregated_contracts = []
+        for contract in main_contracts:
+            # 计算聚合数据
+            total_amount = float(contract.total_amount)
+            total_paid = float(contract.paid_amount)
+            
+            # 计算需求量聚合
+            total_detail_pages = contract.detail_pages
+            total_video_count = contract.video_count
+            total_image_count = contract.image_count
+            total_workflow_count = contract.workflow_count
+            
+            # 聚合附属合同数据
+            appendix_contracts_data = []
+            for appendix in contract.appendix_contracts:
+                total_amount += float(appendix.total_amount)
+                total_paid += float(appendix.paid_amount)
+                total_detail_pages += appendix.detail_pages
+                total_video_count += appendix.video_count
+                total_image_count += appendix.image_count
+                total_workflow_count += appendix.workflow_count
+                
+                appendix_contracts_data.append({
+                    'id': appendix.id,
+                    'total_amount': float(appendix.total_amount),
+                    'paid_amount': float(appendix.paid_amount),
+                    'notes': appendix.notes,
+                    'status': appendix.status,
+                    'transaction_time': appendix.transaction_time,
+                    'detail_pages': appendix.detail_pages,
+                    'video_count': appendix.video_count,
+                    'image_count': appendix.image_count,
+                    'workflow_count': appendix.workflow_count
+                })
+            
+            # 计算总提点（基于聚合后的金额）
+            total_commission_rate = contract.commission_rate if contract.commission_rate else 0
+            if contract.status == '坏单':
+                total_commission = total_paid * total_commission_rate / 100
+            else:
+                total_commission = total_amount * total_commission_rate / 100
+            
+            aggregated_contracts.append({
+                'id': contract.id,
+                'client_id': contract.client_id,
+                'client_name': contract.client.name if contract.client else '未知客户',
+                'sales_id': contract.sales_id,
+                'sales_name': contract.sales.name if contract.sales else '未知销售',
+                'contract_type': contract.contract_type,
+                'status': contract.status,
+                'commission_rate': contract.commission_rate,
+                'transaction_time': contract.transaction_time,
+                'settlement_time': contract.settlement_time,
+                'is_recharged': contract.is_recharged,
+                'notes': contract.notes,
+                'created_at': contract.created_at,
+                'updated_at': contract.updated_at,
+                
+                # 聚合后的金额数据
+                'total_amount': total_amount,
+                'paid_amount': total_paid,
+                'remaining_amount': total_amount - total_paid,
+                'total_commission': round(total_commission, 2),
+                
+                # 聚合后的需求数据
+                'total_detail_pages': total_detail_pages,
+                'total_video_count': total_video_count,
+                'total_image_count': total_image_count,
+                'total_workflow_count': total_workflow_count,
+                
+                # 附属合同信息
+                'appendix_count': len(contract.appendix_contracts),
+                'appendix_contracts': appendix_contracts_data,
+                
+                # 原始主合同数据
+                'main_contract': {
+                    'total_amount': float(contract.total_amount),
+                    'paid_amount': float(contract.paid_amount),
+                    'detail_pages': contract.detail_pages,
+                    'video_count': contract.video_count,
+                    'image_count': contract.image_count,
+                    'workflow_count': contract.workflow_count
+                }
+            })
+        
+        return aggregated_contracts

@@ -258,7 +258,21 @@ async def get_aggregated_contracts(
         page_size=page_size
     )
     
-    return await ContractService.get_aggregated_contracts(db, filter_params, current_employee.id)
+    contracts = await ContractService.get_aggregated_contracts(db, current_employee.id, filter_params)
+    
+    # 实现分页
+    start = (page - 1) * page_size
+    end = start + page_size
+    paginated_contracts = contracts[start:end]
+    total = len(contracts)
+    
+    return api_response(success=True, data={
+        'contracts': paginated_contracts,
+        'total': total,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': (total + page_size - 1) // page_size
+    })
 # 获取所有尾款未结算合同（不限定当前登录销售）
 @router.get("/contracts/pending")
 async def get_all_contracts(
@@ -415,7 +429,21 @@ async def get_aggregated_contracts(
         page_size=page_size
     )
     
-    return await ContractService.get_aggregated_contracts(db, filter_params, current_employee.id)
+    contracts = await ContractService.get_aggregated_contracts(db, current_employee.id, filter_params)
+    
+    # 实现分页
+    start = (page - 1) * page_size
+    end = start + page_size
+    paginated_contracts = contracts[start:end]
+    total = len(contracts)
+    
+    return api_response(success=True, data={
+        'contracts': paginated_contracts,
+        'total': total,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': (total + page_size - 1) // page_size
+    })
 # 销售主管根据客户id获取成交合同列表
 @router.get("/contracts/client/{client_id}")
 async def get_contracts_by_client_id(
@@ -768,5 +796,19 @@ async def get_aggregated_contracts(
         page_size=page_size
     )
     
-    return await ContractService.get_aggregated_contracts(db, filter_params, current_employee.id)
+    contracts = await ContractService.get_aggregated_contracts(db, current_employee.id, filter_params)
+    
+    # 实现分页
+    start = (page - 1) * page_size
+    end = start + page_size
+    paginated_contracts = contracts[start:end]
+    total = len(contracts)
+    
+    return api_response(success=True, data={
+        'contracts': paginated_contracts,
+        'total': total,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': (total + page_size - 1) // page_size
+    })
 

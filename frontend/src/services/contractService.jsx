@@ -188,3 +188,28 @@ export const getPendingContractsForProduction = async () => {
     }
 };
 
+// 获取聚合后的合同列表（主合同+附属合同整合显示）
+export const getAggregatedContracts = async ({ name, status, contract_type, source, start_date, end_date, page, page_size }) => {
+    try {
+        const params = {
+            name,
+            status,
+            contract_type,
+            source,
+            start_date,
+            end_date,
+            page,
+            page_size
+        };
+        
+        const response = await api.get('/contracts/aggregated', {
+            params,
+            paramsSerializer: p => Qs.stringify(p, { arrayFormat: 'repeat', skipNulls: true })
+        });
+        
+        return { success: true, data: response.data };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
