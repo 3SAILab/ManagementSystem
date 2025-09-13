@@ -148,3 +148,43 @@ export const getReadonlyContracts = async (employeeId, filters = {}) => {
     }
 };
 
+// 创建附属合同
+export const createAppendixContract = async (parentId, contractData, attachment) => {
+    try {
+        const formData = new FormData();
+        formData.append("contract_data", JSON.stringify(contractData));
+        if (attachment?.file) {
+            formData.append("file", attachment.file);
+        }
+        
+        const response = await api.post(`/contracts/${parentId}/appendix`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        return { success: true, data: response.data };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// 获取合同树形结构（主合同+附属合同）
+export const getContractTree = async (contractId) => {
+    try {
+        const response = await api.get(`/contracts/tree/${contractId}`);
+        return { success: true, data: response.data };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// 美工主管获取待处理合同列表
+export const getPendingContractsForProduction = async () => {
+    try {
+        const response = await api.get('/contracts/pending-for-production');
+        return { success: true, data: response.data };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+

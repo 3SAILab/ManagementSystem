@@ -408,6 +408,12 @@ const SalesDashboard = () => {
       toast.error(res.error);
     }
   };
+  
+  const handleCreateAppendix = async (contractId) => {
+    // 暂时显示提示信息，后续可以集成具体的追加合同模态框
+    toast.info('追加合同功能正在开发中...');
+    console.log('创建附属合同，主合同ID:', contractId);
+  };
   return (
     <div className="p-6 space-y-6">
       {/* KPI Cards */}
@@ -823,6 +829,15 @@ const SalesDashboard = () => {
                           }}
                         >
                           更改状态
+                        </button>
+                        <button
+                          className="px-3 py-1 rounded-md bg-orange-600 text-white text-sm shadow-sm hover:bg-orange-700 transition"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCreateAppendix(contract.id);
+                          }}
+                        >
+                          追加合同
                         </button>
                         <button
                           className="px-3 py-1 rounded-md bg-red-500 text-white text-sm shadow-sm hover:bg-red-600 transition"

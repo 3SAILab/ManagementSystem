@@ -12,6 +12,7 @@ const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
     workflows: 0,
     transactionTime: "",
     isRecharged: false, // 新增：客户是否充值
+    notes: "", // 新增：合同备注
   });
   
   // 单文件附件
@@ -458,6 +459,22 @@ const AddContractModal = ({ isOpen, client, onClose, onAdd }) => {
                 onChange={handleInputChange}
                 className="block w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
+          </div>
+          
+          {/* 合同备注 */}
+          <div className="space-y-2">
+            <label htmlFor="contract-notes" className="block text-sm font-medium text-slate-700">
+              合同备注
+            </label>
+            <textarea
+              id="contract-notes"
+              name="notes"
+              rows="3"
+              value={formData.notes}
+              onChange={handleInputChange}
+              placeholder="请输入合同相关信息备注..."
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
           
           {/* 提交按钮 */}
