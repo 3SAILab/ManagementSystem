@@ -2,14 +2,22 @@
 import { useMatches } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { UpdateModal } from './UpdateModal';
+import NotificationPanel from './NotificationPanel';
+import { useEmployeePermissionStore } from '../store/employee';
 
 export default function Header() {
   const matches = useMatches();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hasChecked, setHasChecked] = useState(false); // 避免重复检查
+  const { employee } = useEmployeePermissionStore();
 
   // 找到有 title 的路由
   const matchWithTitle = matches.find(match => match.handle?.title);
+
+  // 判断是否为美工主管
+  const isArtManager = employee.department_name === '生产部' && 
+                       employee.position_name === '美工' && 
+                       employee.role === 'manager';
 
   // 检查更新
   useEffect(() => {
@@ -62,6 +70,9 @@ export default function Header() {
 
         {/* 右侧：操作区域 */}
         <div id="header-actions" className="flex items-center space-x-4">
+          {/* 通知面板 - 仅美工主管可见 */}
+          {isArtManager && <NotificationPanel />}
+          
           <button
             className="flex items-center space-x-2 p-2 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-colors"
             onClick={() => setIsModalOpen(true)}

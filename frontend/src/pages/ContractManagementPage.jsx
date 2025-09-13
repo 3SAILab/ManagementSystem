@@ -6,16 +6,20 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getPendingContractsForProduction } from '../services/contractService';
 import { addTicket } from '../services/ticketService';
+import { useNotificationStore } from '../store/notifications';
 
 const ContractManagementPage = () => {
   const navigate = useNavigate();
   const [contracts, setContracts] = useState([]);
-  const [notifications, setNotifications] = useState({
-    newContracts: [],
-    appendixContracts: [],
-    lastChecked: null
-  });
   const [loading, setLoading] = useState(true);
+  
+  // 通知状态管理
+  const { 
+    contractNotifications, 
+    clearNotification, 
+    addNewContractNotification, 
+    addAppendixContractNotification 
+  } = useNotificationStore();
   
   // 创建工单模态框状态
   const [createTicketModal, setCreateTicketModal] = useState(false);
@@ -88,18 +92,18 @@ const ContractManagementPage = () => {
         {/* 通知区域 */}
         <div className="flex items-center space-x-4">
           {/* 新合同通知 */}
-          {notifications.newContracts.length > 0 && (
+          {contractNotifications.newContracts.length > 0 && (
             <div className="flex items-center bg-blue-100 text-blue-800 px-3 py-2 rounded-lg">
               <Bell className="w-4 h-4 mr-2" />
-              <span className="text-sm">{notifications.newContracts.length} 个新合同</span>
+              <span className="text-sm">{contractNotifications.newContracts.length} 个新合同</span>
             </div>
           )}
           
           {/* 附属合同通知 */}
-          {notifications.appendixContracts.length > 0 && (
+          {contractNotifications.appendixContracts.length > 0 && (
             <div className="flex items-center bg-orange-100 text-orange-800 px-3 py-2 rounded-lg">
               <AlertCircle className="w-4 h-4 mr-2" />
-              <span className="text-sm">{notifications.appendixContracts.length} 个合同有更新</span>
+              <span className="text-sm">{contractNotifications.appendixContracts.length} 个合同有更新</span>
             </div>
           )}
         </div>
@@ -127,7 +131,10 @@ const ContractManagementPage = () => {
               <ContractCard
                 key={contract.id}
                 contract={contract}
-                hasNotification={notifications.newContracts.includes(contract.id)}
+                hasNotification={
+                  contractNotifications.newContracts.includes(contract.id) || 
+                  contractNotifications.appendixContracts.includes(contract.id)
+                }
                 onCreateTicket={handleCreateTicket}
                 onViewDetails={handleViewDetails}
               />
