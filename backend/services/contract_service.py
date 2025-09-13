@@ -52,6 +52,9 @@ class ContractService:
             created_at=current_time,
             updated_at=current_time,
             file_resource_id=contract.file_resource_id,
+            notes=contract.notes,  # 合同备注
+            parent_contract_id=contract.parent_contract_id,  # 主合同ID
+            is_appendix=contract.is_appendix,  # 是否为附属合同
         )
         db.add(contract)
         await db.flush()
@@ -254,3 +257,49 @@ class ContractService:
         result = await db.execute(stmt)
         contracts = list(result.scalars().all())
         return contracts, total
+    
+    # 获取合同及其附属合同的树形结构
+    @staticmethod
+    async def get_contract_with_appendix(db: AsyncSession, contract_id: int):
+        """获取合同及其所有附属合同"""
+        stmt = select(Contract).where(Contract.id == contract_id).options(
+            selectinload(Contract.client),
+            selectinload(Contract.sales),
+            selectinload(Contract.appendix_contracts)
+        )
+        result = await db.execute(stmt)
+        main_contract = result.scalar_one_or_none()
+        
+        if not main_contract:
+            raise HTTPException(status_code=404, detail="合同不存在")
+        
+        return api_response(success=True, data={
+            "main_contract": main_contract,
+            "appendix_contracts": main_contract.appendix_contracts
+        })
+
+    # 美工主管获取待处理合同列表
+    @staticmethod
+    async def get_contracts_for_production(db: AsyncSession):
+        """获取美工主管待处理的合同列表"""
+        # 只获取主合同（非附属合同）
+        stmt = select(Contract).where(
+            Contract.is_appendix == False
+        ).options(
+            selectinload(Contract.client),
+            selectinload(Contract.sales),
+            selectinload(Contract.appendix_contracts)
+        ).order_by(Contract.updated_at.desc())
+        
+        result = await db.execute(stmt)
+        contracts = result.scalars().all()
+        
+        return api_response(success=True, data=contracts)
+
+    # 根据ID获取合同
+    @staticmethod
+    async def get_contract_by_id(db: AsyncSession, contract_id: int):
+        """根据ID获取合同"""
+        stmt = select(Contract).where(Contract.id == contract_id)
+        result = await db.execute(stmt)
+        return result.scalar_one_or_none()

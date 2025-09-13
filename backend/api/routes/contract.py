@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Body, Query, Path, File, UploadFile, Form
 from backend.models.employee import Employee
 from backend.models.sub_task import SubTask
-from backend.schemas.contract import ContractCreate, ContractFilter, ContractList, PaginatedContract
+from backend.schemas.contract import ContractCreate, ContractFilter, ContractList, PaginatedContract, ContractDetailWithAppendix, ContractForProduction, ContractOperationLogCreate
 from backend.db.session import get_async_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api.routes.employee import get_current_employee
@@ -147,6 +147,118 @@ async def get_contracts(
     )
     return paginated.model_dump()
 
+
+# === 新增API：合同附属功能相关 ===
+
+# 创建附属合同
+@router.post("/contracts/{parent_id}/appendix")
+async def create_appendix_contract(
+    parent_id: int,
+    file: UploadFile = File(None),
+    contract_data: str = Form(...),
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    """为现有合同创建附属合同"""
+    contract = ContractCreate.model_validate_json(contract_data)
+    
+    # 设置为附属合同
+    contract.parent_contract_id = parent_id
+    contract.is_appendix = True
+    
+    # 获取主合同的客户信息用于提点计算
+    main_contract = await ContractService.get_contract_by_id(db, parent_id)
+    if not main_contract:
+        return api_response(success=False, error="主合同不存在")
+    
+    client = await ClientService.get_client_info(db, main_contract.client_id)
+    
+    # 计算提点（使用与主合同相同的逻辑）
+    async def get_commission_rate(client_source: str):
+        if client_source == "线上":
+            return 4
+        else:
+            start_date = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            total_received = await SalesService.get_total_received(db, start_date=start_date, end_date=contract.transaction_time, sales_id=current_employee.id)
+            total_received = total_received + contract.paid_amount
+            if total_received < 50000:
+                return 10
+            elif total_received < 100000:
+                return 12
+            else:
+                return 15
+    
+    commission_rate = await get_commission_rate(client["source"])
+    contract.commission_rate = commission_rate
+    
+    # 处理文件上传
+    if file:
+        file_resource = await FileUploadService.upload_file(db, file, client["name"], current_employee.id)
+        contract.file_resource_id = file_resource.id
+    
+    # 创建附属合同
+    result = await ContractService.add_contract(db, contract, current_employee.id)
+    
+    # 记录操作
+    from backend.services.contract_operation_log_service import ContractOperationLogService
+    await ContractOperationLogService.create_log(
+        db,
+        ContractOperationLogCreate(
+            contract_id=parent_id,
+            operation_type="创建附属合同",
+            operation_detail=f"创建附属合同，金额：¥{contract.total_amount}，备注：{contract.notes or '无'}"
+        ),
+        current_employee.id
+    )
+    
+    return result
+
+# 获取合同树形结构（主合同+附属合同）
+@router.get("/contracts/tree/{contract_id}")
+async def get_contract_tree(
+    contract_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    """获取合同及其附属合同的树形结构"""
+    return await ContractService.get_contract_with_appendix(db, contract_id)
+
+# 美工主管获取待处理合同列表
+@router.get("/contracts/pending-for-production")
+async def get_pending_contracts_for_production(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(require_departments("生产部"))
+):
+    """美工主管获取待处理的合同列表"""
+    return await ContractService.get_contracts_for_production(db)
+
+# 获取聚合后的合同列表（主合同+附属合同整合显示）
+@router.get("/contracts/aggregated")
+async def get_aggregated_contracts(
+    name: str = Query(None),
+    status: List[str] = Query(None),
+    contract_type: List[str] = Query(None),
+    source: List[str] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    page: int = Query(1),
+    page_size: int = Query(10),
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    """获取聚合后的合同列表，将主合同和附属合同整合显示"""
+    filter_params = ContractFilter(
+        name=name,
+        status=status,
+        contract_type=contract_type,
+        source=source,
+        start_date=start_date,
+        end_date=end_date,
+        page=page,
+        page_size=page_size
+    )
+    
+    return await ContractService.get_aggregated_contracts(db, filter_params, current_employee.id)
 # 获取所有尾款未结算合同（不限定当前登录销售）
 @router.get("/contracts/pending")
 async def get_all_contracts(
@@ -192,6 +304,118 @@ async def get_all_contracts(
     )
     return paginated.model_dump()
 
+
+# === 新增API：合同附属功能相关 ===
+
+# 创建附属合同
+@router.post("/contracts/{parent_id}/appendix")
+async def create_appendix_contract(
+    parent_id: int,
+    file: UploadFile = File(None),
+    contract_data: str = Form(...),
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    """为现有合同创建附属合同"""
+    contract = ContractCreate.model_validate_json(contract_data)
+    
+    # 设置为附属合同
+    contract.parent_contract_id = parent_id
+    contract.is_appendix = True
+    
+    # 获取主合同的客户信息用于提点计算
+    main_contract = await ContractService.get_contract_by_id(db, parent_id)
+    if not main_contract:
+        return api_response(success=False, error="主合同不存在")
+    
+    client = await ClientService.get_client_info(db, main_contract.client_id)
+    
+    # 计算提点（使用与主合同相同的逻辑）
+    async def get_commission_rate(client_source: str):
+        if client_source == "线上":
+            return 4
+        else:
+            start_date = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            total_received = await SalesService.get_total_received(db, start_date=start_date, end_date=contract.transaction_time, sales_id=current_employee.id)
+            total_received = total_received + contract.paid_amount
+            if total_received < 50000:
+                return 10
+            elif total_received < 100000:
+                return 12
+            else:
+                return 15
+    
+    commission_rate = await get_commission_rate(client["source"])
+    contract.commission_rate = commission_rate
+    
+    # 处理文件上传
+    if file:
+        file_resource = await FileUploadService.upload_file(db, file, client["name"], current_employee.id)
+        contract.file_resource_id = file_resource.id
+    
+    # 创建附属合同
+    result = await ContractService.add_contract(db, contract, current_employee.id)
+    
+    # 记录操作
+    from backend.services.contract_operation_log_service import ContractOperationLogService
+    await ContractOperationLogService.create_log(
+        db,
+        ContractOperationLogCreate(
+            contract_id=parent_id,
+            operation_type="创建附属合同",
+            operation_detail=f"创建附属合同，金额：¥{contract.total_amount}，备注：{contract.notes or '无'}"
+        ),
+        current_employee.id
+    )
+    
+    return result
+
+# 获取合同树形结构（主合同+附属合同）
+@router.get("/contracts/tree/{contract_id}")
+async def get_contract_tree(
+    contract_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    """获取合同及其附属合同的树形结构"""
+    return await ContractService.get_contract_with_appendix(db, contract_id)
+
+# 美工主管获取待处理合同列表
+@router.get("/contracts/pending-for-production")
+async def get_pending_contracts_for_production(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(require_departments("生产部"))
+):
+    """美工主管获取待处理的合同列表"""
+    return await ContractService.get_contracts_for_production(db)
+
+# 获取聚合后的合同列表（主合同+附属合同整合显示）
+@router.get("/contracts/aggregated")
+async def get_aggregated_contracts(
+    name: str = Query(None),
+    status: List[str] = Query(None),
+    contract_type: List[str] = Query(None),
+    source: List[str] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    page: int = Query(1),
+    page_size: int = Query(10),
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    """获取聚合后的合同列表，将主合同和附属合同整合显示"""
+    filter_params = ContractFilter(
+        name=name,
+        status=status,
+        contract_type=contract_type,
+        source=source,
+        start_date=start_date,
+        end_date=end_date,
+        page=page,
+        page_size=page_size
+    )
+    
+    return await ContractService.get_aggregated_contracts(db, filter_params, current_employee.id)
 # 销售主管根据客户id获取成交合同列表
 @router.get("/contracts/client/{client_id}")
 async def get_contracts_by_client_id(
@@ -433,4 +657,116 @@ async def get_readonly_contracts(
     )
     return paginated.model_dump()
 
+
+# === 新增API：合同附属功能相关 ===
+
+# 创建附属合同
+@router.post("/contracts/{parent_id}/appendix")
+async def create_appendix_contract(
+    parent_id: int,
+    file: UploadFile = File(None),
+    contract_data: str = Form(...),
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    """为现有合同创建附属合同"""
+    contract = ContractCreate.model_validate_json(contract_data)
+    
+    # 设置为附属合同
+    contract.parent_contract_id = parent_id
+    contract.is_appendix = True
+    
+    # 获取主合同的客户信息用于提点计算
+    main_contract = await ContractService.get_contract_by_id(db, parent_id)
+    if not main_contract:
+        return api_response(success=False, error="主合同不存在")
+    
+    client = await ClientService.get_client_info(db, main_contract.client_id)
+    
+    # 计算提点（使用与主合同相同的逻辑）
+    async def get_commission_rate(client_source: str):
+        if client_source == "线上":
+            return 4
+        else:
+            start_date = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            total_received = await SalesService.get_total_received(db, start_date=start_date, end_date=contract.transaction_time, sales_id=current_employee.id)
+            total_received = total_received + contract.paid_amount
+            if total_received < 50000:
+                return 10
+            elif total_received < 100000:
+                return 12
+            else:
+                return 15
+    
+    commission_rate = await get_commission_rate(client["source"])
+    contract.commission_rate = commission_rate
+    
+    # 处理文件上传
+    if file:
+        file_resource = await FileUploadService.upload_file(db, file, client["name"], current_employee.id)
+        contract.file_resource_id = file_resource.id
+    
+    # 创建附属合同
+    result = await ContractService.add_contract(db, contract, current_employee.id)
+    
+    # 记录操作
+    from backend.services.contract_operation_log_service import ContractOperationLogService
+    await ContractOperationLogService.create_log(
+        db,
+        ContractOperationLogCreate(
+            contract_id=parent_id,
+            operation_type="创建附属合同",
+            operation_detail=f"创建附属合同，金额：¥{contract.total_amount}，备注：{contract.notes or '无'}"
+        ),
+        current_employee.id
+    )
+    
+    return result
+
+# 获取合同树形结构（主合同+附属合同）
+@router.get("/contracts/tree/{contract_id}")
+async def get_contract_tree(
+    contract_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    """获取合同及其附属合同的树形结构"""
+    return await ContractService.get_contract_with_appendix(db, contract_id)
+
+# 美工主管获取待处理合同列表
+@router.get("/contracts/pending-for-production")
+async def get_pending_contracts_for_production(
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(require_departments("生产部"))
+):
+    """美工主管获取待处理的合同列表"""
+    return await ContractService.get_contracts_for_production(db)
+
+# 获取聚合后的合同列表（主合同+附属合同整合显示）
+@router.get("/contracts/aggregated")
+async def get_aggregated_contracts(
+    name: str = Query(None),
+    status: List[str] = Query(None),
+    contract_type: List[str] = Query(None),
+    source: List[str] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    page: int = Query(1),
+    page_size: int = Query(10),
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    """获取聚合后的合同列表，将主合同和附属合同整合显示"""
+    filter_params = ContractFilter(
+        name=name,
+        status=status,
+        contract_type=contract_type,
+        source=source,
+        start_date=start_date,
+        end_date=end_date,
+        page=page,
+        page_size=page_size
+    )
+    
+    return await ContractService.get_aggregated_contracts(db, filter_params, current_employee.id)
 
