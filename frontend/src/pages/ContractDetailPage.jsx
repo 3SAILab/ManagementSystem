@@ -4,7 +4,8 @@ import { getContractDetail } from '../services/contractService';
 import { addTicket, getTicketsByContractId, updateTicketInfo, deleteTicket } from '../services/ticketService';
 import { getSubTasksByTicketId } from '../services/subTaskService';
 import AddTicketModal from '../components/AddTicketModal';
-import { ChevronLeft, Plus, Edit, Trash } from 'lucide-react';
+import FilePreviewModal from '../components/FilePreviewModal';
+import { ChevronLeft, Plus, Edit, Trash, FileText } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
 import SubTaskTable from '../components/SubTaskTable';
@@ -29,6 +30,8 @@ const ContractDetailPage = () => {
   const [editTicketModal, setEditTicketModal] = useState(false);
   // 选中的工单id
   const [ticketId, setTicketId] = useState(null);
+  // 文件预览模态框是否显示
+  const [filePreviewOpen, setFilePreviewOpen] = useState(false);
   // 缓存所有工单的子任务数据
   const [subTasks, setSubTasks] = useState({});
   // 根据合同id刷新页面
@@ -165,16 +168,28 @@ const ContractDetailPage = () => {
           />
           <span className="text-lg font-medium">返回销售看板</span>
         </Link>
-        {/* 创建工单按钮 - 仅生产部门可见 */}
-        {employee.department_name === '生产部' && (
-          <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
-            onClick={() => {
-              setCreateOrderModal(true);
-            }}
+        
+        {/* 按钮组 */}
+        <div className="flex items-center gap-3">
+          {/* 查看文件按钮 */}
+          <button 
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
+            onClick={() => setFilePreviewOpen(true)}
           >
-            <Plus className="w-4 h-4" /> 创建工单
+            <FileText className="w-4 h-4" /> 查看文件
           </button>
-        )}
+          
+          {/* 创建工单按钮 - 仅生产部门可见 */}
+          {employee.department_name === '生产部' && (
+            <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
+              onClick={() => {
+                setCreateOrderModal(true);
+              }}
+            >
+              <Plus className="w-4 h-4" /> 创建工单
+            </button>
+          )}
+        </div>
 
       </div>
       {/* Cards */}
@@ -353,6 +368,13 @@ const ContractDetailPage = () => {
         onClose={() => setEditTicketModal(false)}
         onEdit={handleEditTicket}
         ticketId={ticketId}
+        contractId={parseInt(id)}
+      />
+      
+      {/* 文件预览模态框 */}
+      <FilePreviewModal
+        isOpen={filePreviewOpen}
+        onClose={() => setFilePreviewOpen(false)}
         contractId={parseInt(id)}
       />
     </div>
