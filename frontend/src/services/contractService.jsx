@@ -182,7 +182,12 @@ export const getContractTree = async (contractId) => {
 export const getPendingContractsForProduction = async () => {
     try {
         const response = await api.get('/contracts/pending-for-production');
-        return { success: true, data: response.data };
+        // API返回格式: {success: true, data: [...]}
+        if (response.data && response.data.success) {
+            return { success: true, data: response.data.data };
+        } else {
+            return { success: false, error: '获取数据失败' };
+        }
     } catch (error) {
         return { success: false, error: error.message };
     }
@@ -209,6 +214,21 @@ export const getAggregatedContracts = async ({ name, status, contract_type, sour
         
         return { success: true, data: response.data };
     } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// 生产部门获取附属合同通知
+export const getAppendixContractNotifications = async () => {
+    try {
+        const response = await api.get('/notifications/appendix-contracts');
+        if (response.data && response.data.success) {
+            return { success: true, data: response.data.data };
+        } else {
+            return { success: false, error: '获取通知失败' };
+        }
+    } catch (error) {
+        console.error('获取附属合同通知失败:', error);
         return { success: false, error: error.message };
     }
 };

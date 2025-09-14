@@ -136,7 +136,7 @@ async def get_personal_tasks(
     for task in sub_tasks:
         warning = "正常"
 
-        if task.status == "进行中":
+        if task.status == "进行中" and task.started_at is not None:
             elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.started_at).days
             # 黄色预警条件
             yellow_threshold = task.estimated_completion_time
@@ -153,8 +153,11 @@ async def get_personal_tasks(
             warning = "已完成"
 
         if task.task_type == "美工":
-            performanceSalary = settings.ART_PERFORMANCE_SALARY*task.difficulty_score/16
-            performanceSalary = round(performanceSalary, 2)
+            if task.difficulty_score is not None:
+                performanceSalary = settings.ART_PERFORMANCE_SALARY * task.difficulty_score / 16
+                performanceSalary = round(performanceSalary, 2)
+            else:
+                performanceSalary = 0.0
         elif task.task_type == "渲染":
             performanceSalary = None
         # 保留两位小数
@@ -190,14 +193,15 @@ async def get_sub_task_detail(
     # 获取任务类型
     # 获取预警阈值
     warning = "正常"
-    if res.status == "进行中":
+    if res.status == "进行中" and res.started_at is not None:
         elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - res.started_at).days
         yellow_threshold = res.estimated_completion_time
         red_threshold = res.estimated_completion_time + 1
-        if elapsed_days >= red_threshold:
-            warning = "红色预警"
-        elif elapsed_days >= yellow_threshold:
-            warning = "黄色预警"
+        if yellow_threshold is not None and red_threshold is not None:
+            if elapsed_days >= red_threshold:
+                warning = "红色预警"
+            elif elapsed_days >= yellow_threshold:
+                warning = "黄色预警"
     out = { 
         "id": res.id,
         "ticket_name": res.ticket.name,
@@ -264,7 +268,7 @@ async def get_team_tasks(
     for task in sub_tasks:
         warning = "正常"
 
-        if task.status == "进行中":
+        if task.status == "进行中" and task.started_at is not None:
             elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.started_at).days
 
             # 黄色预警条件
@@ -345,14 +349,15 @@ async def get_sub_tasks_by_ticket_id(
     sub_tasks_out = []
     for task in sub_tasks:
         warning = "正常"
-        if task.status == "进行中":
+        if task.status == "进行中" and task.started_at is not None:
             elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.started_at).days
             yellow_threshold = task.estimated_completion_time
             red_threshold = task.estimated_completion_time + 1
-            if elapsed_days >= red_threshold:
-                warning = "红色预警"
-            elif elapsed_days >= yellow_threshold:
-                warning = "黄色预警"
+            if yellow_threshold is not None and red_threshold is not None:
+                if elapsed_days >= red_threshold:
+                    warning = "红色预警"
+                elif elapsed_days >= yellow_threshold:
+                    warning = "黄色预警"
         sub_tasks_out.append({
             "id": task.id,
             "type": task.task_type,
@@ -382,7 +387,7 @@ async def get_sub_tasks(
     for task in art_tasks:
         warning = "正常"
 
-        if task.status == "进行中":
+        if task.status == "进行中" and task.started_at is not None:
             elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.started_at).days
 
             # 黄色预警条件

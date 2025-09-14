@@ -31,13 +31,17 @@ const ContractManagementPage = () => {
       setLoading(true);
       const result = await getPendingContractsForProduction();
       if (result.success) {
-        setContracts(result.data);
+        // 确保返回的是数组
+        const contractsData = Array.isArray(result.data) ? result.data : [];
+        setContracts(contractsData);
       } else {
         toast.error(result.error || '获取合同列表失败');
+        setContracts([]); // 确保设置为空数组
       }
     } catch (error) {
       console.error('加载合同列表失败:', error);
       toast.error('加载合同列表失败');
+      setContracts([]); // 确保设置为空数组
     } finally {
       setLoading(false);
     }

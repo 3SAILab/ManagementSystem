@@ -2,11 +2,8 @@ import React, { useState } from 'react';
 import { X, Upload, AlertCircle } from 'lucide-react';
 import { createAppendixContract } from '../services/contractService';
 import { toast } from 'react-toastify';
-import { useNotificationStore } from '../store/notifications';
 
 const CreateAppendixContractModal = ({ isOpen, onClose, parentContract, onSuccess }) => {
-  const { addAppendixContractNotification } = useNotificationStore();
-  
   const [formData, setFormData] = useState({
     contract_type: '复购',
     total_amount: '',
@@ -128,9 +125,6 @@ const CreateAppendixContractModal = ({ isOpen, onClose, parentContract, onSucces
       );
       
       if (result.success) {
-        // 触发附属合同通知
-        addAppendixContractNotification(parentContract.id);
-        
         toast.success('附属合同创建成功！');
         onSuccess && onSuccess();
         onClose();

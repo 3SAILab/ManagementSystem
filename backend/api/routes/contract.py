@@ -436,7 +436,39 @@ async def get_contract_detail(
     }
     
     # 美工任务和渲染任务获取
-    art_render_result = await TicketService.get_art_and_render_by_ticket_id(db, tickets, id)
+    art_tasks = []
+    render_tasks = []
+    
+    try:
+        # 获取所有子任务
+        for ticket in tickets:
+            sub_tasks = await TicketService.get_charge_ticket_by_id(db, ticket.id)
+            for sub_task in sub_tasks:
+                if sub_task.task_type == "美工":
+                    art_tasks.append({
+                        "task_id": sub_task.id,
+                        "progress": sub_task.progress,
+                        "status": sub_task.status,
+                        "charge_name": sub_task.charge.name if sub_task.charge else None
+                    })
+                elif sub_task.task_type == "渲染":
+                    render_tasks.append({
+                        "task_id": sub_task.id,
+                        "progress": sub_task.progress,
+                        "status": sub_task.status,
+                        "charge_name": sub_task.charge.name if sub_task.charge else None
+                    })
+        
+        art_render_result = {
+            "art_tasks": art_tasks,
+            "render_tasks": render_tasks
+        }
+    except Exception as e:
+        logger.error(f"获取美工渲染任务失败: {str(e)}")
+        art_render_result = {
+            "art_tasks": [],
+            "render_tasks": []
+        }
     
     return api_response(
         success=True,

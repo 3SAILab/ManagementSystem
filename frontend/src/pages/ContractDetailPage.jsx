@@ -19,10 +19,10 @@ const ContractDetailPage = () => {
   const { id } = useParams();
   // 合同详情数据
   const [contractData, setContractData] = useState({
-    pendingDetails: { detailPage: 0, video: 0, image: 0, workflow: 0 },
-    completedDetails: { detailPage: 0, video: 0, image: 0, workflow: 0 },
-    yellowCount: 0,
-    redCount: 0,
+    pending_details: { detailPage: 0, video: 0, image: 0, workflow: 0 },
+    completed_details: { detailPage: 0, video: 0, image: 0, workflow: 0 },
+    art_tasks: [],
+    render_tasks: []
   });
   // 工单列表
   const [tickets, setTickets] = useState([]);
@@ -38,12 +38,10 @@ const ContractDetailPage = () => {
   const init = useCallback(() => {
     getContractDetail(id).then(res => {
       setContractData({
-        pendingDetails: res.pending_details,
-        completedDetails: res.completed_details,
-        yellowCount: res.yellow_count,
-        redCount: res.red_count,
-        artTasks: res.art_tasks,
-        renderTasks: res.render_tasks,
+        pending_details: res.pending_details || { detailPage: 0, video: 0, image: 0, workflow: 0 },
+        completed_details: res.completed_details || { detailPage: 0, video: 0, image: 0, workflow: 0 },
+        art_tasks: res.art_tasks || [],
+        render_tasks: res.render_tasks || [],
       });
     }).catch(err => {
       console.error(err);
@@ -93,8 +91,10 @@ const ContractDetailPage = () => {
     }
   }
   // 计算待完成和已完成的总数
-  const pendingTotal = Object.values(contractData.pendingDetails).reduce((sum, count) => sum + count, 0);
-  const completedTotal = Object.values(contractData.completedDetails).reduce((sum, count) => sum + count, 0);
+  const pendingTotal = contractData.pending_details ? 
+    Object.values(contractData.pending_details).reduce((sum, count) => sum + count, 0) : 0;
+  const completedTotal = contractData.completed_details ? 
+    Object.values(contractData.completed_details).reduce((sum, count) => sum + count, 0) : 0;
 
   // 处理工单创建
   const handleAddTicket = async (ticketData) => {
@@ -204,10 +204,10 @@ const ContractDetailPage = () => {
             </div>
             {/* 右侧：ul 列表 */}
             <ul className="mt-4 text-sm">
-              <li>详情页：{contractData.pendingDetails.detailPage}</li>
-              <li>视频：{contractData.pendingDetails.video}</li>
-              <li>图片：{contractData.pendingDetails.image}</li>
-              <li>工作流：{contractData.pendingDetails.workflow}</li>
+              <li>详情页：{contractData.pending_details?.detailPage || 0}</li>
+              <li>视频：{contractData.pending_details?.video || 0}</li>
+              <li>图片：{contractData.pending_details?.image || 0}</li>
+              <li>工作流：{contractData.pending_details?.workflow || 0}</li>
             </ul>
           </div>
         </div>
@@ -223,10 +223,10 @@ const ContractDetailPage = () => {
 
             {/* 右侧：ul 列表 */}
             <ul className="mt-4 text-sm">
-              <li>详情页：{contractData.completedDetails.detailPage}</li>
-              <li>视频：{contractData.completedDetails.video}</li>
-              <li>图片：{contractData.completedDetails.image}</li>
-              <li>工作流：{contractData.completedDetails.workflow}</li>
+              <li>详情页：{contractData.completed_details?.detailPage || 0}</li>
+              <li>视频：{contractData.completed_details?.video || 0}</li>
+              <li>图片：{contractData.completed_details?.image || 0}</li>
+              <li>工作流：{contractData.completed_details?.workflow || 0}</li>
             </ul>
           </div>
         </div>
@@ -234,12 +234,18 @@ const ContractDetailPage = () => {
         {/* 黄色预警 */}
         <div className="bg-white p-4 shadow-md rounded-lg">
           <h2 className="text-lg font-bold">黄色预警</h2>
-          <div className={`text-yellow-500 text-4xl font-bold mt-2`}>{contractData.yellowCount}</div>
+          <div className={`text-yellow-500 text-4xl font-bold mt-2`}>
+            {contractData.art_tasks ? 
+              contractData.art_tasks.filter(task => task.status === '黄色预警').length : 0}
+          </div>
         </div>
         {/* 红色预警 */}
         <div className="bg-white p-4 shadow-md rounded-lg">
           <h2 className="text-lg font-bold">红色预警</h2>
-          <div className={`text-red-500 text-4xl font-bold mt-2`}>{contractData.redCount}</div>
+          <div className={`text-red-500 text-4xl font-bold mt-2`}>
+            {contractData.art_tasks ? 
+              contractData.art_tasks.filter(task => task.status === '红色预警').length : 0}
+          </div>
         </div>
       </div>
       {/* 主内容区域 */}

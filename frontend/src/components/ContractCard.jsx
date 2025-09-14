@@ -29,15 +29,39 @@ const ContractCard = ({ contract, hasNotification, onCreateTicket, onViewDetails
     }
   };
 
+  // 检查是否有附属合同
+  const hasAppendixContracts = contract.appendix_contracts && contract.appendix_contracts.length > 0;
+  
+  // 确定卡片样式
+  const getCardStyle = () => {
+    if (hasNotification && hasAppendixContracts) {
+      return 'border-orange-400 bg-gradient-to-br from-orange-50 to-yellow-50 shadow-lg';
+    } else if (hasNotification) {
+      return 'border-blue-500 bg-blue-50';
+    } else if (hasAppendixContracts) {
+      return 'border-orange-300 bg-orange-25';
+    } else {
+      return 'border-gray-200 bg-white';
+    }
+  };
+
   return (
-    <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-      hasNotification ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'
-    }`}>
+    <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${getCardStyle()}`}>
       {/* 通知标识 */}
-      {hasNotification && (
-        <div className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full mb-3">
-          <span className="w-2 h-2 bg-blue-400 rounded-full mr-1 animate-pulse"></span>
-          新合同/有更新
+      {(hasNotification || hasAppendixContracts) && (
+        <div className="flex items-center space-x-2 mb-3">
+          {hasNotification && (
+            <div className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+              <span className="w-2 h-2 bg-blue-400 rounded-full mr-1 animate-pulse"></span>
+              有更新
+            </div>
+          )}
+          {hasAppendixContracts && (
+            <div className="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+              <span className="w-2 h-2 bg-orange-400 rounded-full mr-1"></span>
+              有附属合同 ({contract.appendix_contracts.length})
+            </div>
+          )}
         </div>
       )}
       

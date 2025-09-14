@@ -106,34 +106,55 @@ const WorkAssignmentPage = () => {
 
       {/* 通知区域 */}
       {hasNotifications() && (
-        <div className="mb-6 bg-white rounded-lg border border-orange-200 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <AlertCircle className="w-5 h-5 text-orange-500" />
-              <div>
-                <h3 className="text-sm font-medium text-slate-800">有合同需求更新</h3>
-                <p className="text-xs text-slate-600">
-                  {contractNotifications.appendixContracts.length > 0 && 
-                    `${contractNotifications.appendixContracts.length} 个合同有新的附属合同，请注意工单需求变更`
-                  }
-                </p>
+        <div className="mb-6 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200 p-4 shadow-sm">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <AlertCircle className="w-5 h-5 text-orange-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-slate-800 mb-1">⚠️ 合同需求更新通知</h3>
+                <div className="space-y-2">
+                  {contractNotifications.appendixContracts.length > 0 && (
+                    <div>
+                      <p className="text-xs text-slate-600 mb-2">
+                        发现 <span className="font-semibold text-orange-700">{contractNotifications.appendixContracts.length}</span> 个合同有新的附属合同，相关工单需求已更新：
+                      </p>
+                      <ul className="text-xs text-slate-700 space-y-1">
+                        <li>• 工单需求数量已按主合同+附属合同聚合计算</li>
+                        <li>• 请检查对应工单的备注信息获取详细变更内容</li>
+                        <li>• 建议重新评估任务分配和完成时间</li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
               {contractNotifications.appendixContracts.map(contractId => (
                 <div
                   key={contractId}
-                  className="flex items-center bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs"
+                  className="flex items-center bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs border border-orange-300"
                 >
+                  <span className="w-1.5 h-1.5 bg-orange-400 rounded-full mr-1.5 animate-pulse"></span>
                   合同 #{contractId}
                   <button
                     onClick={() => clearNotification(contractId)}
-                    className="ml-1 text-orange-600 hover:text-orange-800"
+                    className="ml-1 text-orange-600 hover:text-orange-800 hover:bg-orange-200 rounded-full w-4 h-4 flex items-center justify-center"
+                    title="标记为已读"
                   >
                     ×
                   </button>
                 </div>
               ))}
+              {contractNotifications.appendixContracts.length > 1 && (
+                <button
+                  onClick={() => contractNotifications.appendixContracts.forEach(clearNotification)}
+                  className="text-xs text-orange-600 hover:text-orange-800 underline ml-2"
+                >
+                  全部标记为已读
+                </button>
+              )}
             </div>
           </div>
         </div>
