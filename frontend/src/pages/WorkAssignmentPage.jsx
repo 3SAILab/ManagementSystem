@@ -5,6 +5,8 @@ import AssignWorkModal from '../components/AssignWorkModal';
 import { assignSubTask } from '../services/subTaskService';
 import { toast } from 'react-toastify';
 import Pagination from '../components/Pagination';
+import { useNotificationStore } from '../store/notifications';
+import { Bell, AlertCircle } from 'lucide-react';
 
 const WorkAssignmentPage = () => {
   const [tasks, setTasks] = useState([]);
@@ -12,6 +14,14 @@ const WorkAssignmentPage = () => {
   const [isAssignWorkModalOpen, setIsAssignWorkModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
+  
+  // 通知系统
+  const { 
+    contractNotifications, 
+    clearNotification, 
+    getTotalNotificationCount,
+    hasNotifications 
+  } = useNotificationStore();
   
   // 过滤条件
   const [filters, setFilters] = useState({
@@ -93,6 +103,41 @@ const WorkAssignmentPage = () => {
         <h1 className="text-2xl font-bold tracking-tight text-slate-800">工单分配</h1>
         <p className="text-slate-500 mt-1">将工单任务分配给组员</p>
       </div>
+
+      {/* 通知区域 */}
+      {hasNotifications() && (
+        <div className="mb-6 bg-white rounded-lg border border-orange-200 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <AlertCircle className="w-5 h-5 text-orange-500" />
+              <div>
+                <h3 className="text-sm font-medium text-slate-800">有合同需求更新</h3>
+                <p className="text-xs text-slate-600">
+                  {contractNotifications.appendixContracts.length > 0 && 
+                    `${contractNotifications.appendixContracts.length} 个合同有新的附属合同，请注意工单需求变更`
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              {contractNotifications.appendixContracts.map(contractId => (
+                <div
+                  key={contractId}
+                  className="flex items-center bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs"
+                >
+                  合同 #{contractId}
+                  <button
+                    onClick={() => clearNotification(contractId)}
+                    className="ml-1 text-orange-600 hover:text-orange-800"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 待分配工单 */}

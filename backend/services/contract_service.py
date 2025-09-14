@@ -172,27 +172,69 @@ class ContractService:
         contracts = result.scalars().all()
         return contracts
     
-    # 合同剩余需求 (工单各项需求 - 已创建工单需求各项需求之和)
+    # 合同剩余需求 (聚合合同需求 - 已创建工单需求各项需求之和)
     @staticmethod
     async def get_remaining_requirements(db: AsyncSession, contract_id: int):
         contract = await db.get(Contract, contract_id)
         if not contract:
             raise HTTPException(status_code=404, detail="合同不存在")
+        
+        # 获取聚合需求（主合同+所有附属合同）
+        aggregated_requirements = await ContractService._get_aggregated_requirements(db, contract_id)
+        
         # 获取已创建工单需求之和
-        created_requirements = await db.execute(select(func.sum(Ticket.detail_pages),func.sum(Ticket.video_count),func.sum(Ticket.image_count),func.sum(Ticket.workflow_count)).where(Ticket.contract_id == contract_id))
+        created_requirements = await db.execute(
+            select(func.sum(Ticket.detail_pages),func.sum(Ticket.video_count),func.sum(Ticket.image_count),func.sum(Ticket.workflow_count))
+            .where(Ticket.contract_id == contract_id)
+        )
         created_requirements = created_requirements.one()
         # 处理 None 值的情况（当没有工单时）
         if created_requirements is None:
             created_requirements = (0, 0, 0, 0)
         
-        # 计算剩余需求
+        # 计算剩余需求（基于聚合需求）
         remaining_requirements = {
-            "detail_pages": max(0, contract.detail_pages - (created_requirements[0] or 0)),
-            "video_count": max(0, contract.video_count - (created_requirements[1] or 0)),
-            "image_count": max(0, contract.image_count - (created_requirements[2] or 0)),
-            "workflow_count": max(0, contract.workflow_count - (created_requirements[3] or 0))
+            "detail_pages": max(0, aggregated_requirements["detail_pages"] - (created_requirements[0] or 0)),
+            "video_count": max(0, aggregated_requirements["video_count"] - (created_requirements[1] or 0)),
+            "image_count": max(0, aggregated_requirements["image_count"] - (created_requirements[2] or 0)),
+            "workflow_count": max(0, aggregated_requirements["workflow_count"] - (created_requirements[3] or 0))
         }
         return remaining_requirements
+    
+    # 内部方法：获取聚合需求（主合同+附属合同）
+    @staticmethod
+    async def _get_aggregated_requirements(db: AsyncSession, main_contract_id: int):
+        """获取主合同及其所有附属合同的聚合需求"""
+        # 获取主合同
+        main_contract = await db.get(Contract, main_contract_id)
+        if not main_contract:
+            return {"detail_pages": 0, "video_count": 0, "image_count": 0, "workflow_count": 0}
+        
+        # 初始化为主合同需求
+        total_requirements = {
+            "detail_pages": main_contract.detail_pages,
+            "video_count": main_contract.video_count,
+            "image_count": main_contract.image_count,
+            "workflow_count": main_contract.workflow_count
+        }
+        
+        # 如果这本身是附属合同，获取主合同ID
+        if main_contract.parent_contract_id:
+            return await ContractService._get_aggregated_requirements(db, main_contract.parent_contract_id)
+        
+        # 获取所有附属合同
+        appendix_contracts = await db.execute(
+            select(Contract).where(Contract.parent_contract_id == main_contract_id)
+        )
+        
+        # 累加附属合同需求
+        for appendix in appendix_contracts.scalars():
+            total_requirements["detail_pages"] += appendix.detail_pages
+            total_requirements["video_count"] += appendix.video_count
+            total_requirements["image_count"] += appendix.image_count
+            total_requirements["workflow_count"] += appendix.workflow_count
+        
+        return total_requirements
     
 
 

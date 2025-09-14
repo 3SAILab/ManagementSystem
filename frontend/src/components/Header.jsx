@@ -14,10 +14,8 @@ export default function Header() {
   // 找到有 title 的路由
   const matchWithTitle = matches.find(match => match.handle?.title);
 
-  // 判断是否为美工主管
-  const isArtManager = employee.department_name === '生产部' && 
-                       employee.position_name === '美工' && 
-                       employee.role === 'manager';
+  // 判断是否为生产部员工
+  const isProductionStaff = employee.department_name === '生产部';
 
   // 检查更新
   useEffect(() => {
@@ -70,8 +68,8 @@ export default function Header() {
 
         {/* 右侧：操作区域 */}
         <div id="header-actions" className="flex items-center space-x-4">
-          {/* 通知面板 - 仅美工主管可见 */}
-          {isArtManager && <NotificationPanel />}
+          {/* 通知面板 - 仅生产部员工可见 */}
+          {isProductionStaff && <NotificationPanel />}
           
           <button
             className="flex items-center space-x-2 p-2 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-colors"

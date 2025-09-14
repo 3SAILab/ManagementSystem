@@ -88,9 +88,7 @@ class DataPopulator:
     def populate_positions(self, session):
         """填充职位数据"""
         positions_data = [
-            {"id": 5, "name": "销售", "department_id": 6},         # 营销管理部
-            {"id": 6, "name": "销售专员", "department_id": 6},      # 营销管理部
-            {"id": 7, "name": "销售经理", "department_id": 6},      # 营销管理部
+            {"id": 5, "name": "销售", "department_id": 6},         # 营销管理部 - 统一销售职位
             {"id": 10, "name": "美工", "department_id": 7},       # 生产部
             {"id": 12, "name": "渲染", "department_id": 7},       # 生产部
             {"id": 13, "name": "人事专员", "department_id": 1},   # 人事行政部
@@ -129,7 +127,7 @@ class DataPopulator:
                 "password_hash": self.password_hash,
                 "role": EmployeeRole.employee,
                 "department_id": 6,
-                "position_id": 6,  # 销售专员
+                "position_id": 5,  # 销售
                 "hire_date": date(2024, 1, 15),
                 "status": EmployeeStatus.active,
                 "base_salary": Decimal("8000.00"),
@@ -141,7 +139,7 @@ class DataPopulator:
                 "password_hash": self.password_hash,
                 "role": EmployeeRole.manager,
                 "department_id": 6,
-                "position_id": 7,  # 销售经理
+                "position_id": 5,  # 销售
                 "hire_date": date(2023, 12, 1),
                 "status": EmployeeStatus.active,
                 "base_salary": Decimal("12000.00"),

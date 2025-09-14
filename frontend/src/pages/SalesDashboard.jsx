@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ChevronDown, Search, Filter, Grid, List } from 'lucide-react';
 import * as echarts from 'echarts';
-import { getContracts, updateContractStatus, deleteContract, getAggregatedContracts } from '../services/contractService';
+import { getContracts, updateContractStatus, deleteContract, getAggregatedContracts, createAppendixContract } from '../services/contractService';
 import { getMonthlySales, getMonthlySalesStatistics, getMonthlySalesByCycle, getMonthlySalesAmountStatistics, getMonthlySalesAmountByCycle } from '../services/statisticsService';
 import Pagination from '../components/Pagination';
 import AggregatedContractCard from '../components/AggregatedContractCard';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
+import CreateAppendixContractModal from '../components/CreateAppendixContractModal';
 import DateUtils from '../utils/dateUtils';
 
 const getTrendIndicator = (change) => {
@@ -366,6 +367,10 @@ const SalesDashboard = () => {
   const [editingContract, setEditingContract] = useState(null);
   const [newStatus, setNewStatus] = useState('');
   const [settlementTime, setSettlementTime] = useState('');
+  
+  // 附属合同模态框状态
+  const [isAppendixModalOpen, setIsAppendixModalOpen] = useState(false);
+  const [selectedContract, setSelectedContract] = useState(null);
   const handleOpenModal = (contract) => {
     setEditingContract(contract);
     setNewStatus(contract.status);
@@ -417,10 +422,17 @@ const SalesDashboard = () => {
     }
   };
   
-  const handleCreateAppendix = async (contractId) => {
-    // 暂时显示提示信息，后续可以集成具体的追加合同模态框
-    toast.info('追加合同功能正在开发中...');
-    console.log('创建附属合同，主合同ID:', contractId);
+  const handleCreateAppendix = async (contract) => {
+    // 设置选中的合同并打开附属合同模态框
+    setSelectedContract(contract);
+    setIsAppendixModalOpen(true);
+  };
+  
+  const handleAppendixSuccess = () => {
+    // 附属合同创建成功后，刷新合同列表
+    setRefresh(!refresh);
+    setIsAppendixModalOpen(false);
+    setSelectedContract(null);
   };
   return (
     <div className="p-6 space-y-6">
@@ -882,7 +894,7 @@ const SalesDashboard = () => {
                           className="px-3 py-1 rounded-md bg-orange-600 text-white text-sm shadow-sm hover:bg-orange-700 transition"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleCreateAppendix(contract.id);
+                            handleCreateAppendix(contract);
                           }}
                         >
                           追加合同
@@ -974,6 +986,17 @@ const SalesDashboard = () => {
           </div>
         </div>
       )}
+      
+      {/* **创建附属合同模态框** */}
+      <CreateAppendixContractModal
+        isOpen={isAppendixModalOpen}
+        onClose={() => {
+          setIsAppendixModalOpen(false);
+          setSelectedContract(null);
+        }}
+        parentContract={selectedContract}
+        onSuccess={handleAppendixSuccess}
+      />
     </div>
   );
 };
