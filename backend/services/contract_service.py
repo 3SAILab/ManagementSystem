@@ -397,7 +397,7 @@ class ContractService:
                 })
             
             # 计算总提点（基于聚合后的金额）
-            total_commission_rate = contract.commission_rate if contract.commission_rate else 0
+            total_commission_rate = float(contract.commission_rate) if contract.commission_rate else 0
             if contract.status == '坏单':
                 total_commission = total_paid * total_commission_rate / 100
             else:
