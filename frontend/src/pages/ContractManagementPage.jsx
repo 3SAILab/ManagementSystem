@@ -16,9 +16,6 @@ const ContractManagementPage = () => {
   // 通知状态管理
   const { 
     contractNotifications, 
-    clearNotification, 
-    addNewContractNotification, 
-    addAppendixContractNotification 
   } = useNotificationStore();
   
   // 创建工单模态框状态

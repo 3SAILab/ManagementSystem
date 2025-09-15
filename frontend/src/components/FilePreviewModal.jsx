@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Download, FileText, Image, AlertCircle } from 'lucide-react';
 import { 
   getContractFiles, 
-  getPreviewUrl, 
-  getDownloadUrl, 
   downloadFile, 
+  previewFile,
   isImageFile, 
   isPdfFile, 
   isSupportedPreviewType,
@@ -17,32 +16,68 @@ const FilePreviewModal = ({ isOpen, onClose, contractId }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState('');
 
   useEffect(() => {
     if (isOpen && contractId) {
-      loadContractFiles();
+      (async () => {
+        setLoading(true);
+        try {
+          const result = await getContractFiles(contractId);
+          if (result.success) {
+            setFiles(result.files || []);
+            if (result.files && result.files.length > 0) {
+              setSelectedFile(result.files[0]);
+            }
+          } else {
+            toast.error(result.error || '获取文件列表失败');
+          }
+        } catch (error) {
+          console.error('加载文件失败:', error);
+          toast.error('加载文件失败');
+        } finally {
+          setLoading(false);
+        }
+      })();
     }
   }, [isOpen, contractId]);
 
-  const loadContractFiles = async () => {
-    setLoading(true);
-    try {
-      const result = await getContractFiles(contractId);
-      if (result.success) {
-        setFiles(result.files || []);
-        if (result.files && result.files.length > 0) {
-          setSelectedFile(result.files[0]);
-        }
-      } else {
-        toast.error(result.error || '获取文件列表失败');
+  // 当选择的文件变化时，针对可预览类型通过带鉴权的接口获取blob并生成本地URL
+  useEffect(() => {
+    let objectUrl = '';
+    const loadPreview = async () => {
+      if (!selectedFile || !isSupportedPreviewType(selectedFile.file_type)) {
+        setPreviewUrl('');
+        setPreviewError('');
+        return;
       }
-    } catch (error) {
-      console.error('加载文件失败:', error);
-      toast.error('加载文件失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+      setPreviewLoading(true);
+      setPreviewError('');
+      try {
+        const result = await previewFile(selectedFile.id);
+        if (result.success) {
+          objectUrl = window.URL.createObjectURL(result.data);
+          setPreviewUrl(objectUrl);
+        } else {
+          setPreviewUrl('');
+          setPreviewError(result.error || '预览加载失败');
+        }
+      } catch {
+        setPreviewUrl('');
+        setPreviewError('预览加载失败');
+      } finally {
+        setPreviewLoading(false);
+      }
+    };
+    loadPreview();
+    return () => {
+      if (objectUrl) {
+        window.URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [selectedFile]);
 
   const handleDownload = async (file) => {
     setDownloading(true);
@@ -167,23 +202,16 @@ const FilePreviewModal = ({ isOpen, onClose, contractId }) => {
                 </div>
               </div>
               
-              <div className="flex-1 p-4 bg-gray-50">
+              <div className="flex-1 p-4 bg-gray-50 min-h-0">
                 {isSupportedPreviewType(selectedFile.file_type) ? (
                   <>
-                    {isImageFile(selectedFile.file_type) ? (
+                    {previewLoading ? (
+                      <div className="h-full flex items-center justify-center text-gray-600">预览加载中...</div>
+                    ) : previewError ? (
                       <div className="h-full flex items-center justify-center">
-                        <img
-                          src={getPreviewUrl(selectedFile.id)}
-                          alt={selectedFile.original_filename}
-                          className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'block';
-                          }}
-                        />
-                        <div className="text-center hidden">
+                        <div className="text-center">
                           <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-                          <p className="text-gray-600 mb-4">图片加载失败</p>
+                          <p className="text-gray-600 mb-4">{previewError}</p>
                           <button
                             onClick={() => handleDownload(selectedFile)}
                             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
@@ -192,13 +220,25 @@ const FilePreviewModal = ({ isOpen, onClose, contractId }) => {
                           </button>
                         </div>
                       </div>
+                    ) : isImageFile(selectedFile.file_type) ? (
+                      <div className="h-full overflow-auto flex items-center justify-center">
+                        {previewUrl ? (
+                          <img
+                            src={previewUrl}
+                            alt={selectedFile.original_filename}
+                            className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                          />
+                        ) : null}
+                      </div>
                     ) : isPdfFile(selectedFile.file_type) ? (
                       <div className="h-full">
-                        <iframe
-                          src={getPreviewUrl(selectedFile.id)}
-                          className="w-full h-full border-0 rounded-lg"
-                          title={selectedFile.original_filename}
-                        />
+                        {previewUrl ? (
+                          <iframe
+                            src={previewUrl}
+                            className="w-full h-full border-0 rounded-lg"
+                            title={selectedFile.original_filename}
+                          />
+                        ) : null}
                       </div>
                     ) : null}
                   </>

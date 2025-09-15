@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ChevronDown, Search, Filter, Grid, List } from 'lucide-react';
 import * as echarts from 'echarts';
-import { getContracts, updateContractStatus, deleteContract, getAggregatedContracts, createAppendixContract } from '../services/contractService';
+import { getContracts, updateContractStatus, deleteContract, getAggregatedContracts } from '../services/contractService';
 import { getMonthlySales, getMonthlySalesStatistics, getMonthlySalesByCycle, getMonthlySalesAmountStatistics, getMonthlySalesAmountByCycle } from '../services/statisticsService';
 import Pagination from '../components/Pagination';
 import AggregatedContractCard from '../components/AggregatedContractCard';
@@ -342,7 +342,6 @@ const SalesDashboard = () => {
           contractApiCall,
           getMonthlySales()
         ]);
-
         // 分别处理结果
         if (contractsRes.success) {
           setContracts(contractsRes.data.contracts);

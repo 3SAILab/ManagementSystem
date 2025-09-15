@@ -12,14 +12,14 @@ export default function Header() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hasChecked, setHasChecked] = useState(false); // 避免重复检查
   const { employee } = useEmployeePermissionStore();
-  const { addAppendixContractNotification } = useNotificationStore();
+  const { clearAllNotifications, addAppendixContractNotification } = useNotificationStore();
 
   // 找到有 title 的路由
   const matchWithTitle = matches.find(match => match.handle?.title);
 
   // 判断是否需要检查附属合同通知
   const shouldCheckAppendixNotifications = employee && (
-    employee.department_name === '生产部' || // 生产部需要附属合同通知
+    employee.position_name === '美工' && // 生产部需要附属合同通知
     employee.role === 'manager' || // 管理层需要所有通知
     employee.role === 'admin' // 管理员需要所有通知
   );
@@ -33,8 +33,9 @@ export default function Header() {
         console.log('检查附属合同通知...');
         const result = await getAppendixContractNotifications();
         if (result.success && result.data.appendix_contracts) {
-          // 将检查到的合同ID添加到通知状态中
+          // 将检查到的合同ID添加到通知状态中          
           result.data.appendix_contracts.forEach(contractId => {
+            clearAllNotifications();
             addAppendixContractNotification(contractId);
           });
           console.log(`检查到 ${result.data.count} 个附属合同通知`);
@@ -50,7 +51,7 @@ export default function Header() {
     if (employee?.department_name) {
       checkAppendixContractNotifications();
     }
-  }, [shouldCheckAppendixNotifications, hasChecked, employee, addAppendixContractNotification]);
+  }, [shouldCheckAppendixNotifications, hasChecked, employee, clearAllNotifications, addAppendixContractNotification]);
 
   // 检查更新
   useEffect(() => {

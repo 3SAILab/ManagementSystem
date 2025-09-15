@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getContractDetail } from '../services/contractService';
 import { addTicket, getTicketsByContractId, updateTicketInfo, deleteTicket } from '../services/ticketService';
 import { getSubTasksByTicketId } from '../services/subTaskService';
@@ -14,6 +14,7 @@ import { useEmployeePermissionStore } from '../store/employee';
 
 const ContractDetailPage = () => {
   const { employee } = useEmployeePermissionStore();
+  const navigate = useNavigate();
   // 创建工单模态框是否显示
   const [createOrderModal, setCreateOrderModal] = useState(false);
   const { id } = useParams();
@@ -158,16 +159,16 @@ const ContractDetailPage = () => {
       {/* header */}
       <div className="p-4 flex justify-between items-center gap-4">
         {/* 返回按钮 */}
-        <Link
-          to="/sales_dashboard"
+        <button
+          onClick={() => navigate(-1)}
           className="flex items-center text-gray-500 hover:text-gray-700 group text-lg"
         >
           {/* 使用 lucide-react 的 ChevronLeft 图标 */}
           <ChevronLeft
             className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform duration-200"
           />
-          <span className="text-lg font-medium">返回销售看板</span>
-        </Link>
+          <span className="text-lg font-medium">返回上一页</span>
+        </button>
         
         {/* 按钮组 */}
         <div className="flex items-center gap-3">

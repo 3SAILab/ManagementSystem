@@ -315,7 +315,7 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label htmlFor="product-type" className="block text-sm font-medium text-slate-700 mb-1">
-                产品类型
+                产品类型<span className="text-red-500">*</span>
               </label>
               <select
                 id="product-type"
@@ -323,6 +323,7 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
                 value={formData.product_type_id || ""}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required
               >
                 <option value="">请选择产品类型</option>
                 {productTypes.map((productType) => (
@@ -334,7 +335,7 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
             </div>
             <div>
               <label htmlFor="product-name" className="block text-sm font-medium text-slate-700 mb-1">
-                产品名称
+                产品名称<span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -343,12 +344,13 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
                 value={formData.product_name}
                 onChange={handleInputChange}
                 placeholder="请输入产品名称"
+                required
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
               <label htmlFor="price" className="block text-sm font-medium text-slate-700 mb-1">
-                价格 (元)
+                价格 (元)<span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -359,6 +361,7 @@ const AddTicketModal = ({ isOpen, onClose, onAdd, contractId }) => {
                 placeholder="请输入价格"
                 step="0.01"
                 min="0"
+                required
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>

@@ -72,11 +72,11 @@ const ContractCard = ({ contract, hasNotification, onCreateTicket, onViewDetails
           <div className="flex items-center space-x-3 mb-3">
             <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
               <span className="text-indigo-600 font-semibold">
-                {contract.client_name?.charAt(0)?.toUpperCase() || 'C'}
+                {contract.client.name?.charAt(0)?.toUpperCase() || 'C'}
               </span>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-800">{contract.client_name || '未知客户'}</h3>
+              <h3 className="font-semibold text-gray-800">{contract.client.name || '未知客户'}</h3>
               <div className="flex items-center space-x-2 text-sm text-gray-500">
                 <Calendar className="w-4 h-4" />
                 <span>{formatDate(contract.transaction_time)}</span>
@@ -90,7 +90,7 @@ const ContractCard = ({ contract, hasNotification, onCreateTicket, onViewDetails
               <span className="font-medium text-gray-800">{formatCurrency(contract.total_amount)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">已付款:</span>
+              <span className="text-sm text-gray-600">首付款:</span>
               <span className="font-medium text-gray-800">{formatCurrency(contract.paid_amount)}</span>
             </div>
             <div className="flex items-center justify-between">

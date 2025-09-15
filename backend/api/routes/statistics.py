@@ -169,8 +169,8 @@ async def get_sales_data_statistics(
         SalesService.get_sales_amount(db, start_date=start_date, end_date=end_date), # 本月销售额
         SalesService.get_sales_amount(db, start_date=last_month_start_date, end_date=last_now_end), # 上个月同期销售额
         SalesService.get_total_received_by_last(db, last_end=start_date, start_date=start_date, end_date=end_date), # 合同成交时间不在本月，但是尾款结算时间在本月的总到账金额
-        SalesService.get_total_received(db, start_date=start_date, end_date=end_date, source="线上"), # 线上总到账金额
-        SalesService.get_total_received(db, start_date=last_month_start_date, end_date=last_now_end, source="线上"), # 上个月同期线上总到账金额
+        SalesService.get_total_received(db, start_date=start_date, end_date=end_date, source=["线上"]), # 线上总到账金额
+        SalesService.get_total_received(db, start_date=last_month_start_date, end_date=last_now_end, source=["线上"]), # 上个月同期线上总到账金额
         SalesService.get_total_received(db, start_date=start_date, end_date=end_date), # 本月总到账金额
         SalesService.get_total_received(db, start_date=last_month_start_date, end_date=last_now_end), # 上个月同期总到账金额
         SalesService.get_received_final_amount(db, start_date=start_date, end_date=end_date), # 本月尾款到账金额

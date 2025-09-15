@@ -39,6 +39,7 @@ class ContractCreate(BaseModel):
 # 合同列表
 class ContractList(BaseModel):
     id: int
+    client_id: Optional[int] = None
     client_name: str
     sales_name: str
     contract_type: ContractType

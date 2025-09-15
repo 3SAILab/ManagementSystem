@@ -109,6 +109,7 @@ export const menuItems = [
     children: [
       { label: '工单分配', path: '/work_assignment', icon: 'check-square' },
       { label: '产品类型管理', path: '/product_type_management', icon: 'tag' },
+      { label: '合同管理', path: '/contract_management', icon: 'file-text' },  // 新增合同管理
     ]
   },
   {
