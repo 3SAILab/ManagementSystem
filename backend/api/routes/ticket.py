@@ -3,6 +3,7 @@ from backend.services.ticket_service import TicketService
 from backend.services.sub_task_service import SubTaskService
 from backend.db.session import get_async_db
 from backend.api.routes.employee import get_current_employee
+from backend.api.deps.auth import require_departments
 from backend.models.employee import Employee
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
@@ -12,12 +13,12 @@ from backend.services.progress_log_service import ProgressLogService
 from backend.utils.response import api_response
 router = APIRouter()
 
-# 创建工单
+# 创建工单 - 仅限生产部门
 @router.post("/tickets")
 async def create_ticket(
     ticket: TicketCreate = Body(...),
     db: AsyncSession = Depends(get_async_db),
-    current_employee: Employee = Depends(get_current_employee)
+    current_employee: Employee = Depends(require_departments("生产部"))
 ):
     # 需求之和不能<=0
     sum = ticket.detail_pages + ticket.video_count + ticket.image_count + ticket.workflow_count

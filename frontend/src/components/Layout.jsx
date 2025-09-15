@@ -2,25 +2,35 @@ import React from 'react';
 import { useEmployeePermissionStore } from '../store/employee';
 import SidebarNav from './SidebarNav';
 import Header from './Header';
-import { Outlet, useNavigate } from 'react-router-dom';
+import NotificationPanel from './NotificationPanel';
+import { Outlet, useNavigate, useMatches } from 'react-router-dom';
 import { BrainCircuit, Menu, Settings2, LogOut } from 'lucide-react';
 import { logout } from '../services/authService';
 import { setApiNavigate } from '../services/api';
 
 export default function Layout() {
-
   const navigate = useNavigate();
+  const matches = useMatches();
+  const { employee } = useEmployeePermissionStore();
 
   React.useEffect(() => {
     setApiNavigate(navigate);
   }, [navigate]);
 
-  const { employee } = useEmployeePermissionStore();
-
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  // 找到有 title 的路由
+  const matchWithTitle = matches.find(match => match.handle?.title);
+  // 判断用户角色和通知需求
+  const shouldShowNotifications = employee && (
+    employee.department_name === '生产部' || // 生产部需要附属合同通知
+    employee.department_name === '营销管理部' || // 销售需要合同状态通知
+    employee.role === 'manager' || // 管理层需要所有通知
+    employee.role === 'admin' // 管理员需要所有通知
+  );
 
   return (
     <div id="app-view" className="h-screen flex">
@@ -68,9 +78,13 @@ export default function Layout() {
             <Menu className="w-6 h-6" />
           </button>
           <h2 id="page-title" className="text-2xl font-bold text-slate-800">
-            <Header />
+            {matchWithTitle?.handle.title || 'Dashboard'}
           </h2>
-          <div id="header-actions"></div>
+          <div id="header-actions" className="flex items-center space-x-4">
+            {/* 通知面板 - 根据角色显示 */}
+            {shouldShowNotifications && <NotificationPanel />}
+            <Header />
+          </div>
         </header>
 
         <div id="app" className="p-6 flex-1">

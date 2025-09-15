@@ -148,3 +148,88 @@ export const getReadonlyContracts = async (employeeId, filters = {}) => {
     }
 };
 
+// 创建附属合同
+export const createAppendixContract = async (parentId, contractData, attachment) => {
+    try {
+        const formData = new FormData();
+        formData.append("contract_data", JSON.stringify(contractData));
+        if (attachment?.file) {
+            formData.append("file", attachment.file);
+        }
+        
+        const response = await api.post(`/contracts/${parentId}/appendix`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        return { success: true, data: response.data };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// 获取合同树形结构（主合同+附属合同）
+export const getContractTree = async (contractId) => {
+    try {
+        const response = await api.get(`/contracts/tree/${contractId}`);
+        return { success: true, data: response.data };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// 美工主管获取待处理合同列表
+export const getPendingContractsForProduction = async () => {
+    try {
+        const response = await api.get('/contracts/pending-for-production');
+        // API返回格式: {success: true, data: [...]}
+        if (response.data && response.data.success) {
+            return { success: true, data: response.data.data };
+        } else {
+            return { success: false, error: '获取数据失败' };
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// 获取聚合后的合同列表（主合同+附属合同整合显示）
+export const getAggregatedContracts = async ({ name, status, contract_type, source, start_date, end_date, page, page_size }) => {
+    try {
+        const params = {
+            name,
+            status,
+            contract_type,
+            source,
+            start_date,
+            end_date,
+            page,
+            page_size
+        };
+        
+        const response = await api.get('/contracts/aggregated', {
+            params,
+            paramsSerializer: p => Qs.stringify(p, { arrayFormat: 'repeat', skipNulls: true })
+        });
+        
+        return { success: true, data: response.data };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// 生产部门获取附属合同通知
+export const getAppendixContractNotifications = async () => {
+    try {
+        const response = await api.get('/notifications/appendix-contracts');
+        if (response.data && response.data.success) {
+            return { success: true, data: response.data.data };
+        } else {
+            return { success: false, error: '获取通知失败' };
+        }
+    } catch (error) {
+        console.error('获取附属合同通知失败:', error);
+        return { success: false, error: error.message };
+    }
+};
+

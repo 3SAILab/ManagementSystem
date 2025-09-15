@@ -15,7 +15,7 @@ from backend.config import settings
 from backend.models.department import Department
 from backend.models.position import Position
 from backend.models.employee import Employee, EmployeeStatus, EmployeeRole
-from backend.models.client import Client, ClientStatus, ClientScale
+from backend.models.client import Client, ClientStatus, ClientScale, ClientSource
 from backend.models.contract import Contract, ContractType
 from backend.models.ticket import Ticket
 from backend.models.sub_task import SubTask
@@ -23,23 +23,18 @@ from backend.models.file_resource import FileResource
 from backend.models.client_activity_log import ClientActivityLog
 from backend.models.progress_log import ProgressLog
 from backend.models.product_type import ProductType
+from backend.services.employee_service import EmployeeService
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from backend.db.session import Base
-import bcrypt
 
-class Phase1DataPopulator:
+class DataPopulator:
     def __init__(self):
-        self.password_hash = self._hash_password("123456qwerty")
+        self.password_hash = EmployeeService.get_password_hash("123456qwerty")
         # 创建同步数据库引擎和会话
         self.engine = create_engine(settings.DATABASE_URL)
         self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
-    
-    def _hash_password(self, password: str) -> str:
-        """生成密码哈希"""
-        salt = bcrypt.gensalt()
-        return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
     
     def populate_departments(self, session):
         """填充部门数据"""
@@ -93,13 +88,13 @@ class Phase1DataPopulator:
     def populate_positions(self, session):
         """填充职位数据"""
         positions_data = [
-            {"id": 5, "name": "销售", "department_id": 6},      # 营销管理部
-            {"id": 10, "name": "美工", "department_id": 7},     # 生产部
-            {"id": 12, "name": "渲染", "department_id": 7},     # 生产部
-            {"id": 13, "name": "人事专员", "department_id": 1}, # 人事行政部
-            {"id": 25, "name": "IT", "department_id": 8},       # AI部
-            {"id": 28, "name": "HRBP", "department_id": 1},     # 人事行政部
-            {"id": 29, "name": "运营", "department_id": 6}      # 营销管理部
+            {"id": 5, "name": "销售", "department_id": 6},         # 营销管理部 - 统一销售职位
+            {"id": 10, "name": "美工", "department_id": 7},       # 生产部
+            {"id": 12, "name": "渲染", "department_id": 7},       # 生产部
+            {"id": 13, "name": "人事专员", "department_id": 1},   # 人事行政部
+            {"id": 25, "name": "IT", "department_id": 8},         # AI部
+            {"id": 28, "name": "HRBP", "department_id": 1},       # 人事行政部
+            {"id": 29, "name": "运营", "department_id": 6}        # 营销管理部
         ]
         
         print("填充职位数据...")
@@ -115,7 +110,7 @@ class Phase1DataPopulator:
         """填充员工数据"""
         employees_data = [
             {
-                "name": "系统管理员",
+                "name": "admin",
                 "email": "admin@example.com",
                 "password_hash": self.password_hash,
                 "role": EmployeeRole.admin,
@@ -124,23 +119,35 @@ class Phase1DataPopulator:
                 "hire_date": date(2024, 1, 1),
                 "status": EmployeeStatus.active,
                 "base_salary": Decimal("10000.00"),
-                "is_probation": False
+                "is_probation": True
             },
             {
-                "name": "张销售",
-                "email": "sales1@example.com",
+                "name": "销售张三",
+                "email": "sales@example.com",
                 "password_hash": self.password_hash,
                 "role": EmployeeRole.employee,
                 "department_id": 6,
-                "position_id": 5,
+                "position_id": 5,  # 销售
                 "hire_date": date(2024, 1, 15),
                 "status": EmployeeStatus.active,
                 "base_salary": Decimal("8000.00"),
                 "is_probation": False
             },
             {
-                "name": "李美工",
-                "email": "artist1@example.com",
+                "name": "经理李四",
+                "email": "manager@example.com",
+                "password_hash": self.password_hash,
+                "role": EmployeeRole.manager,
+                "department_id": 6,
+                "position_id": 5,  # 销售
+                "hire_date": date(2023, 12, 1),
+                "status": EmployeeStatus.active,
+                "base_salary": Decimal("12000.00"),
+                "is_probation": False
+            },
+            {
+                "name": "美工小王",
+                "email": "art@example.com",
                 "password_hash": self.password_hash,
                 "role": EmployeeRole.employee,
                 "department_id": 7,
@@ -151,20 +158,8 @@ class Phase1DataPopulator:
                 "is_probation": False
             },
             {
-                "name": "王运营经理",
-                "email": "operation_manager@example.com",
-                "password_hash": self.password_hash,
-                "role": EmployeeRole.manager,
-                "department_id": 6,
-                "position_id": 29,
-                "hire_date": date(2023, 12, 1),
-                "status": EmployeeStatus.active,
-                "base_salary": Decimal("12000.00"),
-                "is_probation": False
-            },
-            {
-                "name": "陈渲染",
-                "email": "render1@example.com",
+                "name": "渲染小李",
+                "email": "render@example.com",
                 "password_hash": self.password_hash,
                 "role": EmployeeRole.employee,
                 "department_id": 7,
@@ -172,6 +167,18 @@ class Phase1DataPopulator:
                 "hire_date": date(2024, 1, 20),
                 "status": EmployeeStatus.active,
                 "base_salary": Decimal("7500.00"),
+                "is_probation": False
+            },
+            {
+                "name": "美工主管张总",
+                "email": "art-manager@example.com",
+                "password_hash": self.password_hash,
+                "role": EmployeeRole.manager,
+                "department_id": 7,
+                "position_id": 10,  # 美工
+                "hire_date": date(2023, 11, 1),
+                "status": EmployeeStatus.active,
+                "base_salary": Decimal("12000.00"),
                 "is_probation": False
             },
             {
@@ -200,19 +207,19 @@ class Phase1DataPopulator:
     def populate_clients(self, session):
         """填充客户数据"""
         # 获取销售员工ID
-        sales1 = session.execute(
-            select(Employee).where(Employee.email == "sales1@example.com")
+        sales = session.execute(
+            select(Employee).where(Employee.email == "sales@example.com")
         ).scalar()
-        sales1_id = sales1.id
+        sales_id = sales.id
         
-        operation_manager = session.execute(
-            select(Employee).where(Employee.email == "operation_manager@example.com")
+        manager = session.execute(
+            select(Employee).where(Employee.email == "manager@example.com")
         ).scalar()
-        operation_manager_id = operation_manager.id
+        manager_id = manager.id
         
         clients_data = [
             {
-                "sales_id": sales1_id,
+                "sales_id": sales_id,
                 "name": "测试电商公司A",
                 "contact_name": "王经理",
                 "contact_phone": "13800138001",
@@ -222,14 +229,14 @@ class Phase1DataPopulator:
                     "area": "南山区",
                     "detail": "科技园南区1号楼"
                 },
-                "source": "线上",
-                "product_type": "家电1",
+                "source": ClientSource.线上,
+                "product_type_ids": [2],  # 家电
                 "scale": ClientScale.中,
                 "status": ClientStatus.跟进中,
                 "access_time": datetime(2024, 1, 1, 10, 0, 0)
             },
             {
-                "sales_id": sales1_id,
+                "sales_id": sales_id,
                 "name": "服装贸易有限公司",
                 "contact_name": "李总",
                 "contact_phone": "13800138002",
@@ -239,14 +246,14 @@ class Phase1DataPopulator:
                     "area": "西湖区",
                     "detail": "文三路100号"
                 },
-                "source": "线下",
-                "product_type": "服装1",
+                "source": ClientSource.线下,
+                "product_type_ids": [3],  # 服装
                 "scale": ClientScale.大,
                 "status": ClientStatus.已成交,
                 "access_time": datetime(2024, 1, 2, 14, 0, 0)
             },
             {
-                "sales_id": operation_manager_id,
+                "sales_id": manager_id,
                 "name": "文具用品批发商",
                 "contact_name": "赵经理",
                 "contact_phone": "13800138003",
@@ -256,14 +263,14 @@ class Phase1DataPopulator:
                     "area": "浦东新区",
                     "detail": "陆家嘴金融中心"
                 },
-                "source": "线上",
-                "product_type": "文具1",
+                "source": ClientSource.线上,
+                "product_type_ids": [1],  # 文具
                 "scale": ClientScale.小,
                 "status": ClientStatus.试单中,
                 "access_time": datetime(2024, 1, 5, 9, 30, 0)
             },
             {
-                "sales_id": operation_manager_id,
+                "sales_id": manager_id,
                 "name": "化妆品连锁店",
                 "contact_name": "孙女士",
                 "contact_phone": "13800138004",
@@ -273,14 +280,14 @@ class Phase1DataPopulator:
                     "area": "朝阳区",
                     "detail": "三里屯商业街"
                 },
-                "source": "活动",
-                "product_type": "化妆品1",
+                "source": ClientSource.活动,
+                "product_type_ids": [13],  # 化妆品
                 "scale": ClientScale.大,
                 "status": ClientStatus.复购,
                 "access_time": datetime(2024, 1, 10, 16, 20, 0)
             },
             {
-                "sales_id": sales1_id,
+                "sales_id": sales_id,
                 "name": "玩具制造厂",
                 "contact_name": "陈老板",
                 "contact_phone": "13800138005",
@@ -290,8 +297,8 @@ class Phase1DataPopulator:
                     "area": "长安镇",
                     "detail": "工业园区B栋"
                 },
-                "source": "线下",
-                "product_type": "玩具111",
+                "source": ClientSource.线下,
+                "product_type_ids": [14],  # 玩具
                 "scale": ClientScale.中,
                 "status": ClientStatus.客户流失,
                 "access_time": datetime(2024, 1, 15, 11, 45, 0)
@@ -302,7 +309,7 @@ class Phase1DataPopulator:
         for client_data in clients_data:
             client = Client(**client_data)
             session.add(client)
-            print(f"  创建客户: {client_data['name']} - {client_data['product_type']} ({client_data['status'].value})")
+            print(f"  创建客户: {client_data['name']} - {client_data['product_type_ids']} ({client_data['status'].value})")
         
         print("客户数据填充完成\n")
         session.commit()
@@ -317,20 +324,20 @@ class Phase1DataPopulator:
             ).scalar()
             client_data[phone] = client
         
-        sales1 = session.execute(
-            select(Employee).where(Employee.email == "sales1@example.com")
+        sales = session.execute(
+            select(Employee).where(Employee.email == "sales@example.com")
         ).scalar()
-        sales1_id = sales1.id
+        sales_id = sales.id
         
-        operation_manager = session.execute(
-            select(Employee).where(Employee.email == "operation_manager@example.com")
+        manager = session.execute(
+            select(Employee).where(Employee.email == "manager@example.com")
         ).scalar()
-        operation_manager_id = operation_manager.id
+        manager_id = manager.id
         
         contracts_data = [
             {
                 "client_id": client_data["13800138002"].id,
-                "sales_id": sales1_id,
+                "sales_id": sales_id,
                 "is_recharged": False,
                 "contract_type": ContractType.首单,
                 "status": "进行中",
@@ -345,7 +352,7 @@ class Phase1DataPopulator:
             },
             {
                 "client_id": client_data["13800138003"].id,
-                "sales_id": operation_manager_id,
+                "sales_id": manager_id,
                 "is_recharged": False,
                 "contract_type": ContractType.试单,
                 "status": "已完成",
@@ -360,7 +367,7 @@ class Phase1DataPopulator:
             },
             {
                 "client_id": client_data["13800138004"].id,
-                "sales_id": operation_manager_id,
+                "sales_id": manager_id,
                 "is_recharged": True,
                 "contract_type": ContractType.复购,
                 "status": "进行中",
@@ -410,7 +417,10 @@ class Phase1DataPopulator:
                 "wechat_group": "服装设计沟通群",
                 "notes": "主推女装连衣裙系列",
                 "priority": "高",
-                "platform": "国内"
+                "platform": "国内",
+                "product_type_id": 3,  # 服装
+                "product_name": "女装连衣裙",
+                "price": Decimal("299.99")
             },
             {
                 "name": "文具产品拍摄制作",
@@ -424,7 +434,10 @@ class Phase1DataPopulator:
                 "wechat_group": "文具制作群",
                 "notes": "办公用品系列",
                 "priority": "中",
-                "platform": "国内"
+                "platform": "国内",
+                "product_type_id": 1,  # 文具
+                "product_name": "办公文具套装",
+                "price": Decimal("89.99")
             },
             {
                 "name": "化妆品广告视频",
@@ -438,7 +451,10 @@ class Phase1DataPopulator:
                 "wechat_group": "化妆品项目群",
                 "notes": "护肤品推广视频",
                 "priority": "高",
-                "platform": "国外"
+                "platform": "国外",
+                "product_type_id": 13,  # 化妆品
+                "product_name": "抗衰老精华液",
+                "price": Decimal("199.99")
             },
             {
                 "name": "化妆品详情页优化",
@@ -452,7 +468,10 @@ class Phase1DataPopulator:
                 "wechat_group": "化妆品项目群",
                 "notes": "多SKU产品页面",
                 "priority": "中",
-                "platform": "国内"
+                "platform": "国内",
+                "product_type_id": 13,  # 化妆品
+                "product_name": "护肤套装组合",
+                "price": Decimal("399.99")
             }
         ]
         
@@ -475,20 +494,21 @@ class Phase1DataPopulator:
             ).scalar()
             tickets[name] = ticket
         
-        artist1 = session.execute(
-            select(Employee).where(Employee.email == "artist1@example.com")
+        artist = session.execute(
+            select(Employee).where(Employee.email == "art@example.com")
         ).scalar()
-        artist1_id = artist1.id
+        artist_id = artist.id
         
-        render1 = session.execute(
-            select(Employee).where(Employee.email == "render1@example.com")
+        render = session.execute(
+            select(Employee).where(Employee.email == "render@example.com")
         ).scalar()
-        render1_id = render1.id
+        render_id = render.id
         
         subtasks_data = [
             {
                 "ticket_id": tickets["服装详情页设计"].id,
-                "assignee_id": artist1_id,
+                "assignee_id": artist_id,
+                "charge_id": artist_id,  # 负责人与分配人相同
                 "task_type": "美工",
                 "status": "进行中",
                 "progress": 75,
@@ -497,7 +517,8 @@ class Phase1DataPopulator:
             },
             {
                 "ticket_id": tickets["文具产品拍摄制作"].id,
-                "assignee_id": artist1_id,
+                "assignee_id": artist_id,
+                "charge_id": artist_id,  # 负责人与分配人相同
                 "task_type": "美工",
                 "status": "已完工",
                 "progress": 100,
@@ -506,7 +527,8 @@ class Phase1DataPopulator:
             },
             {
                 "ticket_id": tickets["化妆品广告视频"].id,
-                "assignee_id": render1_id,
+                "assignee_id": render_id,
+                "charge_id": render_id,  # 负责人与分配人相同
                 "task_type": "渲染",
                 "status": "未开始",
                 "progress": 0,
@@ -580,13 +602,14 @@ class Phase1DataPopulator:
                 session.close()
                 
             print("\n" + "=" * 50)
-            print("第一阶段数据填充完成！")
+            print("数据填充完成")
             print("\n默认登录信息:")
             print("  管理员: admin@example.com / 123456qwerty")
-            print("  销售: sales1@example.com / 123456qwerty")
-            print("  美工: artist1@example.com / 123456qwerty")
-            print("  运营经理: operation_manager@example.com / 123456qwerty")
-            print("  渲染: render1@example.com / 123456qwerty")
+            print("  销售: sales@example.com / 123456qwerty")
+            print("  销售经理: manager@example.com / 123456qwerty")
+            print("  美工: art@example.com / 123456qwerty")
+            print("  渲染: render@example.com / 123456qwerty")
+            print("  美工主管: art-manager@example.com / 123456qwerty")
             print("  IT: it1@example.com / 123456qwerty")
             
         except Exception as e:
@@ -595,7 +618,7 @@ class Phase1DataPopulator:
 
 def main():
     """主函数"""
-    populator = Phase1DataPopulator()
+    populator = DataPopulator()
     populator.run()
 
 if __name__ == "__main__":

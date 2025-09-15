@@ -52,6 +52,9 @@ class ContractService:
             created_at=current_time,
             updated_at=current_time,
             file_resource_id=contract.file_resource_id,
+            notes=contract.notes,  # 合同备注
+            parent_contract_id=contract.parent_contract_id,  # 主合同ID
+            is_appendix=contract.is_appendix,  # 是否为附属合同
         )
         db.add(contract)
         await db.flush()
@@ -169,27 +172,69 @@ class ContractService:
         contracts = result.scalars().all()
         return contracts
     
-    # 合同剩余需求 (工单各项需求 - 已创建工单需求各项需求之和)
+    # 合同剩余需求 (聚合合同需求 - 已创建工单需求各项需求之和)
     @staticmethod
     async def get_remaining_requirements(db: AsyncSession, contract_id: int):
         contract = await db.get(Contract, contract_id)
         if not contract:
             raise HTTPException(status_code=404, detail="合同不存在")
+        
+        # 获取聚合需求（主合同+所有附属合同）
+        aggregated_requirements = await ContractService._get_aggregated_requirements(db, contract_id)
+        
         # 获取已创建工单需求之和
-        created_requirements = await db.execute(select(func.sum(Ticket.detail_pages),func.sum(Ticket.video_count),func.sum(Ticket.image_count),func.sum(Ticket.workflow_count)).where(Ticket.contract_id == contract_id))
+        created_requirements = await db.execute(
+            select(func.sum(Ticket.detail_pages),func.sum(Ticket.video_count),func.sum(Ticket.image_count),func.sum(Ticket.workflow_count))
+            .where(Ticket.contract_id == contract_id)
+        )
         created_requirements = created_requirements.one()
         # 处理 None 值的情况（当没有工单时）
         if created_requirements is None:
             created_requirements = (0, 0, 0, 0)
         
-        # 计算剩余需求
+        # 计算剩余需求（基于聚合需求）
         remaining_requirements = {
-            "detail_pages": max(0, contract.detail_pages - (created_requirements[0] or 0)),
-            "video_count": max(0, contract.video_count - (created_requirements[1] or 0)),
-            "image_count": max(0, contract.image_count - (created_requirements[2] or 0)),
-            "workflow_count": max(0, contract.workflow_count - (created_requirements[3] or 0))
+            "detail_pages": max(0, aggregated_requirements["detail_pages"] - (created_requirements[0] or 0)),
+            "video_count": max(0, aggregated_requirements["video_count"] - (created_requirements[1] or 0)),
+            "image_count": max(0, aggregated_requirements["image_count"] - (created_requirements[2] or 0)),
+            "workflow_count": max(0, aggregated_requirements["workflow_count"] - (created_requirements[3] or 0))
         }
         return remaining_requirements
+    
+    # 内部方法：获取聚合需求（主合同+附属合同）
+    @staticmethod
+    async def _get_aggregated_requirements(db: AsyncSession, main_contract_id: int):
+        """获取主合同及其所有附属合同的聚合需求"""
+        # 获取主合同
+        main_contract = await db.get(Contract, main_contract_id)
+        if not main_contract:
+            return {"detail_pages": 0, "video_count": 0, "image_count": 0, "workflow_count": 0}
+        
+        # 初始化为主合同需求
+        total_requirements = {
+            "detail_pages": main_contract.detail_pages,
+            "video_count": main_contract.video_count,
+            "image_count": main_contract.image_count,
+            "workflow_count": main_contract.workflow_count
+        }
+        
+        # 如果这本身是附属合同，获取主合同ID
+        if main_contract.parent_contract_id:
+            return await ContractService._get_aggregated_requirements(db, main_contract.parent_contract_id)
+        
+        # 获取所有附属合同
+        appendix_contracts = await db.execute(
+            select(Contract).where(Contract.parent_contract_id == main_contract_id)
+        )
+        
+        # 累加附属合同需求
+        for appendix in appendix_contracts.scalars():
+            total_requirements["detail_pages"] += appendix.detail_pages
+            total_requirements["video_count"] += appendix.video_count
+            total_requirements["image_count"] += appendix.image_count
+            total_requirements["workflow_count"] += appendix.workflow_count
+        
+        return total_requirements
     
 
 
@@ -254,3 +299,193 @@ class ContractService:
         result = await db.execute(stmt)
         contracts = list(result.scalars().all())
         return contracts, total
+    
+    # 获取合同及其附属合同的树形结构
+    @staticmethod
+    async def get_contract_with_appendix(db: AsyncSession, contract_id: int):
+        """获取合同及其所有附属合同"""
+        stmt = select(Contract).where(Contract.id == contract_id).options(
+            selectinload(Contract.client),
+            selectinload(Contract.sales),
+            selectinload(Contract.appendix_contracts)
+        )
+        result = await db.execute(stmt)
+        main_contract = result.scalar_one_or_none()
+        
+        if not main_contract:
+            raise HTTPException(status_code=404, detail="合同不存在")
+        
+        return api_response(success=True, data={
+            "main_contract": main_contract,
+            "appendix_contracts": main_contract.appendix_contracts
+        })
+
+    # 美工主管获取待处理合同列表
+    @staticmethod
+    async def get_contracts_for_production(db: AsyncSession):
+        """获取美工主管待处理的合同列表"""
+        # 只获取主合同（非附属合同）
+        stmt = select(Contract).where(
+            Contract.is_appendix == False
+        ).options(
+            selectinload(Contract.client),
+            selectinload(Contract.sales),
+            selectinload(Contract.appendix_contracts)
+        ).order_by(Contract.updated_at.desc())
+        
+        result = await db.execute(stmt)
+        contracts = result.scalars().all()
+        
+        return api_response(success=True, data=contracts)
+
+    # 根据ID获取合同
+    @staticmethod
+    async def get_contract_by_id(db: AsyncSession, contract_id: int):
+        """根据ID获取合同"""
+        stmt = select(Contract).where(Contract.id == contract_id)
+        result = await db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    # 获取聚合后的合同列表（主合同+附属合同）
+    @staticmethod
+    async def get_aggregated_contracts(db: AsyncSession, employee_id: int, filter_params=None):
+        """获取聚合后的合同列表（主合同+附属合同）"""
+        # 只查询主合同（非附属合同）
+        stmt = select(Contract).where(
+            Contract.sales_id == employee_id,
+            Contract.parent_contract_id.is_(None)  # 只查询主合同
+        ).options(
+            selectinload(Contract.client),
+            selectinload(Contract.sales),
+            selectinload(Contract.appendix_contracts).selectinload(Contract.client)
+        ).order_by(Contract.created_at.desc())
+        
+        # 应用过滤条件
+        if filter_params:
+            filters = []
+            needs_client_join = False
+            
+            if filter_params.name:
+                needs_client_join = True
+                filters.append(Client.name.ilike(f"%{filter_params.name}%"))
+            
+            if filter_params.status:
+                status_values = [s.value if hasattr(s, 'value') else s for s in filter_params.status]
+                filters.append(Contract.status.in_(status_values))
+            
+            if filter_params.contract_type:
+                contract_type_values = [s.value if hasattr(s, 'value') else s for s in filter_params.contract_type]
+                filters.append(Contract.contract_type.in_(contract_type_values))
+            
+            if filter_params.source:
+                needs_client_join = True
+                filters.append(Client.source.in_(filter_params.source))
+            
+            # 时间范围过滤
+            if filter_params.start_date and filter_params.end_date:
+                filters.append(and_(
+                    Contract.transaction_time >= filter_params.start_date,
+                    Contract.transaction_time <= filter_params.end_date
+                ))
+            elif filter_params.start_date:
+                filters.append(Contract.transaction_time >= filter_params.start_date)
+            elif filter_params.end_date:
+                filters.append(Contract.transaction_time <= filter_params.end_date)
+            
+            # 如果需要客户信息，则join Client表
+            if needs_client_join:
+                stmt = stmt.join(Client)
+            
+            if filters:
+                stmt = stmt.where(and_(*filters))
+        
+        result = await db.execute(stmt)
+        main_contracts = result.scalars().all()
+        
+        # 构建聚合数据
+        aggregated_contracts = []
+        for contract in main_contracts:
+            # 计算聚合数据
+            total_amount = float(contract.total_amount)
+            total_paid = float(contract.paid_amount)
+            
+            # 计算需求量聚合
+            total_detail_pages = contract.detail_pages
+            total_video_count = contract.video_count
+            total_image_count = contract.image_count
+            total_workflow_count = contract.workflow_count
+            
+            # 聚合附属合同数据
+            appendix_contracts_data = []
+            for appendix in contract.appendix_contracts:
+                total_amount += float(appendix.total_amount)
+                total_paid += float(appendix.paid_amount)
+                total_detail_pages += appendix.detail_pages
+                total_video_count += appendix.video_count
+                total_image_count += appendix.image_count
+                total_workflow_count += appendix.workflow_count
+                
+                appendix_contracts_data.append({
+                    'id': appendix.id,
+                    'total_amount': float(appendix.total_amount),
+                    'paid_amount': float(appendix.paid_amount),
+                    'notes': appendix.notes,
+                    'status': appendix.status,
+                    'transaction_time': appendix.transaction_time,
+                    'detail_pages': appendix.detail_pages,
+                    'video_count': appendix.video_count,
+                    'image_count': appendix.image_count,
+                    'workflow_count': appendix.workflow_count
+                })
+            
+            # 计算总提点（基于聚合后的金额）
+            total_commission_rate = float(contract.commission_rate) if contract.commission_rate else 0
+            if contract.status == '坏单':
+                total_commission = total_paid * total_commission_rate / 100
+            else:
+                total_commission = total_amount * total_commission_rate / 100
+            
+            aggregated_contracts.append({
+                'id': contract.id,
+                'client_id': contract.client_id,
+                'client_name': contract.client.name if contract.client else '未知客户',
+                'sales_id': contract.sales_id,
+                'sales_name': contract.sales.name if contract.sales else '未知销售',
+                'contract_type': contract.contract_type,
+                'status': contract.status,
+                'commission_rate': contract.commission_rate,
+                'transaction_time': contract.transaction_time,
+                'settlement_time': contract.settlement_time,
+                'is_recharged': contract.is_recharged,
+                'notes': contract.notes,
+                'created_at': contract.created_at,
+                'updated_at': contract.updated_at,
+                
+                # 聚合后的金额数据
+                'total_amount': total_amount,
+                'paid_amount': total_paid,
+                'remaining_amount': total_amount - total_paid,
+                'total_commission': round(total_commission, 2),
+                
+                # 聚合后的需求数据
+                'total_detail_pages': total_detail_pages,
+                'total_video_count': total_video_count,
+                'total_image_count': total_image_count,
+                'total_workflow_count': total_workflow_count,
+                
+                # 附属合同信息
+                'appendix_count': len(contract.appendix_contracts),
+                'appendix_contracts': appendix_contracts_data,
+                
+                # 原始主合同数据
+                'main_contract': {
+                    'total_amount': float(contract.total_amount),
+                    'paid_amount': float(contract.paid_amount),
+                    'detail_pages': contract.detail_pages,
+                    'video_count': contract.video_count,
+                    'image_count': contract.image_count,
+                    'workflow_count': contract.workflow_count
+                }
+            })
+        
+        return aggregated_contracts

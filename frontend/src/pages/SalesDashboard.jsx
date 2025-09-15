@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ChevronDown, Search, Filter } from 'lucide-react';
+import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ChevronDown, Search, Filter, Grid, List } from 'lucide-react';
 import * as echarts from 'echarts';
-import { getContracts, updateContractStatus, deleteContract } from '../services/contractService';
+import { getContracts, updateContractStatus, deleteContract, getAggregatedContracts, createAppendixContract } from '../services/contractService';
 import { getMonthlySales, getMonthlySalesStatistics, getMonthlySalesByCycle, getMonthlySalesAmountStatistics, getMonthlySalesAmountByCycle } from '../services/statisticsService';
 import Pagination from '../components/Pagination';
+import AggregatedContractCard from '../components/AggregatedContractCard';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
+import CreateAppendixContractModal from '../components/CreateAppendixContractModal';
 import DateUtils from '../utils/dateUtils';
 
 const getTrendIndicator = (change) => {
@@ -318,6 +320,8 @@ const SalesDashboard = () => {
   const [total, setTotal] = useState(0);
   // 刷新状态
   const [refresh, setRefresh] = useState(false);
+  // 视图模式：'list' 表格视图, 'aggregated' 聚合卡片视图
+  const [viewMode, setViewMode] = useState('list');
   // 并行获取所有数据
   useEffect(() => {
     const fetchAllData = async () => {
@@ -328,9 +332,14 @@ const SalesDashboard = () => {
           statistics: true
         }));
         
+        // 根据视图模式调用不同的API
+        const contractApiCall = viewMode === 'aggregated' 
+          ? getAggregatedContracts(filters) 
+          : getContracts(filters);
+        
         // 只获取合同列表和统计数据
         const [contractsRes, statisticsRes] = await Promise.all([
-          getContracts(filters),
+          contractApiCall,
           getMonthlySales()
         ]);
 
@@ -353,11 +362,15 @@ const SalesDashboard = () => {
       }
     };
     fetchAllData();
-  }, [filters,refresh]);
+  }, [filters, refresh, viewMode]); // 添加viewMode到依赖数组
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingContract, setEditingContract] = useState(null);
   const [newStatus, setNewStatus] = useState('');
   const [settlementTime, setSettlementTime] = useState('');
+  
+  // 附属合同模态框状态
+  const [isAppendixModalOpen, setIsAppendixModalOpen] = useState(false);
+  const [selectedContract, setSelectedContract] = useState(null);
   const handleOpenModal = (contract) => {
     setEditingContract(contract);
     setNewStatus(contract.status);
@@ -407,6 +420,19 @@ const SalesDashboard = () => {
     }else{
       toast.error(res.error);
     }
+  };
+  
+  const handleCreateAppendix = async (contract) => {
+    // 设置选中的合同并打开附属合同模态框
+    setSelectedContract(contract);
+    setIsAppendixModalOpen(true);
+  };
+  
+  const handleAppendixSuccess = () => {
+    // 附属合同创建成功后，刷新合同列表
+    setRefresh(!refresh);
+    setIsAppendixModalOpen(false);
+    setSelectedContract(null);
   };
   return (
     <div className="p-6 space-y-6">
@@ -758,11 +784,51 @@ const SalesDashboard = () => {
                   onChange={(e) => setFilters({ ...filters, name: e.target.value })}
                 />
               </div>
+
+              {/* 视图切换器 */}
+              <div className="flex items-center bg-white border border-slate-300 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-3 py-2 flex items-center space-x-2 transition-colors ${
+                    viewMode === 'list' 
+                      ? 'bg-indigo-600 text-white' 
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                  title="表格视图"
+                >
+                  <List className="w-4 h-4" />
+                  <span className="text-sm font-medium">表格</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('aggregated')}
+                  className={`px-3 py-2 flex items-center space-x-2 transition-colors ${
+                    viewMode === 'aggregated' 
+                      ? 'bg-indigo-600 text-white' 
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                  title="聚合卡片视图"
+                >
+                  <Grid className="w-4 h-4" />
+                  <span className="text-sm font-medium">聚合</span>
+                </button>
+              </div>
             </div>
           </div>
+          
+          {/* 根据视图模式渲染不同内容 */}
           {contracts.length === 0 ? (
             <div className="p-4 text-center text-slate-500">
               暂无数据
+            </div>
+          ) : viewMode === 'aggregated' ? (
+            <div className="space-y-4 p-4">
+              {contracts.map((contract) => (
+                <AggregatedContractCard
+                  key={contract.id}
+                  contract={contract}
+                  onClick={() => navigate(`/contract_detail/${contract.id}`)}
+                />
+              ))}
             </div>
           ) : (
           <table className="w-full text-left">
@@ -823,6 +889,15 @@ const SalesDashboard = () => {
                           }}
                         >
                           更改状态
+                        </button>
+                        <button
+                          className="px-3 py-1 rounded-md bg-orange-600 text-white text-sm shadow-sm hover:bg-orange-700 transition"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCreateAppendix(contract);
+                          }}
+                        >
+                          追加合同
                         </button>
                         <button
                           className="px-3 py-1 rounded-md bg-red-500 text-white text-sm shadow-sm hover:bg-red-600 transition"
@@ -911,6 +986,17 @@ const SalesDashboard = () => {
           </div>
         </div>
       )}
+      
+      {/* **创建附属合同模态框** */}
+      <CreateAppendixContractModal
+        isOpen={isAppendixModalOpen}
+        onClose={() => {
+          setIsAppendixModalOpen(false);
+          setSelectedContract(null);
+        }}
+        parentContract={selectedContract}
+        onSuccess={handleAppendixSuccess}
+      />
     </div>
   );
 };
