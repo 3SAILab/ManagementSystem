@@ -320,23 +320,57 @@ class ContractService:
             "appendix_contracts": main_contract.appendix_contracts
         })
 
-    # 美工主管获取待处理合同列表
+    # 美工主管获取待处理合同列表（支持分页与客户名称关键词）
     @staticmethod
-    async def get_contracts_for_production(db: AsyncSession):
-        """获取美工主管待处理的合同列表"""
-        # 只获取主合同（非附属合同）
+    async def get_contracts_for_production(db: AsyncSession, page: int = 1, page_size: int = 10, key_word: Optional[str] = None):
+        """获取美工主管待处理的合同列表
+        - 仅主合同（非附属）
+        - 支持按客户名称模糊查询
+        - 支持分页
+        返回结构：{ contracts, total, page, page_size, total_pages }
+        """
+        # 基础查询：主合同
         stmt = select(Contract).where(
             Contract.is_appendix == False
         ).options(
             selectinload(Contract.client),
             selectinload(Contract.sales),
             selectinload(Contract.appendix_contracts)
-        ).order_by(Contract.updated_at.desc())
-        
+        )
+
+        # 过滤条件
+        filters = []
+        if key_word:
+            # 需要按客户名称过滤，join Client
+            stmt = stmt.join(Client)
+            filters.append(Client.name.ilike(f"%{key_word}%"))
+
+        if filters:
+            from sqlalchemy import and_ as sql_and
+            stmt = stmt.where(sql_and(*filters))
+
+        # 排序
+        stmt = stmt.order_by(Contract.updated_at.desc())
+
+        # 统计总数
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total_result = await db.execute(count_stmt)
+        total = total_result.scalar_one()
+
+        # 分页
+        stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+
+        # 查询数据
         result = await db.execute(stmt)
         contracts = result.scalars().all()
-        
-        return api_response(success=True, data=contracts)
+
+        return api_response(success=True, data={
+            "contracts": contracts,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": (total + page_size - 1) // page_size
+        })
 
     # 根据ID获取合同
     @staticmethod

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, AlertCircle } from 'lucide-react';
+import { Bell, AlertCircle, Search } from 'lucide-react';
 import ContractCard from '../components/ContractCard';
 import AddTicketModal from '../components/AddTicketModal';
 import { useNavigate } from 'react-router-dom';
@@ -7,12 +7,24 @@ import { toast } from 'react-toastify';
 import { getPendingContractsForProduction } from '../services/contractService';
 import { addTicket } from '../services/ticketService';
 import { useNotificationStore } from '../store/notifications';
+import Pagination from '../components/Pagination';
 
 const ContractManagementPage = () => {
   const navigate = useNavigate();
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+  const [filters, setFilters] = useState(() => {
+    const savedPage = sessionStorage.getItem('contractManagementPage');
+    return {
+      page: savedPage ? parseInt(savedPage, 10) : 1,
+      page_size: 10,
+      key_word: '',
+    };
+  });
+  useEffect(() => {
+    sessionStorage.setItem('contractManagementPage', filters.page);
+  }, [filters.page]);
+  const [total, setTotal] = useState(0);
   // 通知状态管理
   const { 
     contractNotifications, 
@@ -22,23 +34,35 @@ const ContractManagementPage = () => {
   const [createTicketModal, setCreateTicketModal] = useState(false);
   const [selectedContractId, setSelectedContractId] = useState(null);
 
-  // 获取待处理合同列表
+  // 获取待处理合同列表（支持分页与关键词）
   const loadPendingContracts = async () => {
     try {
       setLoading(true);
-      const result = await getPendingContractsForProduction();
+      const result = await getPendingContractsForProduction({
+        page: filters.page,
+        page_size: filters.page_size,
+        key_word: filters.key_word
+      });
       if (result.success) {
         // 确保返回的是数组
         const contractsData = Array.isArray(result.data) ? result.data : [];
         setContracts(contractsData);
+        if (result.meta && typeof result.meta.total === 'number') {
+          setTotal(result.meta.total);
+        } else {
+          // 兼容旧接口：无 meta 时，用当前数量作为已知数量
+          setTotal(contractsData.length);
+        }
       } else {
         toast.error(result.error || '获取合同列表失败');
         setContracts([]); // 确保设置为空数组
+        setTotal(0);
       }
     } catch (error) {
       console.error('加载合同列表失败:', error);
       toast.error('加载合同列表失败');
       setContracts([]); // 确保设置为空数组
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -46,7 +70,7 @@ const ContractManagementPage = () => {
 
   useEffect(() => {
     loadPendingContracts();
-  }, []);
+  }, [filters.page, filters.page_size, filters.key_word]);
 
   const handleCreateTicket = (contractId) => {
     setSelectedContractId(contractId);
@@ -83,15 +107,30 @@ const ContractManagementPage = () => {
 
   return (
     <div className="container mx-auto p-6">
-      {/* 页面标题和通知 */}
+      {/* 页面标题、搜索与通知 */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">合同管理</h1>
           <p className="text-gray-600 mt-1">查看并管理待处理的合同</p>
         </div>
-        
-        {/* 通知区域 */}
+
+        {/* 右侧工具栏：搜索 + 通知 */}
         <div className="flex items-center space-x-4">
+          {/* 搜索框 */}
+          <div className="relative w-full max-w-xs">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search className="w-5 h-5 text-slate-400" />
+            </div>
+            <input 
+              type="text" 
+              placeholder="搜索客户名称..." 
+              className="form-input !pl-12 w-full bg-white border-slate-300 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+              value={filters.key_word}
+              onChange={(e) => setFilters({ ...filters, key_word: e.target.value, page: 1 })}
+            />
+          </div>
+
+          {/* 通知区域 */}
           {/* 新合同通知 */}
           {contractNotifications.newContracts.length > 0 && (
             <div className="flex items-center bg-blue-100 text-blue-800 px-3 py-2 rounded-lg">
@@ -141,6 +180,19 @@ const ContractManagementPage = () => {
               />
             ))
           )}
+          {/* 分页 */}
+          <div className="p-4 border-t border-slate-200 text-sm text-slate-600 flex justify-between items-center">
+            <span>显示 {contracts.length} / 共 {total} 条数据</span>
+            <div className="flex items-center gap-2">
+              {/* 分页按钮 */}
+              <Pagination
+                totalItems={total}
+                itemsPerPage={filters.page_size}
+                currentPage={filters.page}
+                onPageChange={(page) => setFilters({...filters, page: page})}
+              />
+            </div>
+          </div>
         </div>
       )}
 

@@ -178,13 +178,29 @@ export const getContractTree = async (contractId) => {
     }
 };
 
-// 美工主管获取待处理合同列表
-export const getPendingContractsForProduction = async () => {
+// 美工主管获取待处理合同列表（支持分页与关键词）
+export const getPendingContractsForProduction = async (params = {}) => {
     try {
-        const response = await api.get('/contracts/pending-for-production');
-        // API返回格式: {success: true, data: [...]}
+        const { page, page_size, key_word } = params;
+        const response = await api.get('/contracts/pending-for-production', { params: { page, page_size, key_word } });
+        // 兼容新旧返回结构
         if (response.data && response.data.success) {
-            return { success: true, data: response.data.data };
+            const payload = response.data.data;
+            // 新结构：{ contracts, total, page, page_size, total_pages }
+            if (payload && Array.isArray(payload.contracts)) {
+                return {
+                    success: true,
+                    data: payload.contracts,
+                    meta: {
+                        total: payload.total,
+                        page: payload.page,
+                        page_size: payload.page_size,
+                        total_pages: payload.total_pages
+                    }
+                };
+            }
+            // 旧结构：直接是数组
+            return { success: true, data: payload };
         } else {
             return { success: false, error: '获取数据失败' };
         }

@@ -273,14 +273,17 @@ async def get_contract_tree(
     """获取合同及其附属合同的树形结构"""
     return await ContractService.get_contract_with_appendix(db, contract_id)
 
-# 美工主管获取待处理合同列表
+# 美工主管获取待处理合同列表（分页+关键词）
 @router.get("/contracts/pending-for-production")
 async def get_pending_contracts_for_production(
+    page: int = Query(1),
+    page_size: int = Query(10),
+    key_word: str = Query(None, description="按客户名称模糊查询"),
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(require_departments("生产部"))
 ):
-    """美工主管获取待处理的合同列表"""
-    return await ContractService.get_contracts_for_production(db)
+    """美工主管获取待处理的合同列表（仅主合同），支持分页与客户名称关键词查询"""
+    return await ContractService.get_contracts_for_production(db, page=page, page_size=page_size, key_word=key_word)
 
 # 获取聚合后的合同列表（主合同+附属合同整合显示）
 @router.get("/contracts/aggregated")
@@ -407,78 +410,85 @@ async def get_contract_detail(
     db: AsyncSession = Depends(get_async_db),
     current_employee: Employee = Depends(get_current_employee)
 ):
-    """
-    获取合同详情 - ✅ 使用聚合需求计算
-    
-    返回：
-    - pending_details：剩余制作需求数量（基于聚合需求）
-    - completed_details：已完成制作需求数量
-    - yellow_count：黄色预警数量（5<=time<7，剩余时间在5-7天之间的子任务数量）
-    - red_count：红色预警数量（time<5，剩余时间小于5天的子任务数量）
-    - art_tasks：美工任务列表（合同+工单+子任务，美工任务）
-    - render_tasks：渲染任务列表（合同+工单+子任务，渲染任务）
-    """
-    # ✅ 使用聚合需求计算
-    aggregated_requirements = await ContractService._get_aggregated_requirements(db, id)
-    
-    # 获取所有工单
-    tickets_result = await db.execute(select(Ticket).where(Ticket.contract_id == id))
-    tickets = tickets_result.scalars().all()
-    
-    # 调用 TicketService 获取完成的工单
-    completed_requirements = await TicketService.get_completed_ticket_counts_by_contract(db, id)
-    
-    # 计算剩余需求（聚合需求 - 已完成需求）
-    pending_requirements = {
-        "detailPage": max(0, aggregated_requirements["detail_pages"] - completed_requirements["detail_pages"]),
-        "video": max(0, aggregated_requirements["video_count"] - completed_requirements["video_count"]),
-        "image": max(0, aggregated_requirements["image_count"] - completed_requirements["image_count"]),
-        "workflow": max(0, aggregated_requirements["workflow_count"] - completed_requirements["workflow_count"])
+    art_tasks = await SubTaskService.get_art_tasks_by_contract_id(db, id)
+    render_tasks = await SubTaskService.get_render_tasks_by_contract_id(db, id)
+    # 任务名称、组长、负责人、创建时间、状态、预警情况
+    yellow_count = 0
+    red_count = 0
+
+    art_tasks_out = []
+    now = datetime.now(tz=ZoneInfo("Asia/Shanghai"))
+    for task in art_tasks:
+        yellow_threshold = task.estimated_completion_time if task.estimated_completion_time else 2
+        red_threshold = task.estimated_completion_time + 1 if task.estimated_completion_time else 3
+        warning = "正常"
+        if task.status == "进行中" and task.started_at:
+            elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.created_at).days
+            if elapsed_days > red_threshold:
+                warning = "红色预警"
+                red_count += 1
+            elif elapsed_days > yellow_threshold:
+                warning = "黄色预警"
+                yellow_count += 1
+        beijing_time = task.created_at.astimezone(ZoneInfo("Asia/Shanghai"))
+        art_tasks_out.append({
+            "id": task.id,
+            "name": task.ticket.name,
+            "leader": task.assignee.name if task.assignee else None,
+            "charge": task.charge.name if task.charge else None,
+            "created_at": beijing_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "status": task.status,
+            "progress": task.progress,
+            "edit_count": task.edit_count,
+            "warning": warning
+        })
+    render_tasks_out = []
+    for task in render_tasks:
+        yellow_threshold = task.estimated_completion_time if task.estimated_completion_time else 2
+        red_threshold = task.estimated_completion_time + 1 if task.estimated_completion_time else 3
+        warning = "正常"
+        if task.status == "进行中" and task.started_at:
+            elapsed_days = (datetime.now(ZoneInfo("Asia/Shanghai")) - task.created_at).days
+            if elapsed_days > red_threshold:
+                warning = "红色预警"
+                red_count += 1
+            elif elapsed_days > yellow_threshold:
+                warning = "黄色预警"
+                yellow_count += 1
+        beijing_time = task.created_at.astimezone(ZoneInfo("Asia/Shanghai"))
+        render_tasks_out.append({
+            "id": task.id,
+            "name": task.ticket.name,
+            "leader": task.assignee.name if task.assignee else None,
+            "charge": task.charge.name if task.charge else None,
+            "created_at": beijing_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "status": task.status,
+            "progress": task.progress,
+            "edit_count": task.edit_count,
+            "warning": warning
+        })
+    # 合同已完成需求情况
+    completed_details = await TicketService.get_completed_ticket_counts_by_contract(db, id)
+    # 合同需求情况
+    res = await ContractService._get_aggregated_requirements(db, id)
+    return {
+        "art_tasks": art_tasks_out,
+        "render_tasks": render_tasks_out,
+        "completed_details": {
+            "detailPage": completed_details['detail_pages'],
+            "video": completed_details['video_count'],
+            "image": completed_details['image_count'],
+            "workflow": completed_details['workflow_count']
+        },
+        "pending_details": {
+            "detailPage": res['detail_pages'] - completed_details['detail_pages'],
+            "video": res['video_count'] - completed_details['video_count'],
+            "image": res['image_count'] - completed_details['image_count'],
+            "workflow": res['workflow_count'] - completed_details['workflow_count']
+        },
+        "yellow_count": yellow_count,
+        "red_count": red_count
     }
-    
-    # 美工任务和渲染任务获取
-    art_tasks = []
-    render_tasks = []
-    
-    try:
-        # 获取所有子任务
-        for ticket in tickets:
-            sub_tasks = await TicketService.get_charge_ticket_by_id(db, ticket.id)
-            for sub_task in sub_tasks:
-                if sub_task.task_type == "美工":
-                    art_tasks.append({
-                        "task_id": sub_task.id,
-                        "progress": sub_task.progress,
-                        "status": sub_task.status,
-                        "charge_name": sub_task.charge.name if sub_task.charge else None
-                    })
-                elif sub_task.task_type == "渲染":
-                    render_tasks.append({
-                        "task_id": sub_task.id,
-                        "progress": sub_task.progress,
-                        "status": sub_task.status,
-                        "charge_name": sub_task.charge.name if sub_task.charge else None
-                    })
-        
-        art_render_result = {
-            "art_tasks": art_tasks,
-            "render_tasks": render_tasks
-        }
-    except Exception as e:
-        logger.error(f"获取美工渲染任务失败: {str(e)}")
-        art_render_result = {
-            "art_tasks": [],
-            "render_tasks": []
-        }
-    
-    return api_response(
-        success=True,
-        data={
-            "pending_details": pending_requirements,
-            "completed_details": completed_requirements,
-            **art_render_result
-        }
-    )
 
 @router.get("/contracts/{id}/remaining_requirements")
 async def get_remaining_requirements(
