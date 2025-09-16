@@ -87,7 +87,7 @@ class ClientService:
             online_source=cdata.get("online_source"),
             activity_name=cdata.get("activity_name"),
             source=cdata.get("source").value,
-            product_type=cdata.get("product_type"),
+            product_type_ids=cdata.get("product_type_ids"),
             scale=cdata.get("scale").value,
             status=cdata.get("status").value,
             access_time=cdata.get("access_time"),
