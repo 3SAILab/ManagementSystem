@@ -384,10 +384,8 @@ async def get_contracts_by_client_id(
     try:
         # 调用service层获取数据
         result = await ContractService.get_contracts_by_client_id(db, client_id)
-        if result['success']:
-            return api_response(success=True, data=result['data'])
-        else:
-            return api_response(success=False, error=result['error'])
+        # 服务层返回的是合同列表，直接作为 data 返回
+        return api_response(success=True, data=result)
     except Exception as e:
         logger.error(f"获取客户合同失败: {str(e)}")
         return api_response(success=False, error="获取客户合同失败")

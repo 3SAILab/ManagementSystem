@@ -86,7 +86,7 @@ export const updateContractStatus = async (id, status, settlement_time) => {
 export const getContractsByClientId = async (client_id) => {
     try {
         const response = await api.get(`/contracts/client/${client_id}`);
-        return {success: true, data: response.data};
+        return {success: true, data: response.data.data};
     } catch (error) {
         return {success: false, error: `数据加载失败:${error.message}`};
     }
