@@ -61,10 +61,11 @@ export default function PrivateRoute({ currentPath, children }) {
     const hasCurrentPathAccess = getAllChildrenMenuItems().some(item => item.path === currentPath);
     
     // 如果没有当前路径权限，跳转到有权限的第一个页面
+    /** 
     if (!hasCurrentPathAccess) {
         const firstPath = getFirstAccessiblePath();
         return <Navigate to={firstPath} replace />;
     }
-    
+    */
     return children;
 }
