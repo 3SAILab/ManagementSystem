@@ -142,7 +142,7 @@ const router = createBrowserRouter([
           {
             path: '/team_dashboard',
             element:(
-              <PrivateRoute currentPath='/team_record'>
+              <PrivateRoute currentPath='/team_dashboard'>
                 <TeamDashboardPage />
               </PrivateRoute>
             ),
