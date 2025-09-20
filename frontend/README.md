@@ -1,10 +1,14 @@
-项目初始化命令
+## 使用npm
+* 安装依赖
+```npm install```
 
-npm create vite@latest frontend --template react
+* 启动开发服务器
+```npm run dev```
 
-npm install tailwindcss @tailwindcss/vite
+### 或者使用pnpm
 
-npm install zustand
+* 安装依赖
+```pnpm install```
 
-项目启动(在frontend目录下)
-npm run dev
+* 启动开发服务器
+```pnpm dev```

@@ -1,36 +1,36 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import LoginPage from '../pages/LoginPage';
-import DashboardPage from '../pages/DashboardPage';
-import EmployeeManagementPage from '../pages/EmployeeManagementPage';
-import PrivateRoute from '../components/PrivateRoute';
-import Layout from '../components/Layout';
-import RequireAuth from '../components/RequireAuth';
-import DepartmentPage from '../pages/DepartmentPage';
-import PositionPage from '../pages/PositionPage';
-import SalesDashboard from '../pages/SalesDashboard';
-import ClientFollowUps from '../pages/ClientFollowUps';
-import TeamRecordPage from '../pages/TeamRecordPage';
-import ContractDetailPage from '../pages/ContractDetailPage'
-import WorkAssignmentPage from '../pages/WorkAssignmentPage'
-import ResetPassword from '../pages/ResetPassword'
-import TeamDashboardPage from '../pages/TeamDashboard';
-import SalesDataPages from '../pages/SalesDataPages'
-import PendingReceivables from '../pages/PendingReceivables'
-import ReadOnlySalesDashboard from '../pages/ReadOnlySalesDashboard'
-import ReadOnlyContractDetail from '../pages/ReadOnlyContractDetail'
-import ArtDataPage from '../pages/ArtDataPage'
-import OnlineClientPage from '../pages/OnlineClientPage'
-import SalaryDataPage from '../pages/SalaryData'
-import ProductTypeManagePage from '../pages/ProductTypeManagePage'
-import ContractManagementPage from '../pages/ContractManagementPage'
+import LoginPage from '../views/auth/login/';
+import DashboardPage from '../views/workorder/dashboard/';
+import EmployeeManagementPage from '../views/organization/employee/';
+import PrivateRoute from '../layout/PrivateRoute';
+import Layout from '../layout/Layout';
+import RequireAuth from '../layout/RequireAuth';
+import DepartmentPage from '../views/organization/department/';
+import PositionPage from '../views/organization/position/';
+import SalesDashboard from '../views/sales/dashboard/';
+import ClientFollowUps from '../views/sales/followups/';
+import TeamRecordPage from '../views/team/record/';
+import ContractDetailPage from '../views/workorder/contract/detail/'
+import WorkAssignmentPage from '../views/workorder/assignment/'
+import ResetPassword from '../views/auth/resetpassword/'
+import TeamDashboardPage from '../views/team/dashboard/';
+import SalesDataPages from '../views/datacenter/sales/'
+import PendingReceivables from '../views/sales/receivables/'
+import ReadOnlySalesDashboard from '../views/sales/readonly/'
+import ReadOnlyContractDetail from '../views/workorder/contract/readonly/'
+import ArtDataPage from '../views/datacenter/art/'
+import OnlineClientPage from '../views/sales/onlineclient/'
+import SalaryDataPage from '../views/datacenter/salary/'
+import ProductTypeManagePage from '../views/organization/producttype/'
+import ContractManagementPage from '../views/workorder/contract/management/'
 
 const router = createBrowserRouter([
   {
-    path: '/login',
-    element: <LoginPage />, 
+    path: '/auth/login',
+    element: <LoginPage />,
   },
   {
-    path: '/reset_password',
+    path: '/auth/resetpassword',
     element: <ResetPassword />,
   },
   {
@@ -50,162 +50,162 @@ const router = createBrowserRouter([
             handle: { title: '工单看板' },
           },
           {
-            path: 'readonly_contract_detail/:id',
+            path: '/workorder/contract/readonly/:id',
             element: (
-              <PrivateRoute currentPath='readonly_contract_detail'>
+              <PrivateRoute currentPath='/workorder/contract/readonly'>
                 <ReadOnlyContractDetail />
               </PrivateRoute>
             ),
             handle: { title: '合同详情' },
           },
           {
-            path: 'readonly_sales_dashboard/:id/:name',
+            path: '/sales/readonly/:id/:name',
             element: (
-              <PrivateRoute currentPath='readonly_sales_dashboard'>
+              <PrivateRoute currentPath='/sales/readonly'>
                 <ReadOnlySalesDashboard />
               </PrivateRoute>
             ),
             handle: { title: `销售看板` },
           },
           {
-            path: 'employee_management',
+            path: '/organization/employee',
             element: (
-              <PrivateRoute currentPath='employee_management'>
+              <PrivateRoute currentPath='/organization/employee'>
                 <EmployeeManagementPage />
               </PrivateRoute>
             ),
             handle: { title: '员工管理' },
           },
           {
-            path: 'department_management',
+            path: '/organization/department',
             element: (
-              <PrivateRoute currentPath='department_management'>
+              <PrivateRoute currentPath='/organization/department'>
                 <DepartmentPage />
               </PrivateRoute>
             ),
             handle: { title: '部门管理' },
           },
           {
-            path: 'position_management',
+            path: '/organization/position',
             element: (
-              <PrivateRoute currentPath='position_management'>
+              <PrivateRoute currentPath='/organization/position'>
                 <PositionPage />
               </PrivateRoute>
             ),
             handle: { title: '职位管理' },
           },
           {
-            path: 'sales_dashboard',
+            path: '/sales/dashboard',
             element: (
-              <PrivateRoute currentPath='sales_dashboard'>
+              <PrivateRoute currentPath='/sales/dashboard'>
                 <SalesDashboard />
               </PrivateRoute>
             ),
             handle: { title: '我的看板' },
           },
           {
-            path: 'client_follow_ups',
+            path: '/sales/followups',
             element: (
-              <PrivateRoute currentPath='client_follow_ups'>
+              <PrivateRoute currentPath='/sales/followups'>
                 <ClientFollowUps />
               </PrivateRoute>
             ),
             handle: { title: '跟进记录' },
           },
           {
-            path: 'contract_detail/:id',
+            path: '/workorder/contract/detail/:id',
             element: (
-              <PrivateRoute currentPath='contract_detail'>
+              <PrivateRoute currentPath='/workorder/contract/detail'>
                 <ContractDetailPage />
               </PrivateRoute>
             ),
             handle: { title: '合同详情' },
           },
           {
-            path: 'team_record',
+            path: '/team/record',
             element: (
-              <PrivateRoute currentPath='team_record'>
+              <PrivateRoute currentPath='/team/record'>
                 <TeamRecordPage />
               </PrivateRoute>
             ),
             handle: { title: '团队记录' },
           },
           {
-            path: 'work_assignment',
+            path: '/workorder/assignment',
             element: (
-              <PrivateRoute currentPath='work_assignment'>
+              <PrivateRoute currentPath='/workorder/assignment'>
                 <WorkAssignmentPage />
               </PrivateRoute>
             ),
             handle: { title: '工单分配' },
           },
           {
-            path: 'team_dashboard',
+            path: '/team/dashboard',
             element:(
-              <PrivateRoute currentPath='team_dashboard'>
+              <PrivateRoute currentPath='/team/dashboard'>
                 <TeamDashboardPage />
               </PrivateRoute>
             ),
             handle: { title: '团队任务监控' }
           },
           {
-            path: 'sales_data',
+            path: '/datacenter/sales',
             element: (
-              <PrivateRoute currentPath='sales_data'>
+              <PrivateRoute currentPath='/datacenter/sales'>
                 <SalesDataPages />
               </PrivateRoute>
             ),
             handle: { title: '销售数据' }
           },
           {
-            path: 'pending_receivables',
+            path: '/sales/receivables',
             element: (
-              <PrivateRoute currentPath='pending_receivables'>
+              <PrivateRoute currentPath='/sales/receivables'>
                 <PendingReceivables />
               </PrivateRoute>
             ),
             handle: { title: '待催收尾款' }
           },
           {
-            path: 'production_data',
+            path: '/datacenter/art',
             element: (
-              <PrivateRoute currentPath='production_data'>
+              <PrivateRoute currentPath='/datacenter/art'>
                 <ArtDataPage />
               </PrivateRoute>
             ),
             handle: { title: '生产数据' }
           },
           {
-            path: 'online_client',
+            path: '/sales/onlineclient',
             element: (
-              <PrivateRoute currentPath='online_client'>
+              <PrivateRoute currentPath='/sales/onlineclient'>
                 <OnlineClientPage />
               </PrivateRoute>
             ),
             handle: { title: '线上客户' }
           },
           {
-            path: 'salary_data',
+            path: '/datacenter/salary',
             element: (
-              <PrivateRoute currentPath='salary_data'>
+              <PrivateRoute currentPath='/datacenter/salary'>
                 <SalaryDataPage />
               </PrivateRoute>
             ),
             handle: { title: '薪资数据' }
           },
           {
-            path: 'contract_management',
+            path: '/workorder/contract/management',
             element: (
-              <PrivateRoute currentPath='contract_management'>
+              <PrivateRoute currentPath='/workorder/contract/management'>
                 <ContractManagementPage />
               </PrivateRoute>
             ),
             handle: { title: '合同管理' }
           },
           {
-            path: 'product_type_management',
+            path: '/organization/producttype',
             element: (
-              <PrivateRoute currentPath='product_type_management'>
+              <PrivateRoute currentPath='/organization/producttype'>
                 <ProductTypeManagePage />
               </PrivateRoute>
             ),
@@ -215,6 +215,7 @@ const router = createBrowserRouter([
       },
     ],
   },
+
   {
     path: '*',
     element: <Navigate to="/" replace />

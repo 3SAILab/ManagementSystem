@@ -1,0 +1,1003 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { DollarSign, PiggyBank, Package, Receipt, TrendingUp, TrendingDown, ChevronDown, Search, Filter, Grid, List } from 'lucide-react';
+import * as echarts from 'echarts';
+import { getContracts, updateContractStatus, deleteContract, getAggregatedContracts } from '../../../api/workorder/contract';
+import { getMonthlySales, getMonthlySalesStatistics, getMonthlySalesByCycle, getMonthlySalesAmountStatistics, getMonthlySalesAmountByCycle } from '../../../api/datacenter/statistics';
+import Pagination from './components/Pagination';
+import AggregatedContractCard from './components/AggregatedContractCard';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
+import CreateAppendixContractModal from './components/CreateAppendixContractModal';
+import DateUtils from '../../../utils/dateUtils';
+
+const getTrendIndicator = (change) => {
+  const isPositive = change > 0;
+  const Icon = isPositive ? TrendingUp : TrendingDown;
+  const colorClass = isPositive ? 'text-red-500' : 'text-green-500';
+  return (
+    <span className={`${colorClass} flex items-center text-sm ml-1`}>
+      <Icon size={16} className="mr-1" />
+      {Math.abs(change).toFixed(1)}%
+    </span>
+  );
+};
+
+const statusBadgeClass = (status) => {
+  switch (status) {
+    case '已结算':
+      return 'bg-green-100 text-green-800';
+    case '待结算':
+      return 'bg-yellow-100 text-yellow-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+// 已移除“是否充值”和合同类型徽章在表格中的显示，故不再需要相关样式函数
+
+const SalesDashboard = () => {
+  const navigate = useNavigate();
+  // 统计数据
+  const [statistics, setStatistics] = useState({
+    monthlySales: 0,
+    monthlySalesChange: 0,
+    monthlyCommission: 0,
+    monthlyCommissionChange: 0,
+    monthlyOrderCount: 0,
+    monthlyOrderCountChange: 0,
+    pendingOrderCount: 0,
+  });
+  // 过滤条件
+  const [filters, setFilters] = useState(() => {
+    const savedPage = sessionStorage.getItem('salesDashboardPage');
+    return {
+      name: '',
+      status: [],
+      contract_type: [],
+      source: [],
+      start_date: '',
+      end_date: '',
+      page: savedPage ? parseInt(savedPage, 10) : 1,
+      page_size: 10
+    };
+  });
+  // 保存页码到sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem('salesDashboardPage', filters.page);
+  }, [filters.page]);
+  const commissionChartRef = useRef(null);
+  const commissionChartInstance = useRef(null);
+  const salesAmountChartRef = useRef(null);
+  const salesAmountChartInstance = useRef(null);
+  // 提点图表当前视图
+  const [currentCommissionView, setCurrentCommissionView] = useState('月度');
+  // 提点图表数据状态
+  const [commissionChartData, setCommissionChartData] = useState([]);
+  // 提点图表标签
+  const [commissionChartLabels, setCommissionChartLabels] = useState([]);
+  // 销售额图表当前视图
+  const [currentSalesAmountView, setCurrentSalesAmountView] = useState('月度');
+  // 销售额图表数据状态
+  const [salesAmountChartData, setSalesAmountChartData] = useState([]);
+  // 销售额图表标签
+  const [salesAmountChartLabels, setSalesAmountChartLabels] = useState([]);
+  // 筛选下拉菜单状态
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  // 临时筛选
+  const [tempStatus, setTempStatus] = useState([]);
+  const [tempContractType, setTempContractType] = useState([]);
+  const [tempSource, setTempSource] = useState([]);
+  const [tempStartDate, setTempStartDate] = useState('');
+  const [tempEndDate, setTempEndDate] = useState('');
+  
+  // 点击外部关闭筛选菜单
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('#filter-btn') && !event.target.closest('#filter-dropdown')) {
+        setIsFilterOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  // 打开筛选时同步当前已应用的筛选到临时状态
+  useEffect(() => {
+    if (isFilterOpen) {
+      setTempStatus(filters.status || []);
+      setTempContractType(filters.contract_type || []);
+      setTempSource(filters.source || []);
+      setTempStartDate(filters.start_date || '');
+      setTempEndDate(filters.end_date || '');
+    }
+  }, [isFilterOpen, filters.status, filters.contract_type, filters.source, filters.start_date, filters.end_date]);
+  
+  // 加载状态
+  const [loadingStates, setLoadingStates] = useState({
+    contracts: false,
+    statistics: false,
+    commissionChart: false,
+    salesAmountChart: false
+  });
+  // 获取提点图表数据
+  useEffect(() => {
+    const fetchCommissionChartData = async () => {
+      try {
+        if (currentCommissionView === '月度') {
+          const res = await getMonthlySalesStatistics();
+          setCommissionChartData(res.data || []);
+          setCommissionChartLabels(['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']);
+        } else if (currentCommissionView === '周期') {
+          const res = await getMonthlySalesByCycle();
+          setCommissionChartData(res.data.map(cycle => cycle.total_amount));
+          setCommissionChartLabels(res.data.map(cycle => `${cycle.cycle} 周期`));
+        }
+      } catch (error) {
+        console.error('获取图表数据失败:', error);
+        setCommissionChartData([]);
+        setCommissionChartLabels([]);
+      }
+    };
+
+    fetchCommissionChartData();
+  }, [currentCommissionView]);
+  // 初始化提点图表
+  useEffect(() => {
+    if (!commissionChartRef.current || commissionChartData.length === 0) return;
+
+    const option = {
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'cross',
+          label: {
+            backgroundColor: '#6a7985',
+          },
+        },
+      },
+      legend: {
+        data: ['提点'],
+        top: 10,
+        left: 'center',
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true,
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: commissionChartLabels,
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: {
+          formatter: '{value} 元',
+        },
+      },
+      series: [
+        {
+          name: '提点',
+          type: 'line',
+          smooth: true,
+          symbol: 'circle', // 数据点为圆形
+          symbolSize: 6, // 数据点大小
+          itemStyle: {
+            color: '#6366F1', // indigo-500
+          },
+          lineStyle: {
+            width: 2,
+          },
+          data: commissionChartData,
+        },
+      ],
+    };
+
+    // 初始化图表实例
+    if (!commissionChartInstance.current) {
+      commissionChartInstance.current = echarts.init(commissionChartRef.current);
+    }
+
+    // 设置图表配置
+    commissionChartInstance.current.setOption(option, true);
+
+    // 自适应屏幕变化
+    const handleResize = () => {
+      if (commissionChartInstance.current) {
+        commissionChartInstance.current.resize();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    // 清理函数
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (commissionChartInstance.current) {
+        commissionChartInstance.current.dispose();
+        commissionChartInstance.current = null;
+      }
+    };
+  }, [commissionChartData, commissionChartLabels]); // 依赖于提点图表数据变化
+  // 获取销售额图表数据
+  useEffect(() => {
+    const fetchSalesAmountChartData = async () => {
+      try {
+        if (currentSalesAmountView === '月度') {
+          const res = await getMonthlySalesAmountStatistics();
+          setSalesAmountChartData(res.data || []);
+          setSalesAmountChartLabels(['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']);
+        } else if (currentSalesAmountView === '周期') {
+          const res = await getMonthlySalesAmountByCycle();
+          setSalesAmountChartData(res.data.map(cycle => cycle.total_amount));
+          setSalesAmountChartLabels(res.data.map(cycle => `${cycle.cycle} 周期`));
+        }
+      } catch (error) {
+        console.error('获取图表数据失败:', error);
+        setSalesAmountChartData([]);
+        setSalesAmountChartLabels([]);
+      }
+    };
+
+    fetchSalesAmountChartData();
+  }, [currentSalesAmountView]);
+  // 初始化销售额图表
+  useEffect(() => {
+    if (!salesAmountChartRef.current || salesAmountChartData.length === 0) return;
+
+    const option = {
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'cross',
+          label: {
+            backgroundColor: '#F59E0B',
+          },
+        },
+      },
+      legend: {
+        data: ['销售额'],
+        top: 10,
+        left: 'center',
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true,
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: salesAmountChartLabels,
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: {
+          formatter: '{value} 元',
+        },
+      },
+      series: [
+        {
+          name: '销售额',
+          type: 'line',
+          smooth: true,
+          symbol: 'circle', // 数据点为圆形
+          symbolSize: 6, // 数据点大小
+          itemStyle: {
+            color: '#F59E0B', // indigo-500
+          },
+          lineStyle: {
+            width: 2,
+          },
+          data: salesAmountChartData,
+        },
+      ],
+    };
+
+    // 初始化图表实例
+    if (!salesAmountChartInstance.current) {
+      salesAmountChartInstance.current = echarts.init(salesAmountChartRef.current);
+    }
+
+    // 设置图表配置
+    salesAmountChartInstance.current.setOption(option, true);
+
+    // 自适应屏幕变化
+    const handleResize = () => {
+      if (salesAmountChartInstance.current) {
+        salesAmountChartInstance.current.resize();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+  }, [salesAmountChartData,salesAmountChartLabels]); // 依赖于销售额图表数据变化
+  // 合同列表
+  const [contracts, setContracts] = useState([]);
+  // 总条数
+  const [total, setTotal] = useState(0);
+  // 刷新状态
+  const [refresh, setRefresh] = useState(false);
+  // 视图模式：'list' 表格视图, 'aggregated' 聚合卡片视图
+  const [viewMode, setViewMode] = useState('list');
+  // 并行获取所有数据
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        setLoadingStates(prev => ({ 
+          ...prev, 
+          contracts: true, 
+          statistics: true
+        }));
+        
+        // 根据视图模式调用不同的API
+        const contractApiCall = viewMode === 'aggregated' 
+          ? getAggregatedContracts(filters) 
+          : getContracts(filters);
+        
+        // 只获取合同列表和统计数据
+        const [contractsRes, statisticsRes] = await Promise.all([
+          contractApiCall,
+          getMonthlySales()
+        ]);
+        // 分别处理结果
+        if (contractsRes.success) {
+          setContracts(contractsRes.data.contracts);
+          setTotal(contractsRes.data.total);
+        }
+        if (statisticsRes.success) {
+          setStatistics(statisticsRes.data);
+        }
+      } catch (error) {
+        console.error('获取数据失败:', error);
+      } finally {
+        setLoadingStates(prev => ({ 
+          ...prev, 
+          contracts: false, 
+          statistics: false
+        }));
+      }
+    };
+    fetchAllData();
+  }, [filters, refresh, viewMode]); // 添加viewMode到依赖数组
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingContract, setEditingContract] = useState(null);
+  const [newStatus, setNewStatus] = useState('');
+  const [settlementTime, setSettlementTime] = useState('');
+  
+  // 附属合同模态框状态
+  const [isAppendixModalOpen, setIsAppendixModalOpen] = useState(false);
+  const [selectedContract, setSelectedContract] = useState(null);
+  const handleOpenModal = (contract) => {
+    setEditingContract(contract);
+    setNewStatus(contract.status);
+    setSettlementTime(DateUtils.toInputDateTimeLocal(contract.settlement_time));
+    setIsModalOpen(true);
+  };
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingContract(null);
+    setNewStatus('');
+    setSettlementTime('');
+  };
+  const handleConfirmStatusChange = async () => {
+    // 如果状态是已结算，结算时间不能为空
+    if(newStatus === '已结算' && !settlementTime){
+      toast.error('结算时间不能为空');
+      return;
+    }
+    const res = await updateContractStatus(editingContract.id, newStatus, settlementTime);
+    if(res.success){
+      toast.success('合同状态更新成功');
+      // 更新合同列表
+      getContracts(filters).then(res => {
+        setContracts(res.data.contracts);
+      });
+      handleCloseModal();
+    }else{
+      toast.error(res.error);
+    }
+    setRefresh(!refresh);
+  };
+  const handleDeleteContract = async (contractId) => {
+    const result = await Swal.fire({
+      text: `确定要删除吗？`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: '确定',
+      cancelButtonText: '取消'
+    });
+    if (!result.isConfirmed) return;
+    const res = await deleteContract(contractId);
+    if(res.success){
+      toast.success('合同删除成功');
+      getContracts(filters).then(res => {
+        setContracts(res.data.contracts);
+      });
+    }else{
+      toast.error(res.error);
+    }
+  };
+  
+  const handleCreateAppendix = async (contract) => {
+    // 设置选中的合同并打开附属合同模态框
+    setSelectedContract(contract);
+    setIsAppendixModalOpen(true);
+  };
+  
+  const handleAppendixSuccess = () => {
+    // 附属合同创建成功后，刷新合同列表
+    setRefresh(!refresh);
+    setIsAppendixModalOpen(false);
+    setSelectedContract(null);
+  };
+  return (
+    <div className="p-6 space-y-6">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center gap-4">
+          <div className="p-3 bg-indigo-100 rounded-lg"><DollarSign className="w-7 h-7 text-indigo-600" /></div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-500">本月销售额</p>
+              {statistics.monthlySalesChange !== undefined && getTrendIndicator(statistics.monthlySalesChange || 0)}
+            </div>
+            <p className="text-3xl font-bold text-slate-800">
+              {statistics.monthlySales !== undefined ? `¥${statistics.monthlySales || 0}` : '加载中...'}
+            </p>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center gap-4">
+          <div className="p-3 bg-green-100 rounded-lg"><PiggyBank className="w-7 h-7 text-green-600" /></div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-500">本月提点</p>
+              {statistics.monthlyCommissionChange !== undefined && getTrendIndicator(statistics.monthlyCommissionChange || 0)}
+            </div>
+            <p className="text-3xl font-bold text-slate-800">
+              {statistics.monthlyCommission !== undefined ? `¥${statistics.monthlyCommission || 0}` : '加载中...'}
+            </p>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center gap-4">
+          <div className="p-3 bg-blue-100 rounded-lg"><Package className="w-7 h-7 text-blue-600" /></div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-500">本月订单数</p>
+              {statistics.monthlyOrderCountChange !== undefined && getTrendIndicator(statistics.monthlyOrderCountChange || 0)}
+            </div>
+            <p className="text-3xl font-bold text-slate-800">
+              {statistics.monthlyOrderCount !== undefined ? (statistics.monthlyOrderCount || 0) : '加载中...'}
+            </p>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center gap-4">
+          <div className="p-3 bg-yellow-100 rounded-lg"><Receipt className="w-7 h-7 text-yellow-600" /></div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-500">待结算订单</p>
+            </div>
+            <p className="text-3xl font-bold text-yellow-500">
+              {statistics.pendingOrderCount !== undefined ? (statistics.pendingOrderCount || 0) : '加载中...'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 提点图表 + 销售额图表 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 提点图表 */}
+        <div className="bg-white p-5 rounded-xl shadow-sm border">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-800">提点</h3>
+            <div className="flex bg-slate-100 rounded-lg p-1 text-sm">
+              <button
+                onClick={() => setCurrentCommissionView('月度')}
+                className={`px-3 py-1 rounded-md bg-white shadow-sm ${currentCommissionView === '月度' ? 'font-bold' : ''}`}
+              >
+                月度
+              </button>
+              <button
+                onClick={() => setCurrentCommissionView('周期')}
+                className={`px-3 py-1 rounded-md bg-white shadow-sm ${currentCommissionView === '周期' ? 'font-bold' : ''}`}
+              >
+                周期
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center mb-5">
+            <h2 className="text-2xl font-bold">¥{statistics.monthlyCommission || 0}</h2>
+            <span className="text-green-500 flex items-center text-sm ml-2">
+              <span className="w-4 h-4 mr-1">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 8l-6 6h12z" />
+                </svg>
+              </span>
+              {getTrendIndicator(statistics.monthlyCommissionChange || 0)}
+            </span>
+            <span className="text-slate-500 text-sm ml-2">同比上期</span>
+          </div>
+          <div className="h-64 mb-4">
+            {loadingStates.commissionChart ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-2"></div>
+                <span className="text-slate-500">加载图表中...</span>
+              </div>
+            ) : (
+              <div ref={commissionChartRef} style={{ width: '100%', height: '256px' }}></div>
+            )}
+          </div>
+          <div className="flex gap-8 text-sm">
+            <div className="flex items-center">
+              <span className="w-3 h-3 rounded-full bg-indigo-500 mr-2"></span>
+              <span>提点</span>
+              <span className="ml-2 font-medium">¥{statistics.monthlyCommission}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 销售额图表 */}
+        <div className="bg-white p-5 rounded-xl shadow-sm border">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-800">销售额</h3>
+            <div className="flex bg-slate-100 rounded-lg p-1 text-sm">
+              <button
+                onClick={() => setCurrentSalesAmountView('月度')}
+                className={`px-3 py-1 rounded-md bg-white shadow-sm ${currentSalesAmountView === '月度' ? 'font-bold' : ''}`}
+              >
+                月度
+              </button>
+              <button
+                onClick={() => setCurrentSalesAmountView('周期')}
+                className={`px-3 py-1 rounded-md bg-white shadow-sm ${currentSalesAmountView === '周期' ? 'font-bold' : ''}`}
+              >
+                周期
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center mb-5">
+            <h2 className="text-2xl font-bold">¥{statistics.monthlySales || 0}</h2>
+            <span className="text-green-500 flex items-center text-sm ml-2">
+              <span className="w-4 h-4 mr-1">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 8l-6 6h12z" />
+                </svg>
+              </span>
+              {getTrendIndicator(statistics.monthlySalesChange || 0)}
+            </span>
+            <span className="text-slate-500 text-sm ml-2">同比上期</span>
+          </div>
+          <div className="h-64 mb-4">
+            {loadingStates.salesAmountChart ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-2"></div>
+                <span className="text-slate-500">加载图表中...</span>
+              </div>
+            ) : (
+              <div ref={salesAmountChartRef} style={{ width: '100%', height: '256px' }}></div>
+            )}
+          </div>
+          <div className="flex gap-8 text-sm">
+            <div className="flex items-center">
+              <span className="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>
+              <span>销售额</span>
+              <span className="ml-2 font-medium">¥{statistics.monthlySales || 0}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* 合同尾款跟踪表格 */}
+      <div className="flex-grow flex flex-col bg-white rounded-xl shadow-sm border overflow-visible min-h-0">
+        {/* 表格头部 */}
+        <div className="bg-white px-6 py-6 border-b border-slate-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-800 mb-2">合同尾款跟踪</h3>
+              <p className="text-sm text-slate-600">管理客户合同状态和付款情况</p>
+            </div>
+            {/* 搜索框和筛选按钮 */}
+            <div className="flex items-center gap-3">
+              {/* 筛选按钮 */}
+              <div className="relative">
+                <button
+                  id="filter-btn"
+                  className="bg-white border border-slate-300 text-slate-700 font-medium py-2 px-3 rounded-lg flex items-center gap-2 transition-colors hover:bg-slate-50"
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                >
+                  <Filter className="w-4 h-4" /> Filters
+                </button>
+
+                {/* 筛选下拉菜单 */}
+                {isFilterOpen && (
+                  <div
+                    id="filter-dropdown"
+                    className="absolute z-50 bg-white rounded-lg shadow-xl border border-slate-200 p-4 transition-all duration-300 w-max"
+                    style={{
+                      right: 0,
+                      top: '100%',
+                      marginTop: '5px',
+                      minWidth: '280px',
+                      maxWidth: '320px',
+                      maxHeight: '80vh',
+                      overflowY: 'auto',
+                    }}
+                  >
+                    {/* 状态筛选 */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-800 mb-3">按状态筛选</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['已结算', '待结算', '坏单'].map((status) => (
+                          <div key={status} className="flex items-center space-x-2 text-sm">
+                            <input
+                              type="checkbox"
+                              value={status}
+                              className="form-checkbox h-4 w-4 rounded text-indigo-600"
+                              checked={tempStatus.includes(status)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setTempStatus([...tempStatus, status]);
+                                } else {
+                                  setTempStatus(tempStatus.filter(s => s !== status));
+                                }
+                              }}
+                            />
+                            <span>{status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 合同类型筛选 */}
+                    <div className="mt-4 border-t border-slate-200 pt-3">
+                      <h4 className="text-sm font-semibold text-slate-800 mb-3">按合同类型筛选</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['首单', '复购'].map((type) => (
+                          <div key={type} className="flex items-center space-x-2 text-sm">
+                            <input
+                              type="checkbox"
+                              value={type}
+                              className="form-checkbox h-4 w-4 rounded text-indigo-600"
+                              checked={tempContractType.includes(type)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setTempContractType([...tempContractType, type]);
+                                } else {
+                                  setTempContractType(tempContractType.filter(t => t !== type));
+                                }
+                              }}
+                            />
+                            <span>{type}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 客户来源筛选 */}
+                    <div className="mt-4 border-t border-slate-200 pt-3">
+                      <h4 className="text-sm font-semibold text-slate-800 mb-3">按客户来源筛选</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['线上', '线下', '活动'].map((source) => (
+                          <div key={source} className="flex items-center space-x-2 text-sm">
+                            <input
+                              type="checkbox"
+                              value={source}
+                              className="form-checkbox h-4 w-4 rounded text-indigo-600"
+                              checked={tempSource.includes(source)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setTempSource([...(tempSource || []), source]);
+                                } else {
+                                  setTempSource((tempSource || []).filter(s => s !== source));
+                                }
+                              }}
+                            />
+                            <span>{source}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 合同时间段筛选 */}
+                    <div className="mt-4 border-t border-slate-200 pt-3">
+                      <h4 className="text-sm font-semibold text-slate-800 mb-3">按合同时间筛选</h4>
+                      <div className="grid grid-cols-1 gap-3">
+                        <div>
+                          <label className="block text-xs text-slate-600 mb-1">开始时间</label>
+                          <input
+                            type="datetime-local"
+                            value={tempStartDate}
+                            onChange={(e) => setTempStartDate(e.target.value)}
+                            className="w-full p-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-slate-600 mb-1">结束时间</label>
+                          <input
+                            type="datetime-local"
+                            value={tempEndDate}
+                            onChange={(e) => setTempEndDate(e.target.value)}
+                            className="w-full p-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 底部操作栏 */}
+                    <div className="mt-5 flex justify-between gap-2 border-t border-slate-200 pt-3">
+                      <button
+                        onClick={() => {
+                          setTempStatus([]);
+                          setTempContractType([]);
+                          setTempSource([]);
+                          setTempStartDate('');
+                          setTempEndDate('');
+                          setFilters({
+                            ...filters,
+                            status: [],
+                            contract_type: [],
+                            source: [],
+                            start_date: '',
+                            end_date: '',
+                            page: 1,
+                          });
+                        }}
+                        className="px-3 py-1.5 text-slate-600 hover:text-slate-700 text-sm font-medium border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                      >
+                        重置
+                      </button>
+                      <button
+                        onClick={() => {
+                          setFilters({
+                            ...filters,
+                            status: tempStatus,
+                            contract_type: tempContractType,
+                            source: tempSource,
+                            start_date: tempStartDate,
+                            end_date: tempEndDate,
+                            page: 1,
+                          });
+                          setIsFilterOpen(false);
+                        }}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors"
+                      >
+                        应用
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 搜索框 */}
+              <div className="relative w-full max-w-xs">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Search className="w-5 h-5 text-slate-400" />
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="搜索客户名称..." 
+                  className="form-input !pl-12 w-full bg-white border-slate-300 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                  value={filters.name}
+                  onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+                />
+              </div>
+
+              {/* 视图切换器 */}
+              <div className="flex items-center bg-white border border-slate-300 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-3 py-2 flex items-center space-x-2 transition-colors ${
+                    viewMode === 'list' 
+                      ? 'bg-indigo-600 text-white' 
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                  title="表格视图"
+                >
+                  <List className="w-4 h-4" />
+                  <span className="text-sm font-medium">表格</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('aggregated')}
+                  className={`px-3 py-2 flex items-center space-x-2 transition-colors ${
+                    viewMode === 'aggregated' 
+                      ? 'bg-indigo-600 text-white' 
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                  title="聚合卡片视图"
+                >
+                  <Grid className="w-4 h-4" />
+                  <span className="text-sm font-medium">聚合</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* 根据视图模式渲染不同内容 */}
+          {contracts.length === 0 ? (
+            <div className="p-4 text-center text-slate-500">
+              暂无数据
+            </div>
+          ) : viewMode === 'aggregated' ? (
+            <div className="space-y-4 p-4">
+              {contracts.map((contract) => (
+                <AggregatedContractCard
+                  key={contract.id}
+                  contract={contract}
+                  onClick={() => navigate(`/contract_detail/${contract.id}`)}
+                />
+              ))}
+            </div>
+          ) : (
+          <table className="w-full text-left">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="p-4 text-sm font-semibold text-slate-600">客户名称</th>
+                <th className="p-4 text-sm font-semibold text-slate-600">合同金额</th>
+                <th className="p-4 text-sm font-semibold text-slate-600">接入日期</th>
+                <th className="p-4 text-sm font-semibold text-slate-600">首付款</th>
+                <th className="p-4 text-sm font-semibold text-slate-600">首付提点</th>
+                <th className="p-4 text-sm font-semibold text-slate-600">尾款</th>
+                <th className="p-4 text-sm font-semibold text-slate-600">结算日期</th>
+                <th className="p-4 text-sm font-semibold text-slate-600">尾款提点</th>
+                <th className="p-4 text-sm font-semibold text-slate-600">提点合计</th>
+                <th className="p-4 text-sm font-semibold text-slate-600">状态</th>
+                <th className="p-4 text-sm font-semibold text-slate-600">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {contracts.map((contract) => {
+                // 使用后端返回的提点金额
+                const prepaymentCommission = contract.prepayment_commission || 0;
+                const finalPaymentCommission = contract.final_payment_commission || 0;
+
+                // 尾款金额
+                const remainingAmount = contract.total_amount - contract.paid_amount;
+
+                // 提点合计
+                const totalCommission = prepaymentCommission + finalPaymentCommission;
+
+                return (
+                  <tr key={contract.id}
+                    onClick={() => navigate(`/contract_detail/${contract.id}`)}
+                    className={`hover:bg-slate-50 cursor-pointer transition-colors`}
+                  >
+                    <td className="p-4 font-medium text-slate-800">{contract.client_name || '未知客户'}</td>
+                    <td className="p-4 text-slate-600 font-medium">¥{contract.total_amount.toLocaleString()}</td>
+                    <td className="p-4 text-slate-600">{DateUtils.formatDateYMD(contract.transaction_time)}</td>
+                    <td className="p-4 text-slate-600 font-medium">¥{contract.paid_amount.toLocaleString()}</td>
+                    <td className="p-4 text-slate-600 font-medium">¥{prepaymentCommission.toLocaleString()}</td>
+                    <td className="p-4 text-slate-600 font-medium">¥{remainingAmount.toLocaleString()}</td>
+                    <td className="p-4 text-slate-600">{contract.settlement_time ? DateUtils.formatDateYMD(contract.settlement_time) : '-'}</td>
+                    <td className="p-4 text-slate-600 font-medium">¥{finalPaymentCommission.toLocaleString()}</td>
+                    <td className="p-4 text-slate-800 font-bold text-lg">¥{totalCommission.toLocaleString()}</td>
+                    <td className="p-4">
+                      <span className={`inline-block px-3 py-1 text-xs rounded-full font-medium ${statusBadgeClass(contract.status)}`}>
+                        {contract.status}
+                      </span>
+                    </td>
+                    {/* 操作 */}
+                    <td className="p-4">
+                      <div className="flex gap-2">
+                        <button
+                          className="px-3 py-1 rounded-md bg-indigo-500 text-white text-sm shadow-sm hover:bg-indigo-600 transition"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenModal(contract);
+                          }}
+                        >
+                          更改状态
+                        </button>
+                        <button
+                          className="px-3 py-1 rounded-md bg-orange-600 text-white text-sm shadow-sm hover:bg-orange-700 transition"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCreateAppendix(contract);
+                          }}
+                        >
+                          追加合同
+                        </button>
+                        <button
+                          className="px-3 py-1 rounded-md bg-red-500 text-white text-sm shadow-sm hover:bg-red-600 transition"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteContract(contract.id);
+                          }}
+                        >
+                          删除
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* 分页 */}
+        <div className="p-4 border-t border-slate-200 text-sm text-slate-600 flex justify-between items-center">
+          <span>显示 {contracts.length} / 共 {total} 条数据</span>
+          <div className="flex items-center gap-2">
+            {/* 分页按钮 */}
+            <Pagination
+              totalItems={total}
+              itemsPerPage={filters.page_size}
+              currentPage={filters.page}
+              onPageChange={(page) => setFilters({...filters, page: page})}
+            />
+          </div>
+        </div>
+      </div>
+      {/* **更改合同状态模态框** */}
+      {isModalOpen && editingContract && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-96">
+            <h3 className="text-lg font-semibold mb-4">更改订单状态</h3>
+            <p className="mb-2 text-slate-600">客户: {editingContract.client_name || '未知客户'}</p>
+            <p className="mb-4 text-slate-600">合同金额: ¥{editingContract.total_amount.toLocaleString()}</p>
+            
+            <label htmlFor="status-select" className="block text-sm font-medium text-slate-700 mb-1">
+              选择新状态:
+            </label>
+            <select
+              id="status-select"
+              value={newStatus}
+              onChange={(e) => setNewStatus(e.target.value)}
+              className="w-full p-2 border border-slate-300 rounded-md mb-6"
+            >
+              <option value="待结算">待结算</option>
+              <option value="已结算">已结算</option>
+              <option value="坏单">坏单</option>
+            </select>
+            {/** 如果状态是已结算需要选择结算时间，并且结算时间不能为空 */}
+            {newStatus === '已结算' && (
+              <div className="space-y-2">
+                <label htmlFor="settlement-time" className="block text-sm font-medium text-slate-700">
+                  结算时间<span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  id="settlement-time"
+                  name="settlement-time"
+                  value={settlementTime}
+                  onChange={(e) => setSettlementTime(e.target.value)}
+                  className="form-input block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200"
+                />
+              </div>
+            )}
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleCloseModal}
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleConfirmStatusChange}
+                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+              >
+                确定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* **创建附属合同模态框** */}
+      <CreateAppendixContractModal
+        isOpen={isAppendixModalOpen}
+        onClose={() => {
+          setIsAppendixModalOpen(false);
+          setSelectedContract(null);
+        }}
+        parentContract={selectedContract}
+        onSuccess={handleAppendixSuccess}
+      />
+    </div>
+  );
+};
+
+export default SalesDashboard;
