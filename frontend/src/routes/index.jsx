@@ -50,162 +50,162 @@ const router = createBrowserRouter([
             handle: { title: '工单看板' },
           },
           {
-            path: '/readonly_contract_detail/:id',
+            path: 'readonly_contract_detail/:id',
             element: (
-              <PrivateRoute currentPath='/readonly_contract_detail'>
+              <PrivateRoute currentPath='readonly_contract_detail'>
                 <ReadOnlyContractDetail />
               </PrivateRoute>
             ),
             handle: { title: '合同详情' },
           },
           {
-            path: '/readonly_sales_dashboard/:id/:name',
+            path: 'readonly_sales_dashboard/:id/:name',
             element: (
-              <PrivateRoute currentPath='/readonly_sales_dashboard'>
+              <PrivateRoute currentPath='readonly_sales_dashboard'>
                 <ReadOnlySalesDashboard />
               </PrivateRoute>
             ),
             handle: { title: `销售看板` },
           },
           {
-            path: '/employee_management',
+            path: 'employee_management',
             element: (
-              <PrivateRoute currentPath='/employee_management'>
+              <PrivateRoute currentPath='employee_management'>
                 <EmployeeManagementPage />
               </PrivateRoute>
             ),
             handle: { title: '员工管理' },
           },
           {
-            path: '/department_management',
+            path: 'department_management',
             element: (
-              <PrivateRoute currentPath='/department_management'>
+              <PrivateRoute currentPath='department_management'>
                 <DepartmentPage />
               </PrivateRoute>
             ),
             handle: { title: '部门管理' },
           },
           {
-            path: '/position_management',
+            path: 'position_management',
             element: (
-              <PrivateRoute currentPath='/position_management'>
+              <PrivateRoute currentPath='position_management'>
                 <PositionPage />
               </PrivateRoute>
             ),
             handle: { title: '职位管理' },
           },
           {
-            path: '/sales_dashboard',
+            path: 'sales_dashboard',
             element: (
-              <PrivateRoute currentPath='/sales_dashboard'>
+              <PrivateRoute currentPath='sales_dashboard'>
                 <SalesDashboard />
               </PrivateRoute>
             ),
             handle: { title: '我的看板' },
           },
           {
-            path: '/client_follow_ups',
+            path: 'client_follow_ups',
             element: (
-              <PrivateRoute currentPath='/client_follow_ups'>
+              <PrivateRoute currentPath='client_follow_ups'>
                 <ClientFollowUps />
               </PrivateRoute>
             ),
             handle: { title: '跟进记录' },
           },
           {
-            path: '/contract_detail/:id',
+            path: 'contract_detail/:id',
             element: (
-              <PrivateRoute currentPath='/contract_detail'>
+              <PrivateRoute currentPath='contract_detail'>
                 <ContractDetailPage />
               </PrivateRoute>
             ),
             handle: { title: '合同详情' },
           },
           {
-            path: '/team_record',
+            path: 'team_record',
             element: (
-              <PrivateRoute currentPath='/team_record'>
+              <PrivateRoute currentPath='team_record'>
                 <TeamRecordPage />
               </PrivateRoute>
             ),
             handle: { title: '团队记录' },
           },
           {
-            path: '/work_assignment',
+            path: 'work_assignment',
             element: (
-              <PrivateRoute currentPath='/work_assignment'>
+              <PrivateRoute currentPath='work_assignment'>
                 <WorkAssignmentPage />
               </PrivateRoute>
             ),
             handle: { title: '工单分配' },
           },
           {
-            path: '/team_dashboard',
+            path: 'team_dashboard',
             element:(
-              <PrivateRoute currentPath='/team_dashboard'>
+              <PrivateRoute currentPath='team_dashboard'>
                 <TeamDashboardPage />
               </PrivateRoute>
             ),
             handle: { title: '团队任务监控' }
           },
           {
-            path: '/sales_data',
+            path: 'sales_data',
             element: (
-              <PrivateRoute currentPath='/sales_data'>
+              <PrivateRoute currentPath='sales_data'>
                 <SalesDataPages />
               </PrivateRoute>
             ),
             handle: { title: '销售数据' }
           },
           {
-            path: '/pending_receivables',
+            path: 'pending_receivables',
             element: (
-              <PrivateRoute currentPath='/pending_receivables'>
+              <PrivateRoute currentPath='pending_receivables'>
                 <PendingReceivables />
               </PrivateRoute>
             ),
             handle: { title: '待催收尾款' }
           },
           {
-            path: '/production_data',
+            path: 'production_data',
             element: (
-              <PrivateRoute currentPath='/production_data'>
+              <PrivateRoute currentPath='production_data'>
                 <ArtDataPage />
               </PrivateRoute>
             ),
             handle: { title: '生产数据' }
           },
           {
-            path: '/online_client',
+            path: 'online_client',
             element: (
-              <PrivateRoute currentPath='/online_client'>
+              <PrivateRoute currentPath='online_client'>
                 <OnlineClientPage />
               </PrivateRoute>
             ),
             handle: { title: '线上客户' }
           },
           {
-            path: '/salary_data',
+            path: 'salary_data',
             element: (
-              <PrivateRoute currentPath='/salary_data'>
+              <PrivateRoute currentPath='salary_data'>
                 <SalaryDataPage />
               </PrivateRoute>
             ),
             handle: { title: '薪资数据' }
           },
           {
-            path: '/contract_management',
+            path: 'contract_management',
             element: (
-              <PrivateRoute currentPath='/contract_management'>
+              <PrivateRoute currentPath='contract_management'>
                 <ContractManagementPage />
               </PrivateRoute>
             ),
             handle: { title: '合同管理' }
           },
           {
-            path: '/product_type_management',
+            path: 'product_type_management',
             element: (
-              <PrivateRoute currentPath='/product_type_management'>
+              <PrivateRoute currentPath='product_type_management'>
                 <ProductTypeManagePage />
               </PrivateRoute>
             ),
