@@ -218,5 +218,6 @@ async def get_sales_list(
     current_employee: Employee = Depends(get_current_employee)
 ):
     employees = await EmployeeService.get_employee_list_by_filter(db, position_name="销售")
+    employees.append({"id": current_employee.id, "name": current_employee.name})
     return api_response(success=True, data=employees)
 
