@@ -66,15 +66,17 @@ export const getContractDetail = async (id) => {
 // 更改合同状态
 export const updateContractStatus = async (id, status, settlement_time) => {
     try {
-        let formattedSettlementTime = null;
-        if (settlement_time && settlement_time.trim() !== '') {
-            formattedSettlementTime = settlement_time; // "2025-04-05T10:30"
-        }
-        const payload = {
-            status: status,
-            settlement_time: formattedSettlementTime
-        }
-        const response = await api.put(`/contracts/${id}/status`, payload);
+        const payload = new FormData();
+        payload.append('status', status);
+        payload.append('settlement_time', settlement_time);
+        // if (settlement_time && settlement_time.trim() !== '') {
+        //     payload.append('settlement_time', settlement_time);
+        // }
+        const response = await api.put(`/contracts/${id}/status`, payload, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
         return {success: true, data: response.data};
     } catch (error) {
         return {success: false, error: `合同状态更新失败:${error.message}`};

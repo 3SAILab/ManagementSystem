@@ -399,6 +399,7 @@ async def update_contract_status(
     current_employee: Employee = Depends(get_current_employee)
 ):
     # 更新合同状态
+    settlement_time = datetime.fromisoformat(settlement_time.replace('Z', '+00:00')) if settlement_time else None
     await ContractService.update_contract_status(db, id, status, settlement_time)
     return api_response(success=True, data="合同状态更新成功")
 

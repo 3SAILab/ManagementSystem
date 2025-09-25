@@ -80,6 +80,7 @@ const ContractCard = ({ contract, hasNotification, onCreateTicket, onViewDetails
               <div className="flex items-center space-x-2 text-sm text-gray-500">
                 <Calendar className="w-4 h-4" />
                 <span>{formatDate(contract.transaction_time)}</span>
+                <span>销售名称：{contract.sales.name}</span>
               </div>
             </div>
           </div>

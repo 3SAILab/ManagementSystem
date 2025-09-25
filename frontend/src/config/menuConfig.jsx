@@ -71,6 +71,8 @@ export const menuItems = [
     children: [
       { label: '线上客户', path: '/online_client', icon: 'contact' },
       { label: '销售数据', path: '/sales_data', icon: 'bar-chart-3' },
+      { label: '我的看板', path: '/sales_dashboard', icon: 'bar-chart-3' },
+      { label: '跟进记录', path: '/client_follow_ups', icon: 'contact' },
     ]
   },
   {
