@@ -208,6 +208,7 @@ const WorkAssignmentPage = () => {
                   <tr>
                     <th className="p-4 text-xs uppercase tracking-wider font-semibold text-slate-600">工单名称</th>
                     <th className="p-4 text-xs uppercase tracking-wider font-semibold text-slate-600">客户</th>
+                    <th className="p-4 text-xs uppercase tracking-wider font-semibold text-slate-600">产品名称</th>
                     <th className="p-4 text-xs uppercase tracking-wider font-semibold text-slate-600 whitespace-nowrap">微信群</th>
                     <th className="p-4 text-xs uppercase tracking-wider font-semibold text-slate-600">销售</th>
                     <th className="p-4 text-xs uppercase tracking-wider font-semibold text-slate-600">负责人</th>
@@ -225,6 +226,9 @@ const WorkAssignmentPage = () => {
                           </td>
                           <td className="p-4 text-slate-600 max-w-[180px] truncate">
                             {task.ticket.client.name}
+                          </td>
+                          <td className="p-4 text-slate-600 max-w-[180px] truncate">
+                            {task.product_name || '-'}
                           </td>
                           <td className="p-4 text-slate-600 whitespace-nowrap">
                             {task.wechat_group || '-'}

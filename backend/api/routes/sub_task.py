@@ -68,6 +68,7 @@ async def get_sub_tasks_uncompleted(
             "sales": task.ticket.contract.sales.name if task.ticket.contract.sales else None,
             "charge_name": task.charge.name if task.charge else None,
             "wechat_group": task.ticket.wechat_group if task.ticket.wechat_group else None,
+            "product_name": task.ticket.product_name if task.ticket.product_name else None,
         })
     return {
         "sub_tasks": sub_tasks_out,
