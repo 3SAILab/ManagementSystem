@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getContractDetail } from '../services/contractService';
+import { getContractDetail, uploadContractFile } from '../services/contractService';
 import { addTicket, getTicketsByContractId, updateTicketInfo, deleteTicket } from '../services/ticketService';
 import { getSubTasksByTicketId } from '../services/subTaskService';
 import AddTicketModal from '../components/AddTicketModal';
@@ -11,12 +11,15 @@ import { toast } from 'react-toastify';
 import SubTaskTable from '../components/SubTaskTable';
 import EditTicketModal from '../components/EditTicketModal';
 import { useEmployeePermissionStore } from '../store/employee';
+import UploadContractFileModal from '../components/UploadContractFileModal';
 
 const ContractDetailPage = () => {
   const { employee } = useEmployeePermissionStore();
   const navigate = useNavigate();
   // 创建工单模态框是否显示
   const [createOrderModal, setCreateOrderModal] = useState(false);
+  // 上传合同文件模态框是否显示
+  const [uploadContractFileModal, setUploadContractFileModal] = useState(false);
   const { id } = useParams();
   // 合同详情数据
   const [contractData, setContractData] = useState({
@@ -154,6 +157,17 @@ const ContractDetailPage = () => {
       toast.error('删除工单失败，请重试');
     }
   };
+  // 处理上传合同文件
+  const handleUploadContractFile = async (attachment) => {
+    const result = await uploadContractFile(id, attachment);
+    if (result.success) {
+      toast.success('上传合同文件成功');
+      init();
+    }
+    else {
+      toast.error(result.error);
+    }
+  };
   return (
     <div className="p-6 space-y-6">
       {/* header */}
@@ -172,6 +186,13 @@ const ContractDetailPage = () => {
         
         {/* 按钮组 */}
         <div className="flex items-center gap-3">
+          {/* 上传文件按钮 */}
+          <button 
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
+            onClick={() => setUploadContractFileModal(true)}
+          >
+            <FileText className="w-4 h-4" /> 上传合同文件
+          </button>
           {/* 查看文件按钮 */}
           <button 
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
@@ -383,6 +404,12 @@ const ContractDetailPage = () => {
         isOpen={filePreviewOpen}
         onClose={() => setFilePreviewOpen(false)}
         contractId={parseInt(id)}
+      />
+      {/* 上传合同文件模态框 */}
+      <UploadContractFileModal
+        isOpen={uploadContractFileModal}
+        onClose={() => setUploadContractFileModal(false)}
+        onAdd={handleUploadContractFile}
       />
     </div>
   );

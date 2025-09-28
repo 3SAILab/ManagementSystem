@@ -250,3 +250,18 @@ export const getAppendixContractNotifications = async () => {
     }
 };
 
+export const uploadContractFile = async (contractId, attachment) => {
+    try {
+        const formData = new FormData();
+        formData.append("file", attachment.file);
+        formData.append("contract_id", contractId);
+        const response = await api.post("/contract/upload-file", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        return { success: true, data: response.data };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};

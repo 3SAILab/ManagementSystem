@@ -594,3 +594,22 @@ async def get_readonly_contracts(
         total_pages=total_pages
     )
     return paginated.model_dump()
+
+
+@router.post("/contract/upload-file")
+async def upload_contract_file(
+    file: UploadFile = File(None),
+    contract_id: int = Form(...),
+    db: AsyncSession = Depends(get_async_db),
+    current_employee: Employee = Depends(get_current_employee)
+):
+    # 根据合同id获取合同信息
+    contract = await ContractService.get_contract_by_id(db, contract_id)
+    # 根据客户id获取客户信息
+    client = await ClientService.get_client_info(db, contract.client_id)
+    # 设置合同信息
+    if file:
+        file_resource = await FileUploadService.upload_file(db, file, client["name"],current_employee.id)
+    # 更新合同信息，将合同文件关联到合同
+    result = await ContractService.update_contract(db, contract_id, file_resource.id)
+    return result

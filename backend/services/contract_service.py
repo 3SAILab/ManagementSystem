@@ -523,3 +523,15 @@ class ContractService:
             })
         
         return aggregated_contracts
+
+    # 更新合同，将合同文件关联到合同
+    @staticmethod
+    async def update_contract(db: AsyncSession, contract_id: int, file_resource_id: int):
+        """更新合同"""
+        contract = await db.get(Contract, contract_id)
+        if not contract:
+            raise HTTPException(status_code=404, detail="合同不存在")
+        contract.file_resource_id = file_resource_id
+        await db.merge(contract)
+        await db.flush()
+        return api_response(success=True, data={"msg": "合同文件关联成功"})
