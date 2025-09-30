@@ -660,7 +660,7 @@ const ReadOnlySalesDashboard = () => {
                         <div>
                           <label className="block text-xs text-slate-600 mb-1">开始时间</label>
                           <input
-                            type="datetime-local"
+                            type="date"
                             value={tempStartDate}
                             onChange={(e) => setTempStartDate(e.target.value)}
                             className="w-full p-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
@@ -669,7 +669,7 @@ const ReadOnlySalesDashboard = () => {
                         <div>
                           <label className="block text-xs text-slate-600 mb-1">结束时间</label>
                           <input
-                            type="datetime-local"
+                            type="date"
                             value={tempEndDate}
                             onChange={(e) => setTempEndDate(e.target.value)}
                             className="w-full p-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"

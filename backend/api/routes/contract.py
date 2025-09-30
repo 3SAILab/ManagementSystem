@@ -525,6 +525,11 @@ async def get_readonly_contracts(
     """
     只读合同列表，根据传入的员工id获取对应的合同列表
     """
+
+    if start_date:
+        start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    if end_date:
+        end_date = end_date.replace(hour=0, minute=0, second=0, microsecond=0)
     filter_params = ContractFilter(
         name=name,
         status=status,
